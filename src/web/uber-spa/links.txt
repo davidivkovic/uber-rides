@@ -1,0 +1,3 @@
+https://github.com/analogjs/analog/blob/router/packages/router/src/index.ts
+https://stackblitz.com/github/analogjs/analog/tree/main/packages/create-analog/template-angular-v14?file=src%2Fapp%2Fapp.component.ts,vite.config.ts&preset=node
+https://medium.com/@axwdev/writing-a-vite-plugin-for-vue-3-5bcc1c0915e0
