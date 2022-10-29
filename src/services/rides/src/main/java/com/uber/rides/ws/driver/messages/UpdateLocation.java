@@ -55,8 +55,8 @@ class ScheduledTask {
     public void dostuff(DriverData sender) {
         wsRider.broadcast("Handled UPDATE_DRIVER_LOCATION");
         var u = new User();
-        u.firstName = "David";
-        u.lastName = "Ivkovic";
+        u.setFirstName("David");
+        u.setLastName("Ivkovic");
         db.persist(u);
     }
 }
