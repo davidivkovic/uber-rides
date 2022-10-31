@@ -1,6 +1,6 @@
 package com.uber.rides.model;
 
-import jakarta.persistence.*;
+import javax.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -27,4 +27,5 @@ public class User {
     private String password;
     private String city;
     private String phoneNumber;
+    private String profilePicture;
 }
