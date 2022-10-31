@@ -3,7 +3,6 @@ package com.uber.rides.ws.driver.messages;
 import java.time.Duration;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -13,10 +12,8 @@ import com.uber.rides.ws.Message;
 import com.uber.rides.ws.driver.DriverData;
 import com.uber.rides.ws.rider.WSRider;
 
-import static com.uber.rides.Utils.*;
-
-import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 
 @Service
 public class UpdateLocation implements Message<DriverData> {
@@ -30,8 +27,8 @@ public class UpdateLocation implements Message<DriverData> {
     @PersistenceContext EntityManager db;
     
     @Autowired WSRider wsRider;
-    @Autowired @Qualifier("taskScheduler") TaskScheduler scheduler;
-    @Autowired ScheduledTask task;
+    @Autowired TaskScheduler scheduler;
+    @Autowired UpdateLocationTask task;
 
     @Override
     @Transactional
@@ -46,8 +43,8 @@ public class UpdateLocation implements Message<DriverData> {
 
 }
 
-@Service(UpdateLocation.TYPE + SCHEDULED)
-class ScheduledTask {
+@Service
+class UpdateLocationTask {
 
     @Autowired WSRider wsRider;
     @PersistenceContext EntityManager db;
