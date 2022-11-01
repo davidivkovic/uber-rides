@@ -5,7 +5,6 @@ import org.springframework.context.annotation.ComponentScan;
 import org.springframework.integration.config.EnableIntegration;
 
 @EnableIntegration
-@ComponentScan(basePackages = "com.speedment.jpastreamer.application")
 @SpringBootApplication
 public class UberRidesApplication {
 

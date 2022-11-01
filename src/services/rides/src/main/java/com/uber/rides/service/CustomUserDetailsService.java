@@ -11,12 +11,12 @@ import org.springframework.stereotype.Service;
 @Service
 public class CustomUserDetailsService implements UserDetailsService {
 
-    private final JPAStreamer jpaStreamer;
-
-    @Autowired
-    public CustomUserDetailsService(JPAStreamer jpaStreamer) {
-        this.jpaStreamer = jpaStreamer;
-    }
+//    private final JPAStreamer jpaStreamer;
+//
+//    @Autowired
+//    public CustomUserDetailsService(JPAStreamer jpaStreamer) {
+//        this.jpaStreamer = jpaStreamer;
+//    }
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
