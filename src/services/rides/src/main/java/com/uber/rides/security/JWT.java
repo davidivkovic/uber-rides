@@ -1,0 +1,128 @@
+package com.uber.rides.security;
+
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.springframework.stereotype.Component;
+import org.springframework.web.method.HandlerMethod;
+
+import com.uber.rides.model.User;
+
+import org.springframework.context.annotation.Bean;
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
+import org.springframework.security.access.annotation.Secured;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.web.access.AccessDeniedHandler;
+import org.springframework.security.web.access.AccessDeniedHandlerImpl;
+import org.springframework.web.servlet.HandlerInterceptor;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.JwtParser;
+
+@Component
+public class JWT {
+    
+    static final String ISSUER = "uber-rides";
+    static final String AUDIENCE = "uber-spa";
+    static final String ROLE_CLAIM = "rol";
+    static final String KEY = "448ba5288b28cc80";
+    
+    static final int DURATION_IN_MILLISECONDS = 24 * 3600000;
+
+    JwtParser jwtParser = Jwts.parser()
+        .requireIssuer(ISSUER)
+        .requireAudience(AUDIENCE)
+        .setSigningKey(KEY);
+
+    public String getJWT(User user) {
+        return Jwts.builder()
+            .setClaims(new HashMap<>(Map.of(ROLE_CLAIM, user.getRole())))
+            .setIssuer(ISSUER)
+            .setAudience(AUDIENCE)
+            .setSubject(String.valueOf(user.getId()))
+            .setIssuedAt(new Date())
+            .setExpiration(new Date(new Date().getTime() + DURATION_IN_MILLISECONDS))
+            .signWith(SignatureAlgorithm.HS512, KEY)
+            .compact();
+    }
+
+    @Component
+    public class Interceptor implements HandlerInterceptor {
+
+        Logger log = LoggerFactory.getLogger(JWT.Interceptor.class);
+
+        @Override
+        public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) {
+            
+            var secured = secured(handler);
+            if (secured == null || authorize(request) || allowAnonymous(secured)) return true;
+            
+            return abortWithUnauthorized(response);
+
+        }
+
+        Secured secured(Object handler) {
+
+            if (handler instanceof HandlerMethod method) {
+                return method.getMethod().getAnnotation(Secured.class);
+            }
+            return null;
+
+        }
+
+        boolean allowAnonymous(Secured secured) {
+            return List.of(secured.value()).contains(User.Roles.ANONYMOUS);
+        }
+
+        boolean abortWithUnauthorized(HttpServletResponse response) {
+
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            return false;
+
+        }
+
+        boolean authorize(HttpServletRequest request) {
+            
+            var header = request.getHeader("Authorization");
+            if (header == null || !header.startsWith("Bearer ")) {
+                return false;
+            }
+
+            var token = header.substring(7);
+            if (token == null) return false;
+
+            try {
+                var jwt = jwtParser.parseClaimsJws(token).getBody();
+                SecurityContextHolder
+                    .getContext()
+                    .setAuthentication(
+                        new UsernamePasswordAuthenticationToken(
+                            jwt.getSubject(),
+                            jwt.getId(),
+                            List.of(new SimpleGrantedAuthority(jwt.get(ROLE_CLAIM, String.class)))
+                        )
+                    );
+                return true;
+            } 
+            catch (Exception e) {
+                log.error("Failed in JWT Filter", e);
+                return false;
+            }
+
+        }
+
+    }
+
+}

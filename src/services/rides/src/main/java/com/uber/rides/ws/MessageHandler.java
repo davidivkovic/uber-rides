@@ -2,6 +2,7 @@ package com.uber.rides.ws;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.config.AutowireCapableBeanFactory;
@@ -40,7 +41,7 @@ public class MessageHandler {
             if (messageType == EmptyMessage.class) {
                 emptyMessage.handle(sender); 
             } else {
-                var message = (Message<UserData>) mapper
+                var message = (Message<UserData>) jsonMapper
                     .readerForUpdating(container.getBean(messageType))
                     .readValue(payload);
                 message.handle(sender);

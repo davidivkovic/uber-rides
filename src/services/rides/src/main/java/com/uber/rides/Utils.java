@@ -1,14 +1,20 @@
 package com.uber.rides;
 
 import java.io.IOException;
+import java.util.Collections;
 
-import org.springframework.web.socket.TextMessage;
-import org.springframework.web.socket.WebSocketSession;
+import org.modelmapper.ModelMapper;
 
 import com.fasterxml.jackson.annotation.PropertyAccessor;
 import com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
+import com.google.api.client.http.javanet.NetHttpTransport;
+import com.google.api.client.json.gson.GsonFactory;
+
+import org.springframework.web.socket.TextMessage;
+import org.springframework.web.socket.WebSocketSession;
 
 public class Utils {
 
@@ -20,11 +26,15 @@ public class Utils {
     public static final String SCHEDULED = "SCHEDULED";
     public static final String UNCHECKED = "unchecked";
 
-    /* JSON Serializer */
+    /* JSON Mapper */
 
-    public static final ObjectMapper mapper = new ObjectMapper()
+    public static final ObjectMapper jsonMapper = new ObjectMapper()
         .setVisibility(PropertyAccessor.FIELD, Visibility.ANY)
         .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+
+    /* DTO Mapper */
+
+    public static final ModelMapper modelMapper = new ModelMapper();
 
     /* WebSocket Methods */
 
@@ -38,5 +48,14 @@ public class Utils {
             catch (IOException e) { /* Nothing special */ }
         }
     }
+
+    /* Google Auth */
+
+    public static GoogleIdTokenVerifier googleAuth = new GoogleIdTokenVerifier.Builder(
+        new NetHttpTransport(),
+        new GsonFactory()
+    )
+    .setAudience(Collections.singletonList("client_id"))
+    .build();
 
 }
