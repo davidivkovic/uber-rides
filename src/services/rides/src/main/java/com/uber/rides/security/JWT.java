@@ -10,9 +10,6 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.springframework.stereotype.Component;
 import org.springframework.web.method.HandlerMethod;
-
-import com.uber.rides.model.User;
-
 import org.springframework.security.access.annotation.Secured;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -25,6 +22,8 @@ import org.slf4j.LoggerFactory;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.JwtParser;
+
+import com.uber.rides.model.User;
 
 @Component
 public class JWT {

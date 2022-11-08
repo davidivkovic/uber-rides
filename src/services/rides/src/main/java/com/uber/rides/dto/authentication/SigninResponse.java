@@ -1,8 +1,8 @@
 package com.uber.rides.dto.authentication;
 
-import com.uber.rides.dto.UserDTO;
-
 import lombok.AllArgsConstructor;
+
+import com.uber.rides.dto.UserDTO;
 
 @AllArgsConstructor
 public class SigninResponse {
