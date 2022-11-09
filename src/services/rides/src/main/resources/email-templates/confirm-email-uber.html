@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:v="urn:schemas-microsoft-com:vml">
+<html lang="en" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:th="http://www.thymeleaf.org">
 <head>
   <meta charset="utf-8">
   <meta name="x-apple-disable-message-reformatting">
@@ -68,7 +68,7 @@
                         Welcome to Uber
                       </p>
                       <p style="font-weight: 500; font-size: 21px; line-height: 20px">
-                        Hello {{ name }}<br><br>
+                        Hello <span id="name" th:utext="${name}"></span><br><br>
                         <span style="font-size: 16px; font-weight: 400;">
                           Please enter this confirmation code in the window where you started creating your account.
                         </span>
@@ -78,7 +78,7 @@
                           <tr>
                             <td style="padding: 0; width: 100%;">
                               <p style=" margin: 0; background-color: #ffffff; border: 3px solid black; padding-top: 22px; padding-bottom: 22px; text-align: center; font-size: 46px; font-weight: 700; line-height: 1; color: #000000;">
-                                {{ code }}
+                                <span id="code" th:utext="${code}"></span>
                               </p>
                             </td>
                             <td style="padding: 6px 0 0 0;">

@@ -1,12 +1,17 @@
 package com.uber.rides.controller;
 
-import java.io.IOException;
-import java.time.LocalDateTime;
-import java.security.GeneralSecurityException;
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken.Payload;
 
-import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
-import javax.validation.constraints.NotBlank;
+import com.uber.rides.dto.UserDTO;
+import com.uber.rides.dto.authentication.PasswordResetRequest;
+import com.uber.rides.dto.authentication.RegistrationRequest;
+import com.uber.rides.dto.authentication.SigninRequest;
+import com.uber.rides.dto.authentication.SigninResponse;
+import com.uber.rides.model.User;
+import com.uber.rides.model.User.OTP;
+import com.uber.rides.security.JWT;
+import com.uber.rides.service.EmailSenderService;
+import com.uber.rides.service.UserService;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.annotation.Secured;
@@ -21,32 +26,43 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken.Payload;
+import javax.mail.MessagingException;
 
-import com.uber.rides.dto.UserDTO;
-import com.uber.rides.dto.authentication.PasswordResetRequest;
-import com.uber.rides.dto.authentication.RegistrationRequest;
-import com.uber.rides.dto.authentication.SigninRequest;
-import com.uber.rides.dto.authentication.SigninResponse;
-import com.uber.rides.model.User;
-import com.uber.rides.model.User.OTP;
-import com.uber.rides.security.JWT;
-import com.uber.rides.service.UserService;
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+
+import javax.validation.constraints.NotBlank;
+
+import java.io.IOException;
+import java.security.GeneralSecurityException;
+import java.time.LocalDateTime;
+
+import java.util.HashMap;
+import java.util.Map;
 
 import static com.uber.rides.Utils.*;
 
 @RestController
 public class Authentication extends Controller {
 
-    @Autowired UserService userService;
-    @Autowired PasswordEncoder passwordEncoder;
-    @Autowired AuthenticationManager authenticationManager;
-    @Autowired JWT jwt;
-    @PersistenceContext EntityManager db;
+    @Autowired
+    UserService userService;
+    @Autowired
+    PasswordEncoder passwordEncoder;
+    @Autowired
+    AuthenticationManager authenticationManager;
+    @Autowired
+    JWT jwt;
+
+    @Autowired
+    EmailSenderService emailSenderService;
+
+    @PersistenceContext
+    EntityManager db;
 
     @Transactional
     @PostMapping("/register")
-    public Object register(@Validated @RequestBody RegistrationRequest request) {
+    public Object register(@Validated @RequestBody RegistrationRequest request) throws MessagingException {
 
         var user = userService.findByEmail(request.getEmail());
         if (user != null) {
@@ -57,21 +73,26 @@ public class Authentication extends Controller {
         user.setPassword(passwordEncoder.encode(request.getPassword()));
         user.setConfirmationCode(OTP.generate(LocalDateTime.now()));
         db.persist(user);
-        
-        /* Posalji EMAIL */
-        
+
+        User finalUser = user;
+        Map<String, Object> model = new HashMap<>() {{
+            put("name", finalUser.getFirstName());
+            put("code", finalUser.getConfirmationCode().value);
+        }};
+        emailSenderService.sendMessageUsingThymeleafTemplate(user.getEmail(), "Welcome to Uber", model, CONFIRM_EMAIL_TEMPLATE);
+
         return ok();
     }
 
     @PostMapping("/signin")
-    public Object signin(@Validated @RequestBody SigninRequest request) {  
+    public Object signin(@Validated @RequestBody SigninRequest request) {
 
         try {
             var result = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(
-                    request.getEmail(),
-                    request.getPassword()
-                )
+                    new UsernamePasswordAuthenticationToken(
+                            request.getEmail(),
+                            request.getPassword()
+                    )
             );
 
             var user = (User) result.getPrincipal();
@@ -80,11 +101,10 @@ public class Authentication extends Controller {
             }
 
             return new SigninResponse(
-                modelMapper.map(user, UserDTO.class),
-                jwt.getJWT(user)
+                    modelMapper.map(user, UserDTO.class),
+                    jwt.getJWT(user)
             );
-        }
-        catch (BadCredentialsException e) {
+        } catch (BadCredentialsException e) {
             return badRequest("Invalid credentials");
         }
     }
@@ -92,7 +112,7 @@ public class Authentication extends Controller {
     /* Method not finished in google cloud console - set cliendID */
     @Transactional
     @PostMapping("/signin/google")
-    public Object googleSignin(@RequestParam(name = "idToken") @NotBlank String token) { 
+    public Object googleSignin(@RequestParam(name = "idToken") @NotBlank String token) {
 
         try {
             var result = googleAuth.verify(token);
@@ -103,20 +123,20 @@ public class Authentication extends Controller {
             var user = userService.findByEmail(payload.getEmail());
             if (user == null) {
                 user = User
-                    .builder()
-                    .email((String) payload.get("email"))
-                    .emailConfirmed(payload.getEmailVerified())
-                    .profilePicture((String) payload.get("picture"))
-                    .firstName((String) payload.get("given_name"))
-                    .lastName((String) payload.get("family_name"))
-                    .build();
+                        .builder()
+                        .email((String) payload.get("email"))
+                        .emailConfirmed(payload.getEmailVerified())
+                        .profilePicture((String) payload.get("picture"))
+                        .firstName((String) payload.get("given_name"))
+                        .lastName((String) payload.get("family_name"))
+                        .build();
                 db.persist(user);
             }
             return new SigninResponse(
-                modelMapper.map(user, UserDTO.class),
-                jwt.getJWT(user)
+                    modelMapper.map(user, UserDTO.class),
+                    jwt.getJWT(user)
             );
-            
+
         } catch (GeneralSecurityException | IOException e) {
             return badRequest("Google Authentication is not possible at this moment.");
         }
@@ -135,7 +155,7 @@ public class Authentication extends Controller {
         if (otp == null || !otp.isValid(code, LocalDateTime.now())) {
             return badRequest("Email confirmation code is invalid or expired.");
         }
-        
+
         user.setEmailConfirmed(true);
         user.setConfirmationCode(null);
         db.merge(user);
@@ -145,7 +165,7 @@ public class Authentication extends Controller {
 
     @Transactional
     @PostMapping("resend-confirmation")
-    public Object resendConfirmationEmail(@RequestParam @NotBlank String email) {
+    public Object resendConfirmationEmail(@RequestParam @NotBlank String email) throws MessagingException {
 
         var user = userService.findByEmail(email);
         if (user == null) {
@@ -155,14 +175,18 @@ public class Authentication extends Controller {
         user.setConfirmationCode(OTP.generate(LocalDateTime.now()));
         db.merge(user);
 
-        /* Posalji EMAIL */
+        Map<String, Object> model = new HashMap<>() {{
+            put("name", user.getFirstName());
+            put("code", user.getConfirmationCode().value);
+        }};
+        emailSenderService.sendMessageUsingThymeleafTemplate(email, "Welcome to Uber", model, CONFIRM_EMAIL_TEMPLATE);
 
         return ok("An email confirmation code has been sent to " + email + ". It will be valid for 30 minutes.");
     }
 
     @Transactional
     @PostMapping("password/forgot")
-    public Object forgotPassword(@RequestParam @NotBlank String email) {
+    public Object forgotPassword(@RequestParam @NotBlank String email) throws MessagingException {
 
         var user = userService.findByEmail(email);
         if (user == null) {
@@ -172,7 +196,12 @@ public class Authentication extends Controller {
         user.setConfirmationCode(OTP.generate(LocalDateTime.now()));
         db.merge(user);
 
-        /* Posalji EMAIL */
+        Map<String, Object> model = new HashMap<>() {{
+            put("name", user.getFirstName());
+            put("email", email);
+            put("code", user.getConfirmationCode().value);
+        }};
+        emailSenderService.sendMessageUsingThymeleafTemplate(email, "Reset your password", model, FORGOT_PASSWORD_TEMPLATE);
 
         return ok("A password reset code has been sent to " + email + ". It will be valid for 30 minutes.");
     }
@@ -187,10 +216,10 @@ public class Authentication extends Controller {
         }
 
         var otp = user.getConfirmationCode();
-        if (otp == null || !otp.isValid(request.getCode(), LocalDateTime.now())) { 
+        if (otp == null || !otp.isValid(request.getCode(), LocalDateTime.now())) {
             return badRequest("Password reset code is invalid or expired.");
         }
-        
+
         user.setConfirmationCode(null);
         user.setPassword(passwordEncoder.encode(request.getPassword()));
         db.merge(user);
@@ -200,8 +229,8 @@ public class Authentication extends Controller {
 
     /* Method needs additional checking */
     @Transactional
-    @PostMapping("password/reset")
-    @Secured({ User.Roles.ADMIN, User.Roles.DRIVER, User.Roles.RIDER })
+    @PostMapping("password/change")
+    @Secured({User.Roles.ADMIN, User.Roles.DRIVER, User.Roles.RIDER})
     public Object changePassword(@NotBlank String currentPassword, @NotBlank String newPassword) {
 
         var user = db.find(User.class, authenticatedUserId());
