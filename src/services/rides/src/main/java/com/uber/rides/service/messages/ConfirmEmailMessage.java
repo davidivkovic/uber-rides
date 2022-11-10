@@ -4,7 +4,7 @@ import com.uber.rides.model.User;
 
 import lombok.Getter;
 
-import java.util.HashMap;
+import java.util.Map;
 
 @Getter
 public class ConfirmEmailMessage extends EmailMessage {
@@ -12,10 +12,7 @@ public class ConfirmEmailMessage extends EmailMessage {
     private final String subject = "Welcome to Uber";
 
     public ConfirmEmailMessage(User user) {
-        templateMap = new HashMap<>() {{
-            put("name", user.getFirstName());
-            put("code", user.getConfirmationCode().value);
-        }};
+        templateMap = Map.of("name", user.getFirstName(), "code", user.getConfirmationCode().value);
         template = "confirm-email-uber";
     }
 

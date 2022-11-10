@@ -5,12 +5,11 @@ import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken.Payload;
 import com.uber.rides.dto.UserDTO;
 import com.uber.rides.dto.authentication.PasswordResetRequest;
 import com.uber.rides.dto.authentication.RegistrationRequest;
-import com.uber.rides.dto.authentication.SigninRequest;
-import com.uber.rides.dto.authentication.SigninResponse;
+import com.uber.rides.dto.authentication.SignInRequest;
+import com.uber.rides.dto.authentication.SignInResponse;
 import com.uber.rides.model.User;
-import com.uber.rides.model.User.OTP;
 import com.uber.rides.security.JWT;
-import com.uber.rides.service.EmailSenderService;
+import com.uber.rides.service.EmailSender;
 import com.uber.rides.service.UserService;
 import com.uber.rides.service.messages.ConfirmEmailMessage;
 import com.uber.rides.service.messages.ForgotPasswordMessage;
@@ -27,8 +26,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-
-import javax.mail.MessagingException;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
@@ -54,14 +51,14 @@ public class Authentication extends Controller {
     JWT jwt;
 
     @Autowired
-    EmailSenderService emailSenderService;
+    EmailSender emailSender;
 
     @PersistenceContext
     EntityManager db;
 
     @Transactional
     @PostMapping("/register")
-    public Object register(@Validated @RequestBody RegistrationRequest request) throws MessagingException {
+    public Object register(@Validated @RequestBody RegistrationRequest request) {
 
         var user = userService.findByEmail(request.getEmail());
         if (user != null) {
@@ -70,16 +67,16 @@ public class Authentication extends Controller {
 
         user = modelMapper.map(request, User.class);
         user.setPassword(passwordEncoder.encode(request.getPassword()));
-        user.setConfirmationCode(OTP.generate(LocalDateTime.now()));
+        user.setConfirmationCode(User.OTP.generate(LocalDateTime.now()));
         db.persist(user);
 
-        emailSenderService.sendHtmlMessage(user.getEmail(), new ConfirmEmailMessage(user));
+        emailSender.send(user.getEmail(), new ConfirmEmailMessage(user));
 
         return ok();
     }
 
     @PostMapping("/signin")
-    public Object signin(@Validated @RequestBody SigninRequest request) {
+    public Object signin(@Validated @RequestBody SignInRequest request) {
 
         try {
             var result = authenticationManager.authenticate(
@@ -94,7 +91,7 @@ public class Authentication extends Controller {
                 return badRequest("This email address has not been confirmed yet.");
             }
 
-            return new SigninResponse(
+            return new SignInResponse(
                     modelMapper.map(user, UserDTO.class),
                     jwt.getJWT(user)
             );
@@ -106,7 +103,7 @@ public class Authentication extends Controller {
     /* Method not finished in google cloud console - set cliendID */
     @Transactional
     @PostMapping("/signin/google")
-    public Object googleSignin(@RequestParam(name = "idToken") @NotBlank String token) {
+    public Object googleSignIn(@RequestParam(name = "idToken") @NotBlank String token) {
 
         try {
             var result = googleAuth.verify(token);
@@ -126,7 +123,7 @@ public class Authentication extends Controller {
                         .build();
                 db.persist(user);
             }
-            return new SigninResponse(
+            return new SignInResponse(
                     modelMapper.map(user, UserDTO.class),
                     jwt.getJWT(user)
             );
@@ -159,34 +156,34 @@ public class Authentication extends Controller {
 
     @Transactional
     @PostMapping("resend-confirmation")
-    public Object resendConfirmationEmail(@RequestParam @NotBlank String email) throws MessagingException {
+    public Object resendConfirmationEmail(@RequestParam @NotBlank String email) {
 
         var user = userService.findByEmail(email);
         if (user == null) {
             return emailNotFound();
         }
 
-        user.setConfirmationCode(OTP.generate(LocalDateTime.now()));
+        user.setConfirmationCode(User.OTP.generate(LocalDateTime.now()));
         db.merge(user);
 
-        emailSenderService.sendHtmlMessage(user.getEmail(), new ConfirmEmailMessage(user));
+        emailSender.send(user.getEmail(), new ConfirmEmailMessage(user));
 
         return ok("An email confirmation code has been sent to " + email + ". It will be valid for 30 minutes.");
     }
 
     @Transactional
     @PostMapping("password/forgot")
-    public Object forgotPassword(@RequestParam @NotBlank String email) throws MessagingException {
+    public Object forgotPassword(@RequestParam @NotBlank String email) {
 
         var user = userService.findByEmail(email);
         if (user == null) {
             return emailNotFound();
         }
 
-        user.setConfirmationCode(OTP.generate(LocalDateTime.now()));
+        user.setConfirmationCode(User.OTP.generate(LocalDateTime.now()));
         db.merge(user);
 
-        emailSenderService.sendHtmlMessage(user.getEmail(), new ForgotPasswordMessage(user));
+        emailSender.send(user.getEmail(), new ForgotPasswordMessage(user));
 
         return ok("A password reset code has been sent to " + email + ". It will be valid for 30 minutes.");
     }

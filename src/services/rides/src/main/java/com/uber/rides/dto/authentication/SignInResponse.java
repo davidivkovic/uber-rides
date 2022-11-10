@@ -5,9 +5,9 @@ import lombok.AllArgsConstructor;
 import com.uber.rides.dto.UserDTO;
 
 @AllArgsConstructor
-public class SigninResponse {
+public class SignInResponse {
     
-    public UserDTO user;
+    public UserDTO userDTO;
     public String token;
 
 }

@@ -28,9 +28,6 @@ public class Utils {
     public static final String SCHEDULED = "SCHEDULED";
     public static final String UNCHECKED = "unchecked";
 
-    public static final String CONFIRM_EMAIL_TEMPLATE = "confirm-email-uber";
-    public static final String FORGOT_PASSWORD_TEMPLATE = "forgot-password-uber";
-
     /* JSON Mapper */
 
     public static final ObjectMapper jsonMapper = new ObjectMapper()
@@ -60,7 +57,7 @@ public class Utils {
         new NetHttpTransport(),
         new GsonFactory()
     )
-    .setAudience(Collections.singletonList("client_id"))
+    .setAudience(Collections.singletonList("152138799418-rdah02vercon3q3p9ubkh4jqa5vflpcr.apps.googleusercontent.com"))
     .build();
 
 }
