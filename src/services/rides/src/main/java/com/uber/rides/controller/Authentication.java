@@ -12,6 +12,8 @@ import com.uber.rides.model.User.OTP;
 import com.uber.rides.security.JWT;
 import com.uber.rides.service.EmailSenderService;
 import com.uber.rides.service.UserService;
+import com.uber.rides.service.messages.ConfirmEmailMessage;
+import com.uber.rides.service.messages.ForgotPasswordMessage;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.annotation.Secured;
@@ -36,9 +38,6 @@ import javax.validation.constraints.NotBlank;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.time.LocalDateTime;
-
-import java.util.HashMap;
-import java.util.Map;
 
 import static com.uber.rides.Utils.*;
 
@@ -74,12 +73,7 @@ public class Authentication extends Controller {
         user.setConfirmationCode(OTP.generate(LocalDateTime.now()));
         db.persist(user);
 
-        User finalUser = user;
-        Map<String, Object> model = new HashMap<>() {{
-            put("name", finalUser.getFirstName());
-            put("code", finalUser.getConfirmationCode().value);
-        }};
-        emailSenderService.sendMessageUsingThymeleafTemplate(user.getEmail(), "Welcome to Uber", model, CONFIRM_EMAIL_TEMPLATE);
+        emailSenderService.sendHtmlMessage(user.getEmail(), new ConfirmEmailMessage(user));
 
         return ok();
     }
@@ -175,11 +169,7 @@ public class Authentication extends Controller {
         user.setConfirmationCode(OTP.generate(LocalDateTime.now()));
         db.merge(user);
 
-        Map<String, Object> model = new HashMap<>() {{
-            put("name", user.getFirstName());
-            put("code", user.getConfirmationCode().value);
-        }};
-        emailSenderService.sendMessageUsingThymeleafTemplate(email, "Welcome to Uber", model, CONFIRM_EMAIL_TEMPLATE);
+        emailSenderService.sendHtmlMessage(user.getEmail(), new ConfirmEmailMessage(user));
 
         return ok("An email confirmation code has been sent to " + email + ". It will be valid for 30 minutes.");
     }
@@ -196,12 +186,7 @@ public class Authentication extends Controller {
         user.setConfirmationCode(OTP.generate(LocalDateTime.now()));
         db.merge(user);
 
-        Map<String, Object> model = new HashMap<>() {{
-            put("name", user.getFirstName());
-            put("email", email);
-            put("code", user.getConfirmationCode().value);
-        }};
-        emailSenderService.sendMessageUsingThymeleafTemplate(email, "Reset your password", model, FORGOT_PASSWORD_TEMPLATE);
+        emailSenderService.sendHtmlMessage(user.getEmail(), new ForgotPasswordMessage(user));
 
         return ok("A password reset code has been sent to " + email + ". It will be valid for 30 minutes.");
     }
