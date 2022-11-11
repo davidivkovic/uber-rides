@@ -2,3 +2,55 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  [type="text"],
+  [type="email"],
+  [type="url"],
+  [type="password"],
+  [type="number"],
+  [type="date"],
+  [type="datetime-local"],
+  [type="month"],
+  [type="search"],
+  [type="tel"],
+  [type="time"],
+  [type="week"],
+  [multiple],
+  textarea,
+  select {
+    @apply w-full rounded-md text-sm h-11 pl-4 border-0 bg-[#eeeeee] focus:border-black focus:ring-black focus:ring-2 focus:bg-gray-50;
+  }
+
+  [type="checkbox"],
+  [type="radio"] {
+    @apply border-gray-300 rounded text-black focus:ring-0 ring-offset-0;
+  }
+
+  button {
+    @apply px-6 py-3 rounded-md font-medium text-sm transition duration-300;
+  }
+
+  button.primary {
+    @apply text-white bg-black hover:bg-zinc-800 disabled:bg-zinc-200 disabled:text-zinc-500;
+  }
+
+  button.secondary {
+    @apply text-black bg-[#eeeeee] hover:bg-zinc-200 disabled:bg-zinc-200 disabled:text-zinc-500;
+  }
+
+  small {
+    @apply text-gray-500 text-[11px];
+  }
+
+  input::-webkit-outer-spin-button,
+  input::-webkit-inner-spin-button {
+    /* display: none; <- Crashes Chrome on hover */
+    -webkit-appearance: none;
+    margin: 0; /* <-- Apparently some margin are still there even though it's hidden */
+  }
+
+  input[type="number"] {
+    -moz-appearance: textfield; /* Firefox */
+  }
+}

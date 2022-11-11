@@ -53,7 +53,7 @@ public class Utils {
 
     /* Google Auth */
 
-    public static GoogleIdTokenVerifier googleAuth = new GoogleIdTokenVerifier.Builder(
+    public static final GoogleIdTokenVerifier googleAuth = new GoogleIdTokenVerifier.Builder(
         new NetHttpTransport(),
         new GsonFactory()
     )
