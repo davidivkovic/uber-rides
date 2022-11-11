@@ -26,6 +26,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.RestTemplate;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
@@ -35,6 +37,7 @@ import javax.validation.constraints.NotBlank;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.time.LocalDateTime;
+import java.util.LinkedHashMap;
 
 import static com.uber.rides.Utils.*;
 
@@ -131,6 +134,43 @@ public class Authentication extends Controller {
 
         } catch (GeneralSecurityException | IOException e) {
             return badRequest("Google Authentication is not possible at this moment.");
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    @Transactional
+    @PostMapping("/signin/facebook")
+    public Object facebookSignIn(@RequestParam(name = "userId") @NotBlank String userId, @RequestParam(name = "accessToken") @NotBlank String token) {
+        var restTemplate = new RestTemplate();
+        String url = "https://graph.facebook.com/%s?fields=id,email,first_name,last_name&access_token=%s".formatted(userId, token);
+        try {
+            var response = restTemplate.getForEntity(url, Object.class);
+            var payload = (LinkedHashMap<String, String>) response.getBody();
+            if (payload != null) {
+                String email = payload.get("email");
+                var user = userService.findByEmail(email);
+                if (user == null) {
+                    user = User
+                            .builder()
+                            .email(email)
+                            .emailConfirmed(true)
+                            .firstName(payload.get("first_name"))
+                            .lastName(payload.get("last_name"))
+                            .role(User.Roles.RIDER)
+                            .build();
+                    db.persist(user);
+                }
+                return new SignInResponse(
+                        modelMapper.map(user, UserDTO.class),
+                        jwt.getJWT(user)
+                );
+            }
+            else {
+                return badRequest("An error occurred");
+            }
+        }
+        catch (HttpClientErrorException.BadRequest e) {
+            return badRequest("Invalid access token");
         }
     }
 
