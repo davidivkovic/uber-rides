@@ -19,7 +19,7 @@
   [multiple],
   textarea,
   select {
-    @apply w-full rounded-md text-sm h-11 pl-4 border-0 bg-[#eeeeee] focus:border-black focus:ring-black focus:ring-2 focus:bg-gray-50;
+    @apply w-full rounded-md  h-11 px-4 border-0 bg-[#eeeeee] focus:border-black focus:ring-black focus:ring-2 focus:bg-gray-50 placeholder:text-gray-500;
   }
 
   [type="checkbox"],
@@ -28,7 +28,7 @@
   }
 
   button {
-    @apply px-6 py-3 rounded-md font-medium text-sm transition duration-300;
+    @apply px-6 py-3 rounded-md font-medium transition duration-300;
   }
 
   button.primary {
@@ -40,7 +40,7 @@
   }
 
   small {
-    @apply text-gray-500 text-[11px];
+    @apply text-gray-600 text-[11px];
   }
 
   input::-webkit-outer-spin-button,
