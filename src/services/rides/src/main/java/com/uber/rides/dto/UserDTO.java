@@ -15,5 +15,6 @@ public class UserDTO {
     String city;
     String phoneNumber;
     String profilePicture;
+    boolean isBlocked;
     
 }

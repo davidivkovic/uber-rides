@@ -72,7 +72,9 @@ public class User implements UserDetails {
     String city;
     String phoneNumber;
     String profilePicture;
+    String blockingReason;
     boolean emailConfirmed;
+    boolean isBlocked;
     @Embedded OTP confirmationCode;
 
     @Override
@@ -92,7 +94,7 @@ public class User implements UserDetails {
 
     @Override
     public boolean isAccountNonLocked() {
-        return true;
+        return !isBlocked;
     }
 
     @Override
