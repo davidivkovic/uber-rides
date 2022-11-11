@@ -61,12 +61,13 @@ public class EmailSender {
         try {
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+            helper.setFrom("Uber", "Uber");
             helper.setTo(to);
             helper.setSubject(emailMessage.getSubject());
             helper.setText(emailMessage.getHtmlBody(templateEngine), true);
             mailSender.send(message);
         }
-        catch (MessagingException e) {
+        catch (Exception e) {
             // TODO
         }
 

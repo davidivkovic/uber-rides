@@ -1,12 +1,11 @@
 package com.uber.rides.controller;
 
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken.Payload;
-
-import com.uber.rides.dto.UserDTO;
 import com.uber.rides.dto.authentication.PasswordResetRequest;
 import com.uber.rides.dto.authentication.RegistrationRequest;
 import com.uber.rides.dto.authentication.SignInRequest;
 import com.uber.rides.dto.authentication.SignInResponse;
+import com.uber.rides.dto.user.UserDTO;
 import com.uber.rides.model.User;
 import com.uber.rides.security.JWT;
 import com.uber.rides.service.EmailSender;
@@ -24,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -39,6 +39,7 @@ import java.time.LocalDateTime;
 import static com.uber.rides.Utils.*;
 
 @RestController
+@RequestMapping("/authentication")
 public class Authentication extends Controller {
 
     @Autowired

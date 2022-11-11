@@ -1,4 +1,6 @@
-package com.uber.rides.dto;
+package com.uber.rides.dto.user;
+
+import javax.validation.constraints.NotBlank;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -15,5 +17,6 @@ public class UserDTO {
     String city;
     String phoneNumber;
     String profilePicture;
+    String blocked;
     
 }

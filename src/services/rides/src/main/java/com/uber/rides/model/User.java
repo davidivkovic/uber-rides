@@ -41,7 +41,7 @@ public class User implements UserDetails {
     @Embeddable
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class OTP implements Serializable {
+    public static class OTP {
 
         static final Random random = new Random();
 
@@ -72,8 +72,13 @@ public class User implements UserDetails {
     String city;
     String phoneNumber;
     String profilePicture;
+    String blockReason;
     boolean emailConfirmed;
-    @Embedded OTP confirmationCode;
+    boolean blocked;
+    OTP confirmationCode;
+
+    @OneToOne UserUpdate updateRequest;
+    @OneToOne Car car;
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
