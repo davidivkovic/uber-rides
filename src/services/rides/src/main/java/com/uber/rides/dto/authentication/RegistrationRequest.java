@@ -1,16 +1,14 @@
 package com.uber.rides.dto.authentication;
 
-import com.uber.rides.model.User;
-import lombok.Getter;
-import lombok.Setter;
-import org.springframework.web.multipart.MultipartFile;
-
 import javax.validation.constraints.Email;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Pattern;
 
+import lombok.Getter;
+
+import com.uber.rides.model.User;
+
 @Getter
-@Setter
 public class RegistrationRequest {
     
     @NotBlank public String firstName;
@@ -21,6 +19,5 @@ public class RegistrationRequest {
     @NotBlank public String phoneNumber;
     @Pattern(regexp = User.Roles.DRIVER + "|" + User.Roles.RIDER) 
     @NotBlank public String role;
-    public MultipartFile profilePicture;
 
 }
