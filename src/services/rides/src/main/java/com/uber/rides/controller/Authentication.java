@@ -14,6 +14,7 @@ import com.uber.rides.service.messages.ConfirmEmailMessage;
 import com.uber.rides.service.messages.ForgotPasswordMessage;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
 import org.springframework.security.access.annotation.Secured;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -21,11 +22,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
@@ -35,14 +32,19 @@ import javax.persistence.PersistenceContext;
 import javax.validation.constraints.NotBlank;
 
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.security.GeneralSecurityException;
 import java.time.LocalDateTime;
 import java.util.LinkedHashMap;
+import java.util.UUID;
 
 import static com.uber.rides.Utils.*;
 
 @RestController
 @RequestMapping("/authentication")
+@CrossOrigin
 public class Authentication extends Controller {
 
     @Autowired
@@ -61,19 +63,26 @@ public class Authentication extends Controller {
     EntityManager db;
 
     @Transactional
-    @PostMapping("/register")
-    public Object register(@Validated @RequestBody RegistrationRequest request) {
+    @PostMapping(value = "/register", consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})
+    public Object register(@ModelAttribute RegistrationRequest registrationRequest) throws IOException {
 
-        var user = userService.findByEmail(request.getEmail());
+        var user = userService.findByEmail(registrationRequest.getEmail());
         if (user != null) {
             return badRequest("This email isn't available. Please try another.");
         }
 
-        user = modelMapper.map(request, User.class);
-        user.setPassword(passwordEncoder.encode(request.getPassword()));
+        var propertyMapper = modelMapper.createTypeMap(RegistrationRequest.class, User.class);
+        var imageWithUUID = UUID.randomUUID() + "-" + registrationRequest.getProfilePicture().getOriginalFilename();
+        propertyMapper.addMappings(
+                mapper -> mapper.map(src -> imageWithUUID, User::setProfilePicture)
+        );
+        user = propertyMapper.map(registrationRequest);
+        user.setPassword(passwordEncoder.encode(registrationRequest.getPassword()));
         user.setConfirmationCode(User.OTP.generate(LocalDateTime.now()));
         db.persist(user);
 
+        Path fileNameAndPath = Paths.get(USER_IMAGES_DIR, imageWithUUID);
+        Files.write(fileNameAndPath, registrationRequest.getProfilePicture().getBytes());
         emailSender.send(user.getEmail(), new ConfirmEmailMessage(user));
 
         return ok();

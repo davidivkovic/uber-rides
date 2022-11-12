@@ -28,6 +28,8 @@ public class Utils {
     public static final String SCHEDULED = "SCHEDULED";
     public static final String UNCHECKED = "unchecked";
 
+    public static final String USER_IMAGES_DIR = "images";
+
     /* JSON Mapper */
 
     public static final ObjectMapper jsonMapper = new ObjectMapper()
