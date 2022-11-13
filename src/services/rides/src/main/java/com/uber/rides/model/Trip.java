@@ -27,13 +27,12 @@ public class Trip {
         CREATED, PAID, AWAITING_PICKUP, IN_PROGRESS, CANCELLED, COMPLETED
     }
 
-    @Id @GeneratedValue long id;
+    @Id @GeneratedValue Long id;
 
     @OneToOne User rider;
     @OneToOne User driver;
 
     @OneToMany List<User> passengers;
-    @OneToMany List<Payment> payments;
 
     Status status;
     Route route;

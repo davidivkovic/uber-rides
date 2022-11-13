@@ -1,6 +1,5 @@
 package com.uber.rides.model;
 
-import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
@@ -63,7 +62,7 @@ public class User implements UserDetails {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
-    long id;
+    Long id;
     String role;
     String firstName;
     String lastName;
@@ -77,8 +76,8 @@ public class User implements UserDetails {
     boolean blocked;
     OTP confirmationCode;
 
-    @OneToOne UserUpdate updateRequest;
-    @OneToOne Car car;
+    @OneToOne(fetch = FetchType.LAZY) UserUpdateRequest updateRequest;
+    @OneToOne(fetch = FetchType.LAZY) Car car;
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {

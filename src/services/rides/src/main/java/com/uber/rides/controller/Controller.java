@@ -22,6 +22,10 @@ public class Controller {
         return ResponseEntity.ok().build();
     }
 
+    public Object notFound() {
+        return ResponseEntity.notFound().build();
+    }
+
     public Object emailNotFound() {
         return badRequest(EMAIL_NOT_FOUND);
     }
@@ -34,7 +38,7 @@ public class Controller {
             .equalsIgnoreCase("AnonymousUser");
     }
 
-    public static long authenticatedUserId() {
+    public static Long authenticatedUserId() {
         return Long.parseLong(
             SecurityContextHolder
                 .getContext()

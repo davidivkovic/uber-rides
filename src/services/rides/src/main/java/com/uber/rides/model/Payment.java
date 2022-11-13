@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 
 import javax.persistence.Entity;
 import javax.persistence.Id;
+import javax.persistence.ManyToOne;
 
 import org.javamoney.moneta.FastMoney;
 
@@ -15,11 +16,14 @@ import lombok.Setter;
 @Entity
 public class Payment {
     
-    @Id 
-    String id;
+    @Id String id;
+
     FastMoney money;
     String captureUrl;
     boolean captured;
     LocalDateTime capturedAt;
+
+    @ManyToOne User user;
+    @ManyToOne Trip trip;
 
 }

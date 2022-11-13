@@ -1,22 +1,22 @@
 package com.uber.rides.service;
 
-import com.speedment.jpastreamer.application.JPAStreamer;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
+import com.uber.rides.database.DbContext;
 import com.uber.rides.model.User;
 import com.uber.rides.model.User$;
 
 @Service
 public class UserService implements UserDetailsService {
 
-    @Autowired JPAStreamer query;
+    @Autowired DbContext context;
 
     public User findByEmail(String email) {
-        return query
+        return context
+            .query()
             .stream(User.class)
             .filter(User$.email.equal(email))
             .findFirst()

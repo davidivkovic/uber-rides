@@ -1,17 +1,13 @@
 package com.uber.rides.controller;
 
-import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken.Payload;
-import com.uber.rides.dto.authentication.PasswordResetRequest;
-import com.uber.rides.dto.authentication.RegistrationRequest;
-import com.uber.rides.dto.authentication.SignInRequest;
-import com.uber.rides.dto.authentication.SignInResponse;
-import com.uber.rides.dto.user.UserDTO;
-import com.uber.rides.model.User;
-import com.uber.rides.security.JWT;
-import com.uber.rides.service.EmailSender;
-import com.uber.rides.service.UserService;
-import com.uber.rides.service.messages.ConfirmEmailMessage;
-import com.uber.rides.service.messages.ForgotPasswordMessage;
+import java.io.IOException;
+import java.security.GeneralSecurityException;
+import java.time.LocalDateTime;
+import java.util.LinkedHashMap;
+
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+import javax.validation.constraints.NotBlank;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.annotation.Secured;
@@ -29,37 +25,33 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
-import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken.Payload;
 
-import javax.validation.constraints.NotBlank;
-
-import java.io.IOException;
-import java.security.GeneralSecurityException;
-import java.time.LocalDateTime;
-import java.util.LinkedHashMap;
-
+import com.uber.rides.dto.authentication.PasswordResetRequest;
+import com.uber.rides.dto.authentication.RegistrationRequest;
+import com.uber.rides.dto.authentication.SignInRequest;
+import com.uber.rides.dto.authentication.SignInResponse;
+import com.uber.rides.dto.user.UserDTO;
+import com.uber.rides.model.User;
+import com.uber.rides.security.JWT;
+import com.uber.rides.service.EmailSender;
+import com.uber.rides.service.UserService;
+import com.uber.rides.service.messages.ConfirmEmailMessage;
+import com.uber.rides.service.messages.ForgotPasswordMessage;
 import static com.uber.rides.Utils.*;
 
 @RestController
 @RequestMapping("/authentication")
 public class Authentication extends Controller {
 
-    @Autowired
-    UserService userService;
-    @Autowired
-    PasswordEncoder passwordEncoder;
-    @Autowired
-    AuthenticationManager authenticationManager;
-    @Autowired
-    JWT jwt;
+    @Autowired UserService userService;
+    @Autowired PasswordEncoder passwordEncoder;
+    @Autowired AuthenticationManager authenticationManager;
+    @Autowired JWT jwt;
+    @Autowired EmailSender emailSender;
+    @PersistenceContext EntityManager db;
 
-    @Autowired
-    EmailSender emailSender;
-
-    @PersistenceContext
-    EntityManager db;
-
+    /* TODO: Roles */
     @Transactional
     @PostMapping("/register")
     public Object register(@Validated @RequestBody RegistrationRequest request) {
@@ -79,15 +71,16 @@ public class Authentication extends Controller {
         return ok();
     }
 
+    @Transactional
     @PostMapping("/signin")
     public Object signin(@Validated @RequestBody SignInRequest request) {
 
         try {
             var result = authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(
-                            request.getEmail(),
-                            request.getPassword()
-                    )
+                new UsernamePasswordAuthenticationToken(
+                    request.getEmail(),
+                    request.getPassword()
+                )
             );
 
             var user = (User) result.getPrincipal();
@@ -96,8 +89,8 @@ public class Authentication extends Controller {
             }
 
             return new SignInResponse(
-                    modelMapper.map(user, UserDTO.class),
-                    jwt.getJWT(user)
+                modelMapper.map(user, UserDTO.class),
+                jwt.getJWT(user)
             );
         } catch (BadCredentialsException e) {
             return badRequest("Invalid credentials");
@@ -105,6 +98,7 @@ public class Authentication extends Controller {
     }
 
     /* Method not finished in google cloud console - set cliendID */
+    /* TODO: Roles */
     @Transactional
     @PostMapping("/signin/google")
     public Object googleSignIn(@RequestParam(name = "idToken") @NotBlank String token) {
@@ -118,18 +112,19 @@ public class Authentication extends Controller {
             var user = userService.findByEmail(payload.getEmail());
             if (user == null) {
                 user = User
-                        .builder()
-                        .email((String) payload.get("email"))
-                        .emailConfirmed(payload.getEmailVerified())
-                        .profilePicture((String) payload.get("picture"))
-                        .firstName((String) payload.get("given_name"))
-                        .lastName((String) payload.get("family_name"))
-                        .build();
+                    .builder()
+                    .email((String) payload.get("email"))
+                    .emailConfirmed(payload.getEmailVerified())
+                    .profilePicture((String) payload.get("picture"))
+                    .firstName((String) payload.get("given_name"))
+                    .lastName((String) payload.get("family_name"))
+                    .role(User.Roles.RIDER)
+                    .build();
                 db.persist(user);
             }
             return new SignInResponse(
-                    modelMapper.map(user, UserDTO.class),
-                    jwt.getJWT(user)
+                modelMapper.map(user, UserDTO.class),
+                jwt.getJWT(user)
             );
 
         } catch (GeneralSecurityException | IOException e) {
@@ -137,37 +132,42 @@ public class Authentication extends Controller {
         }
     }
 
-    @SuppressWarnings("unchecked")
+    /* TODO: Roles */
     @Transactional
+    @SuppressWarnings(UNCHECKED)
     @PostMapping("/signin/facebook")
-    public Object facebookSignIn(@RequestParam(name = "userId") @NotBlank String userId, @RequestParam(name = "accessToken") @NotBlank String token) {
+    public Object facebookSignIn(
+        @RequestParam(name = "userId") @NotBlank String userId,
+        @RequestParam(name = "accessToken") @NotBlank String token
+    ) {
+        
         var restTemplate = new RestTemplate();
-        String url = "https://graph.facebook.com/%s?fields=id,email,first_name,last_name&access_token=%s".formatted(userId, token);
+        var url = "https://graph.facebook.com/%s?fields=id,email,first_name,last_name&access_token=%s".formatted(userId, token);
         try {
             var response = restTemplate.getForEntity(url, Object.class);
             var payload = (LinkedHashMap<String, String>) response.getBody();
-            if (payload != null) {
-                String email = payload.get("email");
-                var user = userService.findByEmail(email);
-                if (user == null) {
-                    user = User
-                            .builder()
-                            .email(email)
-                            .emailConfirmed(true)
-                            .firstName(payload.get("first_name"))
-                            .lastName(payload.get("last_name"))
-                            .role(User.Roles.RIDER)
-                            .build();
-                    db.persist(user);
-                }
-                return new SignInResponse(
-                        modelMapper.map(user, UserDTO.class),
-                        jwt.getJWT(user)
-                );
-            }
-            else {
+            if (payload == null) {
                 return badRequest("An error occurred");
             }
+
+            var email = payload.get("email");
+            var user = userService.findByEmail(email);
+            if (user == null) {
+                user = User
+                    .builder()
+                    .email(email)
+                    .emailConfirmed(true)
+                    .firstName(payload.get("first_name"))
+                    .lastName(payload.get("last_name"))
+                    .role(User.Roles.RIDER)
+                    .build();
+                db.persist(user);
+            }
+
+            return new SignInResponse(
+                modelMapper.map(user, UserDTO.class),
+                jwt.getJWT(user)
+            );
         }
         catch (HttpClientErrorException.BadRequest e) {
             return badRequest("Invalid access token");

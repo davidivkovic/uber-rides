@@ -49,6 +49,20 @@ public class Config implements WebMvcConfigurer {
 
     @Autowired JWT.Interceptor jwtInterceptor;
 
+    /* Use to disable all logging */
+    // public Config() {
+        
+    //     System.setOut(new PrintStream(new OutputStream() {
+
+    //         @Override
+    //         public void write(int b) throws IOException {
+    //             /* noop */ 
+    //         }
+
+    //     }));
+
+    // }
+
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
         registry.addInterceptor(jwtInterceptor);

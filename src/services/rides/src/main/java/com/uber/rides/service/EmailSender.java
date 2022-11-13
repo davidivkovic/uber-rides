@@ -13,7 +13,6 @@ import org.thymeleaf.spring6.SpringTemplateEngine;
 import org.thymeleaf.templateresolver.ClassLoaderTemplateResolver;
 import org.thymeleaf.templateresolver.ITemplateResolver;
 
-import javax.mail.MessagingException;
 import javax.mail.internet.MimeMessage;
 
 @Service
@@ -67,9 +66,7 @@ public class EmailSender {
             helper.setText(emailMessage.getHtmlBody(templateEngine), true);
             mailSender.send(message);
         }
-        catch (Exception e) {
-            // TODO
-        }
+        catch (Exception e) { /* Not much we can do here except logging a message */}
 
     }
 }
