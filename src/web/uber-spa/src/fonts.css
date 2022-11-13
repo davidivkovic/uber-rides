@@ -1,0 +1,48 @@
+@font-face {
+  font-family: UberMove;
+  src: url("/assets/fonts/UberMove-Regular.otf");
+  font-weigth: normal;
+}
+
+@font-face {
+  font-family: UberMove;
+  src: url("/assets/fonts/UberMove-Regular.woff2");
+  font-weigth: 600;
+}
+
+@font-face {
+  font-family: UberMove;
+  src: url("/assets/fonts/UberMove-Bold.woff2");
+  font-weigth: bold;
+}
+
+@font-face {
+  font-family: UberMoveText;
+  src: url("/assets/fonts/UberMoveText-Regular.woff2");
+  font-weigth: 600;
+}
+
+@font-face {
+  font-family: UberMoveText;
+  src: url("/assets/fonts/UberMoveText-Medium.woff2");
+  font-weigth: 700;
+}
+
+* {
+  font-family: UberMoveText;
+}
+
+.system-font {
+  font-family: -apple-system, BlinkMacSystemFont, "SegoeUI", Roboto, Helvetica,
+    Arial, sans-serif, "AppleColorEmoji", "SegoeUIEmoji", "SegoeUISymbol";
+}
+
+h1,
+h2,
+h3 {
+  font-family: UberMove;
+}
+
+router-outlet + * {
+  width: 100%;
+}

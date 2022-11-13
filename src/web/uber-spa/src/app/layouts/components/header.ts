@@ -6,10 +6,8 @@ import { RouterModule } from '@angular/router';
   standalone: true,
   imports: [RouterModule],
   template: `
-    <div class="bg-black h-14 w-full flex justify-center">
-      <div
-        class="w-[1280px] flex items-center justify-between mx-auto text-[13px]"
-      >
+    <div class="bg-black h-16 w-full flex justify-center">
+      <div class="w-[1280px] flex items-center justify-between mx-auto text-sm">
         <div class="flex space-x-5 items-center">
           <a routerLink="/" class="p-2">
             <img
@@ -19,22 +17,15 @@ import { RouterModule } from '@angular/router';
             />
           </a>
           <div>
-            <button class="primary  rounded-3xl px-3 py-2 text-[13px]">
-              Home
-            </button>
-            <button class="primary  rounded-3xl px-3 py-2 text-[13px]">
-              Live support
-            </button>
+            <button class="primary  rounded-3xl px-3 py-2">Home</button>
+            <button class="primary  rounded-3xl px-3 py-2">Live support</button>
           </div>
         </div>
-        <div>
-          <button
-            routerLink="/login"
-            class="primary rounded-3xl px-3 py-2 text-[13px]"
-          >
+        <div class="space-x-2">
+          <button routerLink="/login" class="primary rounded-3xl px-3 py-2">
             Log in
           </button>
-          <button class="secondary rounded-3xl px-3 py-2 text-[13px]">
+          <button routerLink="/signup" class="secondary rounded-3xl px-3 py-2">
             Sign up
           </button>
         </div>
