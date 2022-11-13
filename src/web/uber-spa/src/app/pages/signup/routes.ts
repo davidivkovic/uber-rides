@@ -5,8 +5,13 @@ const routes: Routes = [
     path: 'signup',
     children: [
       {
-        path: 'ride',
+        path: '',
         loadComponent: () => import('./ride').then((m) => m.Index),
+      },
+      {
+        path: 'verification-code/:email',
+        loadComponent: () =>
+          import('./[email]').then((m) => m.EmailVerification),
       },
       {
         path: 'drive',

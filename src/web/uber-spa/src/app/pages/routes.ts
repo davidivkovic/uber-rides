@@ -14,14 +14,13 @@ const routes: Routes = [
         path: '',
         component: Index,
       },
-      ...signup,
     ],
   },
 
   {
     path: '',
     component: HeaderLayout,
-    children: [...login],
+    children: [...login, ...signup],
   },
 ];
 

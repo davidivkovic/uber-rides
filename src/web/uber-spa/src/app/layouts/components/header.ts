@@ -17,8 +17,10 @@ import { RouterModule } from '@angular/router';
             />
           </a>
           <div>
-            <button class="primary  rounded-3xl px-3 py-2">Home</button>
-            <button class="primary  rounded-3xl px-3 py-2">Live support</button>
+            <button routerLink="/" class="primary rounded-3xl px-3 py-2">
+              Home
+            </button>
+            <button class="primary rounded-3xl px-3 py-2">Live support</button>
           </div>
         </div>
         <div class="space-x-2">

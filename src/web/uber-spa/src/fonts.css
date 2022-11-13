@@ -42,7 +42,3 @@ h2,
 h3 {
   font-family: UberMove;
 }
-
-router-outlet + * {
-  width: 100%;
-}

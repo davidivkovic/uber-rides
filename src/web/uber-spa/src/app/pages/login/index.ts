@@ -2,6 +2,7 @@ import { NgIf } from '@angular/common';
 import { Component } from '@angular/core';
 import { NgForm, FormsModule } from '@angular/forms';
 
+declare var FB: any;
 @Component({
   standalone: true,
   imports: [NgIf, FormsModule],
@@ -63,6 +64,7 @@ import { NgForm, FormsModule } from '@angular/forms';
       <p class="system-font">Continue with Google</p>
     </button>
     <button
+      (click)="loginWithFacebook()"
       class="secondary flex items-center justify-center space-x-2 h-[51px]"
     >
       <img
@@ -85,7 +87,27 @@ import { NgForm, FormsModule } from '@angular/forms';
   </div>`,
 })
 export class Index {
+  constructor() {
+    FB.init({
+      appId: '1762946884038679',
+      cookie: false, // enable cookies to allow the server to access
+      // the session
+      xfbml: true, // parse social plugins on this page
+      version: 'v15.0', // use graph api version 2.5
+    });
+  }
+
   login = (f: NgForm) => {
     console.log(console.log(f.valid));
+  };
+
+  loginWithFacebook = () => {
+    FB.login(function (response) {
+      if (response.status === 'connected') {
+        console.log(response.authResponse);
+      } else {
+        console.log(response);
+      }
+    });
   };
 }

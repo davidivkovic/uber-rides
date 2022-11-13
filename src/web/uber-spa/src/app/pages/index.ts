@@ -4,7 +4,7 @@ import { RouterModule } from '@angular/router';
 @Component({
   standalone: true,
   imports: [RouterModule],
-  template: `<div>
+  template: `<div class="w-full">
     <img
       alt="Cover image"
       class="h-[660px] w-full object-cover"
