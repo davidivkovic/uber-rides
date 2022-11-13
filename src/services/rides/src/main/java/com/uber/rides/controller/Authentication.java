@@ -140,11 +140,12 @@ public class Authentication extends Controller {
         @RequestParam(name = "userId") @NotBlank String userId,
         @RequestParam(name = "accessToken") @NotBlank String token
     ) {
-        
-        var restTemplate = new RestTemplate();
+        if (!isValidAccessToken(token)) {
+            return badRequest("Invalid access token");
+        }
         var url = "https://graph.facebook.com/%s?fields=id,email,first_name,last_name&access_token=%s".formatted(userId, token);
         try {
-            var response = restTemplate.getForEntity(url, Object.class);
+            var response = new RestTemplate().getForEntity(url, Object.class);
             var payload = (LinkedHashMap<String, String>) response.getBody();
             if (payload == null) {
                 return badRequest("An error occurred");
@@ -172,6 +173,26 @@ public class Authentication extends Controller {
         catch (HttpClientErrorException.BadRequest e) {
             return badRequest("Invalid access token");
         }
+    }
+
+    @SuppressWarnings(UNCHECKED)
+    private boolean isValidAccessToken(String token) {
+        var appAccessToken = getAppAccessToken();
+        if (appAccessToken == null) return false;
+        var url = "https://graph.facebook.com/debug_token?input_token=%s&access_token=%s".formatted(token, appAccessToken);
+        var response = new RestTemplate().getForEntity(url, Object.class);
+        var payload = (LinkedHashMap<String, LinkedHashMap<String, String>>) response.getBody();
+        if (payload == null) return false;
+        return !payload.get("data").containsKey("error");
+    }
+
+    @SuppressWarnings(UNCHECKED)
+    private String getAppAccessToken() {
+        var url = "https://graph.facebook.com/oauth/access_token?client_id=1762946884038679&client_secret=dd81ed25eddb336b08a544644d8c9658&grant_type=client_credentials";
+        var response = new RestTemplate().getForEntity(url, Object.class);
+        var payload = (LinkedHashMap<String, String>) response.getBody();
+        if (payload == null) return null;
+        return payload.get("access_token");
     }
 
     @Transactional
