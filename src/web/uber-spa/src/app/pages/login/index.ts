@@ -1,8 +1,10 @@
 import { NgIf } from '@angular/common';
+import { jsDocComment } from '@angular/compiler';
 import { Component } from '@angular/core';
 import { NgForm, FormsModule } from '@angular/forms';
 
-declare var FB: any;
+declare let FB: any;
+
 @Component({
   standalone: true,
   imports: [NgIf, FormsModule],
@@ -87,14 +89,28 @@ declare var FB: any;
   </div>`,
 })
 export class Index {
-  constructor() {
+  fbInit = () => {
     FB.init({
       appId: '1762946884038679',
-      cookie: false, // enable cookies to allow the server to access
-      // the session
-      xfbml: true, // parse social plugins on this page
-      version: 'v15.0', // use graph api version 2.5
+      cookie: false,
+      xfbml: true,
+      version: 'v2.4',
     });
+  };
+
+  constructor() {
+    let js: HTMLScriptElement,
+      fjs: HTMLScriptElement = document.getElementsByTagName('script')[0];
+
+    if (document.getElementById('facebook-jssdk')) return;
+    js = Object.assign(document.createElement('script'), {
+      src: 'https://connect.facebook.net/en_US/sdk.js',
+      async: true,
+      id: 'facebook-jssdk',
+      onload: this.fbInit,
+    });
+
+    fjs.parentNode.insertBefore(js, fjs);
   }
 
   login = (f: NgForm) => {
