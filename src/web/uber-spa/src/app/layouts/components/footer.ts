@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component } from '@angular/core'
 
 @Component({
   selector: 'app-footer',
@@ -9,6 +9,6 @@ import { Component } from '@angular/core';
         <p class="text-gray-400 text-[11px]">© 2022 Uber Technologies Inc.</p>
       </div>
     </div>
-  `,
+  `
 })
 export default class Footer {}

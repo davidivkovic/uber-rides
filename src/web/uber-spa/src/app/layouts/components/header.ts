@@ -1,8 +1,8 @@
-import { Component, Input } from '@angular/core';
-import { RouterModule } from '@angular/router';
+import { Component, Input } from '@angular/core'
+import { RouterModule } from '@angular/router'
 
 @Component({
-  selector: 'app-header',
+  selector: 'Header',
   standalone: true,
   imports: [RouterModule],
   template: `
@@ -33,6 +33,6 @@ import { RouterModule } from '@angular/router';
         </div>
       </div>
     </div>
-  `,
+  `
 })
 export default class Header {}

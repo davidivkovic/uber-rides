@@ -1,4 +1,4 @@
-import { Routes } from '@angular/router';
+import { Routes } from '@angular/router'
 
 const routes: Routes = [
   {
@@ -6,19 +6,18 @@ const routes: Routes = [
     children: [
       {
         path: '',
-        loadComponent: () => import('./ride').then((m) => m.Index),
+        loadComponent: () => import('./ride').then(m => m.Index)
       },
       {
         path: 'verification-code/:email',
-        loadComponent: () =>
-          import('./[email]').then((m) => m.EmailVerification),
+        loadComponent: () => import('./[email]').then(m => m.EmailVerification)
       },
       {
         path: 'drive',
-        loadComponent: () => import('./drive').then((m) => m.Index),
-      },
-    ],
-  },
-];
+        loadComponent: () => import('./drive').then(m => m.Index)
+      }
+    ]
+  }
+]
 
-export default routes;
+export default routes

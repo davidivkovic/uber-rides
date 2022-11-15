@@ -40,7 +40,7 @@ import { NgForm, FormsModule } from '@angular/forms'
   </div>`
 })
 export class EmailVerification {
-  handleInput = (e: KeyboardEvent) => {
+  handleInput = e => {
     const input = e.target as HTMLInputElement
     if (e.key === 'space' && input.previousElementSibling) {
       input.value = ''
