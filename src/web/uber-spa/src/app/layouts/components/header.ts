@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core'
+import { Component } from '@angular/core'
 import { RouterModule } from '@angular/router'
 
 @Component({
@@ -24,10 +24,16 @@ import { RouterModule } from '@angular/router'
           </div>
         </div>
         <div class="space-x-2">
-          <button routerLink="/login" class="primary rounded-3xl px-3 py-2">
+          <button
+            routerLink="/auth/login"
+            class="primary rounded-3xl px-3 py-2"
+          >
             Log in
           </button>
-          <button routerLink="/signup" class="secondary rounded-3xl px-3 py-2">
+          <button
+            routerLink="/auth/signup"
+            class="secondary rounded-3xl px-3 py-2"
+          >
             Sign up
           </button>
         </div>
