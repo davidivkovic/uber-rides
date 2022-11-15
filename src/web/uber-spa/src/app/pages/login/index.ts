@@ -1,9 +1,10 @@
-import { NgIf } from '@angular/common';
-import { jsDocComment } from '@angular/compiler';
-import { Component } from '@angular/core';
-import { NgForm, FormsModule } from '@angular/forms';
+import { NgIf } from '@angular/common'
+import { Component } from '@angular/core'
+import { NgForm, FormsModule } from '@angular/forms'
+import { MyDialog } from 'src/app/components/ui/dialog'
+import { dialogStore } from 'src/app/stores'
 
-declare let FB: any;
+declare let FB: any
 
 @Component({
   standalone: true,
@@ -86,44 +87,42 @@ declare let FB: any;
       <span class="underline text-black"> Privacy Policy</span> and
       <span class="underline text-black">Terms of Service</span> apply
     </small>
-  </div>`,
+  </div>`
 })
 export class Index {
+
+  constructor() {
+    if (document.getElementById('facebook-jssdk')) return
+
+    const script = Object.assign(document.createElement('script'), {
+      src: 'https://connect.facebook.net/en_US/sdk.js',
+      async: true,
+      id: 'facebook-jssdk',
+      onload: this.fbInit
+    })
+    document.head.appendChild(script)
+  }
+
   fbInit = () => {
     FB.init({
       appId: '1762946884038679',
       cookie: false,
       xfbml: true,
-      version: 'v2.4',
-    });
-  };
-
-  constructor() {
-    let js: HTMLScriptElement,
-      fjs: HTMLScriptElement = document.getElementsByTagName('script')[0];
-
-    if (document.getElementById('facebook-jssdk')) return;
-    js = Object.assign(document.createElement('script'), {
-      src: 'https://connect.facebook.net/en_US/sdk.js',
-      async: true,
-      id: 'facebook-jssdk',
-      onload: this.fbInit,
-    });
-
-    fjs.parentNode.insertBefore(js, fjs);
+      version: 'v2.4'
+    })
   }
 
-  login = (f: NgForm) => {
-    console.log(console.log(f.valid));
-  };
+  login = (form: NgForm) => {
+    console.log(console.log(form.valid))
+  }
 
   loginWithFacebook = () => {
-    FB.login(function (response) {
+    FB.login((response: any) => {
       if (response.status === 'connected') {
-        console.log(response.authResponse);
+        console.log(response.authResponse)
       } else {
-        console.log(response);
+        console.log(response)
       }
-    });
-  };
+    })
+  }
 }
