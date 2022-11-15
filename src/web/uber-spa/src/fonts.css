@@ -32,7 +32,7 @@
   font-family: UberMoveText;
 }
 
-.system-font {
+. {
   font-family: -apple-system, BlinkMacSystemFont, "SegoeUI", Roboto, Helvetica,
     Arial, sans-serif, "AppleColorEmoji", "SegoeUIEmoji", "SegoeUISymbol";
 }

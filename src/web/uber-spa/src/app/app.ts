@@ -1,6 +1,6 @@
-import { Component } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
-import DialogOutlet from './components/ui/dialog/dialogOutlet';
+import { Component } from '@angular/core'
+import { RouterOutlet } from '@angular/router'
+import DialogOutlet from './components/ui/dialog/dialogOutlet'
 
 @Component({
   selector: 'app-root',
@@ -9,8 +9,8 @@ import DialogOutlet from './components/ui/dialog/dialogOutlet';
   template: `
     <router-outlet></router-outlet>
     <DialogOutlet></DialogOutlet>
-  `,
+  `
 })
 export class AppComponent {
-  title = 'uber-spa';
+  title = 'uber-spa'
 }

@@ -1,8 +1,6 @@
 import { NgIf } from '@angular/common'
 import { Component } from '@angular/core'
 import { NgForm, FormsModule } from '@angular/forms'
-import { MyDialog } from 'src/app/components/ui/dialog'
-import { dialogStore } from 'src/app/stores'
 
 declare let FB: any
 
@@ -90,7 +88,6 @@ declare let FB: any
   </div>`
 })
 export class Index {
-
   constructor() {
     if (document.getElementById('facebook-jssdk')) return
 
