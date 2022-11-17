@@ -66,9 +66,9 @@ import { Dialog } from 'src/app/components/ui/dialog'
 export class Index {
   loginError: string = ''
 
-  constructor () {
-    dialogStore.openDialog(ExampleDialog, { counter: 12 }, closingData => console.log(closingData))
-  }
+  // constructor () {
+  //   dialogStore.openDialog(ExampleDialog, { counter: 12 }, closingData => console.log(closingData))
+  // }
 
   login = (form: NgForm) => {
     this.loginError = ''

@@ -7,34 +7,36 @@ declare let google: any
   selector: 'SocialMedia',
   standalone: true,
   template: `
-    <div class="w-full space-y-5">
+    <div class="w-full">
       <div
         class="w-full h-[18px] border-b border-gray-400 text-center pt-[2px]"
       >
         <span class="text-xs bg-white px-2 text-gray-400 "> or </span>
       </div>
-      <button
-        (click)="loginWithGoogle()"
-        class="secondary w-full flex items-center justify-center space-x-2 h-[51px] mt-2 "
-      >
-        <img
-          alt="Google icon"
-          class="h-4 w-4"
-          src="https://cdn-icons-png.flaticon.com/512/2991/2991148.png"
-        />
-        <p class="">Continue with Google</p>
-      </button>
-      <button
-        (click)="loginWithFacebook()"
-        class="secondary w-full flex items-center justify-center space-x-2 h-[51px]"
-      >
-        <img
-          alt="Google icon"
-          class="h-4 w-4"
-          src="https://cdn-icons-png.flaticon.com/512/124/124010.png"
-        />
-        <p class="">Continue with Facebook</p>
-      </button>
+      <div class="space-y-2 mt-6">
+        <button
+          (click)="loginWithGoogle()"
+          class="secondary w-full flex items-center justify-center space-x-2 h-[51px]"
+        >
+          <img
+            alt="Google icon"
+            class="h-4 w-4"
+            src="https://cdn-icons-png.flaticon.com/512/2991/2991148.png"
+          />
+          <p class="">Continue with Google</p>
+        </button>
+        <button
+          (click)="loginWithFacebook()"
+          class="secondary w-full flex items-center justify-center space-x-2 h-[51px]"
+        >
+          <img
+            alt="Google icon"
+            class="h-4 w-4"
+            src="https://cdn-icons-png.flaticon.com/512/124/124010.png"
+          />
+          <p class="">Continue with Facebook</p>
+        </button>
+      </div>
     </div>
   `
 })

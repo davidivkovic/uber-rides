@@ -15,9 +15,9 @@ import SocialMedia from '../components/socialMedia'
       class=" space-y-10"
     >
       <div>
-        <h2 class="text-2xl">Personal information</h2>
-        <p class="text-gray-700 ">Let us know how to properly address you.</p>
-        <div class="flex w-full space-x-5 mt-3">
+        <div class="text-2xl">Personal information</div>
+        <p class="text-gray-700">Let us know how to properly address you.</p>
+        <div class="flex w-full space-x-5 mt-5">
           <input
             required
             ngModel
@@ -55,8 +55,8 @@ import SocialMedia from '../components/socialMedia'
         </div>
       </div>
       <div>
-        <h2 class="text-2xl">Additional information</h2>
-        <p class="text-gray-700 ">Tell us more information about yourself.</p>
+        <div class="text-2xl">Additional information</div>
+        <p class="text-gray-700">Tell us more information about yourself.</p>
         <div class="flex w-full space-x-5 mt-3">
           <input
             required

@@ -11,7 +11,7 @@ import { DialogData, dialogStore } from 'src/app/stores'
       *ngFor="let dialog of dialogStore.dialogs; trackBy: dialogIdentity"
       #dialog
       [id]="dialog.id"
-      class="backdrop:bg-black/25"
+      class="backdrop:bg-black/25 rounded-lg"
     >
       <ng-container *ngComponentOutlet="dialog.component(); injector: createInjector(dialog)"></ng-container>
     </dialog>
