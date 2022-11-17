@@ -1,8 +1,19 @@
-import { AfterViewInit, Component, ContentChildren, ElementRef, ViewChild } from '@angular/core'
-import { DialogData, dialogStore } from 'src/app/stores'
-import { uid } from 'src/app/utils'
-import DialogOutlet from './dialogOutlet'
+import { Component } from '@angular/core'
+import { DialogData } from 'src/app/stores'
 
+
+@Component({
+  standalone: true,
+  template: ``
+})
+export class Dialog {
+  constructor(public data: DialogData) { }
+
+  close = (data?: any) => {
+    this.data.onclose(data)
+    this.data.close()
+  }
+}
 
 @Component({
   standalone: true,
@@ -13,11 +24,4 @@ import DialogOutlet from './dialogOutlet'
       <p>Counter: 1</p>
   `,
 })
-export class Dialog {
-  constructor(public data: DialogData) { }
-
-  close = (data?: any) => {
-    this.data.onclose(data)
-    this.data.close()
-  }
-}
+export class MyDialog extends Dialog { }
