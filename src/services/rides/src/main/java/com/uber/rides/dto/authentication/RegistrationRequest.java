@@ -5,19 +5,21 @@ import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Pattern;
 
 import lombok.Getter;
+import lombok.Setter;
 
 import com.uber.rides.model.User;
 
-@Getter
+@Getter 
+@Setter
 public class RegistrationRequest {
     
-    @NotBlank public String firstName;
-    @NotBlank public String lastName;
-    @NotBlank @Email public String email;
-    @NotBlank public String password; 
-    @NotBlank public String city;
-    @NotBlank public String phoneNumber;
+    @NotBlank String firstName;
+    @NotBlank String lastName;
+    @NotBlank @Email String email;
+    @NotBlank String password; 
+    @NotBlank String city;
+    @NotBlank String phoneNumber;
     @Pattern(regexp = User.Roles.DRIVER + "|" + User.Roles.RIDER) 
-    @NotBlank public String role;
+    @NotBlank String role;
 
 }

@@ -33,6 +33,7 @@ import com.uber.rides.dto.authentication.SignInRequest;
 import com.uber.rides.dto.authentication.SignInResponse;
 import com.uber.rides.dto.user.UserDTO;
 import com.uber.rides.model.User;
+import com.uber.rides.model.User.Roles;
 import com.uber.rides.security.JWT;
 import com.uber.rides.service.EmailSender;
 import com.uber.rides.service.UserService;
@@ -47,13 +48,12 @@ public class Authentication extends Controller {
     @Autowired UserService userService;
     @Autowired PasswordEncoder passwordEncoder;
     @Autowired AuthenticationManager authenticationManager;
-    @Autowired JWT jwt;
     @Autowired EmailSender emailSender;
     @PersistenceContext EntityManager db;
 
-    /* TODO: Roles */
     @Transactional
     @PostMapping("/register")
+    @Secured({ Roles.ANONYMOUS, Roles.ADMIN })
     public Object register(@Validated @RequestBody RegistrationRequest request) {
 
         var user = userService.findByEmail(request.getEmail());
@@ -61,12 +61,24 @@ public class Authentication extends Controller {
             return badRequest("This email isn't available. Please try another.");
         }
 
-        user = modelMapper.map(request, User.class);
+        user = mapper.map(request, User.class);
         user.setPassword(passwordEncoder.encode(request.getPassword()));
-        user.setConfirmationCode(User.OTP.generate(LocalDateTime.now()));
-        db.persist(user);
+        user.setCompletedRegistration(true);
 
-        emailSender.send(user.getEmail(), new ConfirmEmailMessage(user));
+        if (user.getRole().equals(Roles.RIDER)) {
+            user.setConfirmationCode(User.OTP.generate(LocalDateTime.now()));
+        } 
+        else if (authenticatedUserRole().equals(Roles.ADMIN)) {
+            user.setEmailConfirmed(true);
+        }
+        else {
+            return badRequest("Only administrators can register drivers.");
+        }
+        
+        db.persist(user);
+        if (!user.isEmailConfirmed()) {
+            emailSender.send(user.getEmail(), new ConfirmEmailMessage(user));
+        } 
 
         return ok();
     }
@@ -89,16 +101,14 @@ public class Authentication extends Controller {
             }
 
             return new SignInResponse(
-                modelMapper.map(user, UserDTO.class),
-                jwt.getJWT(user)
+                mapper.map(user, UserDTO.class),
+                JWT.getJWT(user)
             );
         } catch (BadCredentialsException e) {
             return badRequest("Invalid credentials");
         }
     }
 
-    /* Method not finished in google cloud console - set cliendID */
-    /* TODO: Roles */
     @Transactional
     @PostMapping("/signin/google")
     public Object googleSignIn(@RequestParam(name = "idToken") @NotBlank String token) {
@@ -118,13 +128,13 @@ public class Authentication extends Controller {
                     .profilePicture((String) payload.get("picture"))
                     .firstName((String) payload.get("given_name"))
                     .lastName((String) payload.get("family_name"))
-                    .role(User.Roles.RIDER)
+                    .role(Roles.RIDER)
                     .build();
                 db.persist(user);
             }
             return new SignInResponse(
-                modelMapper.map(user, UserDTO.class),
-                jwt.getJWT(user)
+                mapper.map(user, UserDTO.class),
+                JWT.getJWT(user)
             );
 
         } catch (GeneralSecurityException | IOException e) {
@@ -132,7 +142,6 @@ public class Authentication extends Controller {
         }
     }
 
-    /* TODO: Roles */
     @Transactional
     @SuppressWarnings(UNCHECKED)
     @PostMapping("/signin/facebook")
@@ -160,14 +169,14 @@ public class Authentication extends Controller {
                     .emailConfirmed(true)
                     .firstName(payload.get("first_name"))
                     .lastName(payload.get("last_name"))
-                    .role(User.Roles.RIDER)
+                    .role(Roles.RIDER)
                     .build();
                 db.persist(user);
             }
 
             return new SignInResponse(
-                modelMapper.map(user, UserDTO.class),
-                jwt.getJWT(user)
+                mapper.map(user, UserDTO.class),
+                JWT.getJWT(user)
             );
         }
         catch (HttpClientErrorException.BadRequest e) {
@@ -271,10 +280,9 @@ public class Authentication extends Controller {
         return ok();
     }
 
-    /* Method needs additional checking */
     @Transactional
     @PostMapping("password/change")
-    @Secured({User.Roles.ADMIN, User.Roles.DRIVER, User.Roles.RIDER})
+    @Secured({ Roles.ADMIN, Roles.DRIVER, Roles.RIDER })
     public Object changePassword(@NotBlank String currentPassword, @NotBlank String newPassword) {
 
         var user = db.find(User.class, authenticatedUserId());

@@ -13,14 +13,15 @@ import lombok.Setter;
 @Setter
 @Entity
 public class Car {
+ 
+    public enum Types {
+        UBER_X,
+        UBER_BLACK,
+        UBER_GREEN
+    }
 
     @Embeddable
-    public record Type(
-        String name,
-        byte seats,
-        double paymentMultiplier,
-        String description
-    ) { }
+    public record Type(Types type, String name, int seats, double paymentMultiplier, String description) { }
 
     @Id
     String registration;
@@ -29,10 +30,13 @@ public class Car {
     short year;
     Type type;
 
-    static final List<Type> availableTypes = List.of(
-        new Type("UberX", (byte) 4, 1, "Cheap rides, just for you"),
-        new Type("Uber Black", (byte) 4, 1.2, "Premium rides in luxury cars"),
-        new Type("Uber Green", (byte) 4, 0.95, "Eco-friendly rides")
+    public static final List<Type> availableTypes = List.of(
+        new Type(Types.UBER_X, "UberX", 4, 1, "Cheap rides, just for you"),
+        new Type(Types.UBER_BLACK, "Uber Black", 4, 1.2, "Premium rides in luxury cars"),
+        new Type(Types.UBER_GREEN, "Uber Green", 4, 0.95, "Eco-friendly rides")
     );
 
+    public static Type getByType(Types type) {
+        return availableTypes.stream().filter(t -> t.type() == type).findFirst().orElse(null);
+    }
 }

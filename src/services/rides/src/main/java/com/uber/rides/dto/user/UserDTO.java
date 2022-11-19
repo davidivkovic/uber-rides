@@ -8,14 +8,14 @@ import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.*;
 import com.uber.rides.model.User;
 import com.uber.rides.controller.Users;
 
-import static com.uber.rides.Utils.modelMapper;
+import static com.uber.rides.Utils.mapper;
 
 @Getter
 @Setter
 public class UserDTO {
     
     static {
-        modelMapper
+        mapper
         .typeMap(User.class, UserDTO.class)
         .addMappings(mapper -> 
             mapper
@@ -32,6 +32,7 @@ public class UserDTO {
     String city;
     String phoneNumber;
     String profilePicture;
-    String blocked;
-    
+    boolean blocked;
+    boolean completedRegistration;
+
 }

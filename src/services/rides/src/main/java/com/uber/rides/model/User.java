@@ -1,6 +1,7 @@
 package com.uber.rides.model;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Random;
@@ -60,9 +61,7 @@ public class User implements UserDetails {
         
     }
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    Long id;
+    @Id @GeneratedValue Long id;
     String role;
     String firstName;
     String lastName;
@@ -74,10 +73,22 @@ public class User implements UserDetails {
     String blockReason;
     boolean emailConfirmed;
     boolean blocked;
+    boolean completedRegistration;
     OTP confirmationCode;
-
+    
     @OneToOne(fetch = FetchType.LAZY) UserUpdateRequest updateRequest;
-    @OneToOne(fetch = FetchType.LAZY) Car car;
+    @OneToOne Car car;
+    
+    @OneToMany @Builder.Default List<Route> favoriteRoutes = new ArrayList<>();
+    
+    @OneToMany(mappedBy = "driver") List<Trip> tripsAsDriver;
+    @ManyToMany(mappedBy = "riders") List<Trip> tripsAsRider;
+
+    @Transient Trip currentTrip;
+
+    public void addFavoriteRoute(Route route) {
+        favoriteRoutes.add(route);
+    }
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {

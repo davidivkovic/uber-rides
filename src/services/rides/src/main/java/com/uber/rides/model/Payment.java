@@ -2,11 +2,12 @@ package com.uber.rides.model;
 
 import java.time.LocalDateTime;
 
+import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.Id;
+import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
-
-import org.javamoney.moneta.FastMoney;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -18,12 +19,13 @@ public class Payment {
     
     @Id String id;
 
-    FastMoney money;
     String captureUrl;
     boolean captured;
     LocalDateTime capturedAt;
+    double amount;
+    String currency;
 
-    @ManyToOne User user;
-    @ManyToOne Trip trip;
+    @ManyToOne(fetch = FetchType.LAZY) @JoinColumn(name = "user_id") User user;
+    @Column(name = "user_id", insertable = false, updatable = false) Long userId;
 
 }

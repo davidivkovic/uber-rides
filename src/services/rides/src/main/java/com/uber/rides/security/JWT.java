@@ -21,6 +21,7 @@ import org.slf4j.LoggerFactory;
 
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtParser;
 
 import com.uber.rides.model.User;
@@ -35,12 +36,12 @@ public class JWT {
     
     static final int DURATION_IN_MILLISECONDS = 24 * 3600000;
 
-    JwtParser jwtParser = Jwts.parser()
+    static final JwtParser parser = Jwts.parser()
         .requireIssuer(ISSUER)
         .requireAudience(AUDIENCE)
         .setSigningKey(KEY);
 
-    public String getJWT(User user) {
+    public static String getJWT(User user) {
         return Jwts.builder()
             .setClaims(new HashMap<>(Map.of(ROLE_CLAIM, user.getRole())))
             .setIssuer(ISSUER)
@@ -50,6 +51,15 @@ public class JWT {
             .setExpiration(new Date(new Date().getTime() + DURATION_IN_MILLISECONDS))
             .signWith(SignatureAlgorithm.HS512, KEY)
             .compact();
+    }
+
+    public static Claims parseJWT(String token) {
+        try {
+            return parser.parseClaimsJws(token).getBody();
+        }
+        catch (Exception e) {
+            return Jwts.claims();
+        }
     }
 
     @Component
@@ -97,23 +107,20 @@ public class JWT {
             var token = header.substring(7);
             if (token == null) return false;
 
-            try {
-                var jwt = jwtParser.parseClaimsJws(token).getBody();
-                SecurityContextHolder
-                    .getContext()
-                    .setAuthentication(
-                        new UsernamePasswordAuthenticationToken(
-                            jwt.getSubject(),
-                            jwt.getId(),
-                            List.of(new SimpleGrantedAuthority(jwt.get(ROLE_CLAIM, String.class)))
-                        )
-                    );
-                return true;
-            } 
-            catch (Exception e) {
-                log.error("Failed in JWT Filter", e);
-                return false;
-            }
+            var jwt = parseJWT(token);
+            if (jwt.getSubject() == null) return false;
+            
+            SecurityContextHolder
+                .getContext()
+                .setAuthentication(
+                    new UsernamePasswordAuthenticationToken(
+                        jwt.getSubject(),
+                        jwt.getId(),
+                        List.of(new SimpleGrantedAuthority(jwt.get(ROLE_CLAIM, String.class)))
+                    )
+                );
+
+            return true;
 
         }
 

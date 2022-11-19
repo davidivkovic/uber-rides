@@ -1,12 +1,13 @@
 package com.uber.rides.database;
 
 import javax.persistence.EntityManager;
+import javax.persistence.EntityManagerFactory;
 import javax.persistence.PersistenceContext;
 
 import org.hibernate.Session;
 import org.hibernate.engine.spi.SessionFactoryDelegatingImpl;
 import org.hibernate.internal.SessionFactoryImpl;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 import org.springframework.web.context.annotation.RequestScope;
 
@@ -32,8 +33,11 @@ public class DbContext {
         
     }
 
+    @Autowired private EntityManagerFactory dbFactory;
     @PersistenceContext EntityManager db;
+    @Autowired JPAStreamer readonlyQuery;
     JPAStreamer query;
+
 
     public JPAStreamer query() {
         if (query == null) {
@@ -43,8 +47,16 @@ public class DbContext {
         return query;
     }
 
+    public JPAStreamer readonlyQuery() {
+        return readonlyQuery;
+    }
+
     public EntityManager db() {
         return db;
+    }
+
+    public EntityManager createDb() {
+        return dbFactory.createEntityManager();
     }
 
 }

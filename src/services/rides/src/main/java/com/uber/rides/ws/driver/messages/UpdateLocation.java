@@ -8,9 +8,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.uber.rides.model.User;
+import com.uber.rides.model.User.Roles;
 import com.uber.rides.ws.Message;
 import com.uber.rides.ws.driver.DriverData;
-import com.uber.rides.ws.rider.WSRider;
+import com.uber.rides.ws.WS;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
@@ -26,7 +27,7 @@ public class UpdateLocation implements Message<DriverData> {
 
     @PersistenceContext EntityManager db;
     
-    @Autowired WSRider wsRider;
+    @Autowired WS ws;
     @Autowired ThreadPoolTaskScheduler scheduler;
     @Autowired UpdateLocationTask task;
 
@@ -46,12 +47,12 @@ public class UpdateLocation implements Message<DriverData> {
 @Service
 class UpdateLocationTask {
 
-    @Autowired WSRider wsRider;
+    @Autowired WS ws;
     @PersistenceContext EntityManager db;
 
     @Transactional
     public void dostuff(DriverData sender) {
-        wsRider.broadcast("Handled UPDATE_DRIVER_LOCATION");
+        ws.broadcast(Roles.RIDER, "Handled UPDATE_DRIVER_LOCATION");
         var u = new User();
         u.setFirstName("David");
         u.setLastName("Ivkovic");

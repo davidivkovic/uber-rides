@@ -8,6 +8,7 @@ import com.uber.rides.model.User;
 
 public class Controller {
 
+    static final String USER_NOT_EXIST = "User does not exist.";
     static final String EMAIL_NOT_FOUND = "The email you entered doesn't belong to an account.";
  
     public Object badRequest(Object response) {

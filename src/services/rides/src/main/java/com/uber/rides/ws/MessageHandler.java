@@ -40,7 +40,8 @@ public class MessageHandler {
         try { 
             if (messageType == EmptyMessage.class) {
                 emptyMessage.handle(sender); 
-            } else {
+            } 
+            else {
                 var message = (Message<UserData>) jsonMapper
                     .readerForUpdating(container.getBean(messageType))
                     .readValue(payload);

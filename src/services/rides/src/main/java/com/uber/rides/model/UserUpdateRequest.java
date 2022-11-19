@@ -9,7 +9,7 @@ import javax.persistence.GeneratedValue;
 import lombok.Getter;
 import lombok.Setter;
 
-import static com.uber.rides.Utils.modelMapper;
+import static com.uber.rides.Utils.mapper;
 
 @Getter
 @Setter
@@ -17,7 +17,7 @@ import static com.uber.rides.Utils.modelMapper;
 public class UserUpdateRequest {
 
     static {
-        modelMapper
+        mapper
         .typeMap(UserUpdateRequest.class, User.class)
         .addMappings(mapper ->  mapper.skip(User::setId));
     }

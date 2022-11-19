@@ -5,12 +5,20 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.UUID;
 
+import javax.servlet.ServletContext;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.FileSystemResource;
 import org.springframework.http.MediaType;
+import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 
+@Component
 public class ImageStore {
 
-    public static final String STORAGE_PATH = File.separator + "images";
+    public static final String STORAGE_PATH = new FileSystemResource("").getFile().getPath() + "../../../images/";
+
+    @Autowired ServletContext context;
 
     private ImageStore() {}
 
@@ -24,8 +32,9 @@ public class ImageStore {
             var isJpeg = contentType.equals(MediaType.IMAGE_JPEG_VALUE);
             if (!isPng && !isJpeg) return null;
 
-            var filename = UUID.randomUUID().toString() + (isPng ? ".png" : ".jpeg");
+            var filename = UUID.randomUUID().toString().replace("-", "") + (isPng ? ".png" : ".jpeg");
             var file = new File(Path.of(STORAGE_PATH, filename).toAbsolutePath().toString());
+
             file.mkdirs();
             image.transferTo(file);
 
