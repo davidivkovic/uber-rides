@@ -2,8 +2,6 @@ import { NgIf } from '@angular/common'
 import { Component } from '@angular/core'
 import { NgForm, FormsModule } from '@angular/forms'
 import SocialMedia from '../auth/components/socialMedia'
-import { dialogStore } from 'src/app/stores'
-import { Dialog } from 'src/app/components/ui/dialog'
 
 @Component({
   standalone: true,
@@ -66,10 +64,6 @@ import { Dialog } from 'src/app/components/ui/dialog'
 export class Index {
   loginError: string = ''
 
-  // constructor () {
-  //   dialogStore.openDialog(ExampleDialog, { counter: 12 }, closingData => console.log(closingData))
-  // }
-
   login = (form: NgForm) => {
     this.loginError = ''
     if (form.valid) {
@@ -77,14 +71,3 @@ export class Index {
     }
   }
 }
-
-@Component({
-  standalone: true,
-  template: `
-      <button (click)="close()">X</button>
-      <p>Counter: {{ data.props.counter }}</p>
-      <button (click)="close('ok')">OK</button>
-      <p>Counter: 1</p>
-  `,
-})
-class ExampleDialog extends Dialog { }

@@ -1,7 +1,7 @@
 import { Component } from '@angular/core'
 
 @Component({
-  selector: 'app-footer',
+  selector: 'Footer',
   standalone: true,
   template: `
     <div class="bg-black h-14 w-full flex items-center">

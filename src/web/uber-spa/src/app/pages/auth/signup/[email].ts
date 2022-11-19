@@ -26,7 +26,6 @@ import { dialogStore } from 'src/app/stores'
             #number="ngModel"
             [name]="'input' + number"
             (paste)="handlePaste($event)"
-            (input)="handleInput($event)"
             (keydown)="handleInput($event)"
             class="w-12 h-12 px-0 text-center
           "
@@ -71,16 +70,19 @@ export class EmailVerification {
 
   handleInput = (e: Event) => {
     const input = e.target as HTMLInputElement
-    if (
-      (e as KeyboardEvent).code === 'Backspace' &&
-      input.previousElementSibling
-    ) {
+    e.preventDefault()
+    if ((e as KeyboardEvent).code === 'Backspace') {
       input.value = ''
-      const previousSibling = input.previousElementSibling as HTMLElement
-      previousSibling.focus()
-    } else if (input.nextElementSibling && input.value) {
-      const nextSibling = input.nextElementSibling as HTMLElement
-      nextSibling.focus()
+      if (input.previousElementSibling) {
+        const previousSibling = input.previousElementSibling as HTMLElement
+        previousSibling.focus()
+      }
+    } else if (Number((e as KeyboardEvent).key)) {
+      input.value = Number((e as KeyboardEvent).key).toString()
+      if (input.nextElementSibling) {
+        const nextSibling = input.nextElementSibling as HTMLElement
+        nextSibling.focus()
+      }
     }
   }
   handlePaste = (e: ClipboardEvent) => {
