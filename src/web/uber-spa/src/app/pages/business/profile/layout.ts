@@ -16,4 +16,4 @@ import Banner from 'src/app/components/common/banner'
     </div>
   `
 })
-export default class ProfileSidebarLayout {}
+export default class Layout {}

@@ -33,7 +33,11 @@ export default class ProfileSidebar {
     {
       name: 'Settings',
       link: 'settings'
-    }
+    },
+     {
+      name: 'Change password',
+      link: '/'
+     }
   ]
 
   trackByName = (item: any) => item.name;

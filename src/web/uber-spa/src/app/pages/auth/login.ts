@@ -2,10 +2,12 @@ import { NgIf } from '@angular/common'
 import { Component } from '@angular/core'
 import { NgForm, FormsModule } from '@angular/forms'
 import SocialMedia from '../auth/components/socialMedia'
+import { userStore } from 'src/app/stores/userStore'
+import { Router, RouterModule } from '@angular/router'
 
 @Component({
   standalone: true,
-  imports: [NgIf, FormsModule, SocialMedia],
+  imports: [NgIf, FormsModule, SocialMedia, RouterModule],
   template: ` <div
     class="flex-1 flex flex-col w-[320px] py-10 gap-4 mx-auto justify-center h-full"
   >
@@ -63,11 +65,16 @@ import SocialMedia from '../auth/components/socialMedia'
 })
 export class Index {
   loginError: string = ''
+  userStore = userStore
+
+  constructor(private router: Router) { }
 
   login = (form: NgForm) => {
     this.loginError = ''
     if (form.valid) {
       console.log(console.log(form.value))
+      userStore.setUser({name: 'Milica', email: 'email@example.com'})
+      this.router.navigate(['/'])
     }
   }
 }

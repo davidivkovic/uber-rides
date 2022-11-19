@@ -15,4 +15,4 @@ import Footer from '../../components/common/footer'
     <Footer></Footer>
   `
 })
-export default class FooterLayout {}
+export default class Layout {}

@@ -1,5 +1,6 @@
 import { Component } from '@angular/core'
-import { RouterLink, RouterModule } from '@angular/router'
+import { RouterModule } from '@angular/router'
+
 @Component({
   selector: 'Banner',
   standalone: true,
@@ -16,7 +17,7 @@ import { RouterLink, RouterModule } from '@angular/router'
         <p class="text-gray-400">Book an Uber from a web browser, no app installation required.</p>
         </div>
         <button routerLink="/" class="primary">Request a trip</button>
-    </div>
-  `
+    </div>`
 })
-export default class Banner {}
+
+export default class Banner { }

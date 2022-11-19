@@ -12,4 +12,4 @@ import Header from '../components/common/header'
     </div>
   `
 })
-export default class HeaderLayout {}
+export default class Layout {}

@@ -1,10 +1,10 @@
 import { Routes } from "@angular/router";
-import ProfileSidebarLayout from "./layout";
+import Layout from "./layout";
 
 const routes: Routes = [
     {
       path: 'profile',
-      component: ProfileSidebarLayout,
+      component: Layout,
       children: [
         {
             path: 'settings', loadComponent: () => import('./settings').then(m => m.Settings)
@@ -16,4 +16,4 @@ const routes: Routes = [
     }
   ]
 
-  export default routes
+export default routes
