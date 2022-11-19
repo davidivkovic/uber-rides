@@ -21,7 +21,7 @@ import { dialogStore } from 'src/app/stores'
         <div class="flex justify-between w-full">
           <input
             required=""
-            *ngFor="let number of [0, 1, 2, 3, 4, 5]"
+            *ngFor="let number of [0, 1, 2, 3, 4, 5]; trackBy: ngForIdentity"
             ngModel
             #number="ngModel"
             [name]="'input' + number"
@@ -67,6 +67,8 @@ export class EmailVerification {
       this.email = params.get('email')
     })
   }
+
+  ngForIdentity = (index: number, item: any) => item.index;
 
   handleInput = (e: Event) => {
     const input = e.target as HTMLInputElement
