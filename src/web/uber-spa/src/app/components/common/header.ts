@@ -1,7 +1,7 @@
 import { Component } from '@angular/core'
 import { Router, RouterModule } from '@angular/router'
 import { NgIf } from '@angular/common'
-import { userStore } from 'src/app/stores/userStore'
+import { userStore } from '@app/stores/userStore'
 
 @Component({
   selector: 'Header',

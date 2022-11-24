@@ -7,13 +7,13 @@ import { NgFor } from '@angular/common'
   standalone: true,
   imports: [RouterModule, NgFor],
   template: `
-    <aside class="h-full bg w-[220px]">
+    <aside class="h-full w-[220px]">
       <a
         *ngFor="let option of options; trackBy: trackByName"
         [routerLink]="option.link"
-        routerLinkActive="border-l-4 border-black bg-zinc-200"
         [routerLinkActiveOptions]="{exact: true}"
-        class="w-full block p-3 pl-6 cursor-pointer transition hover:bg-zinc-100"
+        routerLinkActive="border-l-4 border-black bg-zinc-100"
+        class="w-full block p-3 pl-6 cursor-pointer transition hover:bg-[#f0f0f1]"
       >
         {{ option.name }}
       </a>

@@ -1,5 +1,7 @@
 package com.uber.rides.controller;
 
+import java.util.Collection;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.annotation.Secured;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,8 +22,6 @@ import com.uber.rides.model.User$;
 import com.uber.rides.model.User.Roles;
 
 import static com.uber.rides.Utils.*;
-
-import java.util.Collection;
 
 @RestController("/routes")
 public class Routes extends Controller {
@@ -45,16 +45,29 @@ public class Routes extends Controller {
         return ok();
 
     }
-
         
-    // @Transactional
-    // @PostMapping("/favorites/{id}/remove")
-    // @Secured({ Roles.RIDER })
-    // public Object removeFavoriteRoute(@PathVariable("id") Long routeId) {
+    @Transactional
+    @PostMapping("/favorites/{id}/remove")
+    @Secured({ Roles.RIDER })
+    public Object removeFavoriteRoute(@PathVariable("id") Long routeId) {
         
-    //     return ok();
+        var user = context.query().stream(
+            of(User.class)
+            .joining(User$.favoriteRoutes)
+        )
+        .filter(User$.id.equal(authenticatedUserId()))
+        .findFirst()
+        .orElse(null);
+        
+        if (user == null) {
+            return badRequest(USER_NOT_EXIST);
+        }
 
-    // }
+        user.removeFavoriteRoute(routeId);
+
+        return ok();
+
+    }
 
     @Transactional
     @GetMapping("/favorites")
@@ -65,6 +78,7 @@ public class Routes extends Controller {
                 of(User.class)
                 .joining(User$.favoriteRoutes)
             )
+            .filter(User$.id.equal(authenticatedUserId()))
             .map(User::getFavoriteRoutes)
             .flatMap(Collection::stream)
             .toList();

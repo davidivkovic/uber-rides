@@ -1,5 +1,5 @@
 import { Component } from '@angular/core'
-import { DialogData } from 'src/app/stores'
+import { DialogData } from '@app/stores'
 
 @Component({
   standalone: true,

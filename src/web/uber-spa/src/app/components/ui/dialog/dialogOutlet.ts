@@ -1,10 +1,10 @@
 import { AfterViewInit, Component, ElementRef, Injector, QueryList, ViewChildren } from '@angular/core'
 import { NgComponentOutlet, NgForOf } from '@angular/common'
-import { DialogData, dialogStore } from 'src/app/stores'
+import { DialogData, dialogStore } from '@app/stores'
 
 @Component({
-  selector: 'DialogOutlet',
   standalone: true,
+  selector: 'DialogOutlet',
   imports: [NgForOf, NgComponentOutlet],
   template: `
     <dialog 

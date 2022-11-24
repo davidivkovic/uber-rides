@@ -37,9 +37,17 @@ public class Trip {
 
     @Id @GeneratedValue Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY) @JoinColumn(name = "driver_id") User driver;
-    @ManyToOne(fetch = FetchType.LAZY) @JoinColumn(name = "route_id") Route route;
-    @ManyToOne(fetch = FetchType.LAZY) @JoinColumn(name = "car_id") Car car;
+    @ManyToOne(fetch = FetchType.LAZY) 
+    @JoinColumn(name = "driver_id") 
+    User driver;
+
+    @ManyToOne(fetch = FetchType.LAZY) 
+    @JoinColumn(name = "route_id") 
+    Route route;
+
+    @ManyToOne(fetch = FetchType.LAZY) 
+    @JoinColumn(name = "car_id") 
+    Car car;
 
     @ManyToMany Set<User> riders = new HashSet<>();
     @OneToMany List<Payment> payments = new ArrayList<>();
@@ -60,8 +68,13 @@ public class Trip {
 
     /* Navigation FK's */
 
-    @Column(name = "driver_id", insertable = false, updatable = false) Long driverId;
-    @Column(name = "route_id", insertable = false, updatable = false) Long routeId;
-    @Column(name = "car_id", insertable = false, updatable = false) String carId;
+    @Column(name = "driver_id", insertable = false, updatable = false) 
+    Long driverId;
+
+    @Column(name = "route_id", insertable = false, updatable = false) 
+    Long routeId;
+
+    @Column(name = "car_id", insertable = false, updatable = false) 
+    String carId;
     
 }

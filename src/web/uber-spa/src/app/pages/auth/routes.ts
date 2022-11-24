@@ -16,9 +16,8 @@ const routes: Routes = [
             loadComponent: () => import('./signup/ride').then(m => m.Index)
           },
           {
-            path: 'verification-code/:email',
-            loadComponent: () =>
-              import('./signup/[email]').then(m => m.EmailVerification)
+            path: ':email',
+            loadComponent: () => import('./signup/[email]').then(m => m.EmailVerification)
           },
           {
             path: 'drive',

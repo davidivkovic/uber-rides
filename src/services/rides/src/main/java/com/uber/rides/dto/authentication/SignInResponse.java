@@ -7,7 +7,7 @@ import lombok.AllArgsConstructor;
 @AllArgsConstructor
 public class SignInResponse {
     
-    public UserDTO userDTO;
-    public String token;
+    public UserDTO user;
+    public String accessToken;
 
 }

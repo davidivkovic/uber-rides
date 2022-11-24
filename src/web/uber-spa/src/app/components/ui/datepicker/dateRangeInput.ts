@@ -5,7 +5,7 @@ import dayjs from 'dayjs'
 import en from 'dayjs/locale/en'
 import relativeTime from 'dayjs/plugin/relativeTime'
 
-import { computed } from "src/app/utils"
+import { computed } from '@app/utils'
 
 dayjs.locale(en)
 dayjs.extend(relativeTime)

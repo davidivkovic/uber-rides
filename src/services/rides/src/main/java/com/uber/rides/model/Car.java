@@ -29,6 +29,7 @@ public class Car {
     String model;
     short year;
     Type type;
+    double rating;
 
     public static final List<Type> availableTypes = List.of(
         new Type(Types.UBER_X, "UberX", 4, 1, "Cheap rides, just for you"),
@@ -37,6 +38,6 @@ public class Car {
     );
 
     public static Type getByType(Types type) {
-        return availableTypes.stream().filter(t -> t.type() == type).findFirst().orElse(null);
+        return availableTypes.stream().filter(t -> t.type().equals(type)).findFirst().orElse(null);
     }
 }

@@ -7,7 +7,6 @@ import lombok.Getter;
 import lombok.Setter;
 
 import com.uber.rides.model.Route;
-import com.uber.rides.model.Trip;
 import com.uber.rides.model.Trip.Status;
 import com.uber.rides.dto.user.UserDTO;
 

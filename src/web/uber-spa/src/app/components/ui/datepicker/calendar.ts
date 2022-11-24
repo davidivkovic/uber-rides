@@ -5,7 +5,7 @@ import dayjs from 'dayjs'
 import isBetween from 'dayjs/plugin/isBetween'
 import localeData from 'dayjs/plugin/localeData'
 
-import { classNames, computed } from 'src/app/utils'
+import { classNames, computed } from '@app/utils'
 
 dayjs.extend(isBetween)
 dayjs.extend(localeData)

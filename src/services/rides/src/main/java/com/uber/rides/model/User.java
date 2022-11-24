@@ -74,12 +74,13 @@ public class User implements UserDetails {
     boolean emailConfirmed;
     boolean blocked;
     boolean completedRegistration;
+    double rating;
     OTP confirmationCode;
     
     @OneToOne(fetch = FetchType.LAZY) UserUpdateRequest updateRequest;
     @OneToOne Car car;
     
-    @OneToMany @Builder.Default List<Route> favoriteRoutes = new ArrayList<>();
+    @ManyToMany @Builder.Default List<Route> favoriteRoutes = new ArrayList<>();
     
     @OneToMany(mappedBy = "driver") List<Trip> tripsAsDriver;
     @ManyToMany(mappedBy = "riders") List<Trip> tripsAsRider;
@@ -88,6 +89,10 @@ public class User implements UserDetails {
 
     public void addFavoriteRoute(Route route) {
         favoriteRoutes.add(route);
+    }
+
+    public void removeFavoriteRoute(Long routeId) {
+        favoriteRoutes.removeIf(route -> route.id.equals(routeId));
     }
 
     @Override

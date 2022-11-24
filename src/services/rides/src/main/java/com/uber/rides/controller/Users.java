@@ -25,6 +25,7 @@ import static com.speedment.jpastreamer.streamconfiguration.StreamConfiguration.
 
 import com.uber.rides.database.DbContext;
 import com.uber.rides.dto.user.UpdateRequest;
+import com.uber.rides.dto.user.UserDTO;
 import com.uber.rides.model.*;
 import com.uber.rides.model.User.Roles;
 import com.uber.rides.service.ImageStore;
@@ -62,11 +63,12 @@ public class Users extends Controller {
     @Secured({ Roles.DRIVER, Roles.RIDER, Roles.ADMIN })
     public Object get() {
 
-        var user = context.query().stream(
+        var user = context.readonlyQuery().stream(
                 of(User.class)
                 .joining(User$.updateRequest)
             )
             .filter(User$.id.equal(authenticatedUserId()))
+            .map(u -> mapper.map(u, UserDTO.class))
             .findFirst()
             .orElse(null);
         if (user == null) return badRequest(USER_NOT_EXIST);

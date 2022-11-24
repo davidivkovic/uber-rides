@@ -5,7 +5,6 @@ import business from './business/routes'
 import Layout from './layout'
 
 const routes: Routes = [
-
   {
     path: '',
     component: Layout,

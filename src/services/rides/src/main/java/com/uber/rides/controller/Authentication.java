@@ -72,7 +72,7 @@ public class Authentication extends Controller {
             user.setEmailConfirmed(true);
         }
         else {
-            return badRequest("Only administrators can register drivers.");
+            return badRequest("Only administrators can register administrators and drivers.");
         }
         
         db.persist(user);
@@ -105,7 +105,7 @@ public class Authentication extends Controller {
                 JWT.getJWT(user)
             );
         } catch (BadCredentialsException e) {
-            return badRequest("Invalid credentials");
+            return badRequest("The email and password combination is invalid.");
         }
     }
 
@@ -212,10 +212,14 @@ public class Authentication extends Controller {
         if (user == null) {
             return emailNotFound();
         }
+        
+        if (user.isEmailConfirmed()) {
+            return badRequest("This email has already been confirmed.");
+        }
 
         var otp = user.getConfirmationCode();
         if (otp == null || !otp.isValid(code, LocalDateTime.now())) {
-            return badRequest("Email confirmation code is invalid or expired.");
+            return badRequest("Email verification code is invalid or expired.");
         }
 
         user.setEmailConfirmed(true);
@@ -232,6 +236,10 @@ public class Authentication extends Controller {
         var user = userService.findByEmail(email);
         if (user == null) {
             return emailNotFound();
+        }
+
+        if (user.isEmailConfirmed()) {
+            return badRequest("This email has already been confirmed.");
         }
 
         user.setConfirmationCode(User.OTP.generate(LocalDateTime.now()));
