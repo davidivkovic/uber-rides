@@ -1,0 +1,31 @@
+version: '3.8'
+
+services:
+  # can be used for local development with hmr, a bit slower than native node
+  spa:
+    image: ${DOCKER_REGISTRY-}spa
+    build:
+      context: ./web/uber-spa
+      dockerfile: Dockerfile
+    ports:
+      - 4200:4200
+    volumes:
+      - ./web/uber-spa:/src
+      - /src/node_modules
+    tty: true
+    stdin_open: true
+
+  postgres:
+    image: postgres:15.1-alpine
+    restart: always
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=root
+    ports:
+      - 5432:5432
+    volumes:
+      - postgres:/var/lib/postgresql/data
+
+volumes:
+  postgres:
+    driver: local

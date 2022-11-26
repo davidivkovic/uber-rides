@@ -61,6 +61,8 @@ public class User implements UserDetails {
         
     }
 
+    public static final String DEFAULT_PFP = "default_pfp.png"; 
+
     @Id @GeneratedValue Long id;
     String role;
     String firstName;

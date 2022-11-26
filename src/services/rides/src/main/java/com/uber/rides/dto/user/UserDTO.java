@@ -17,10 +17,14 @@ public class UserDTO {
     static {
         mapper
         .typeMap(User.class, UserDTO.class)
-        .addMappings(mapper -> 
-            mapper
-                .using(c -> linkTo(methodOn(Users.class).getProfilePicture((String) c.getSource())).toString())
-                .map(User::getProfilePicture, UserDTO::setProfilePicture)
+        .addMappings(mapper -> mapper
+            .using(c -> {
+                var profilePicture = (String) c.getSource();
+                if (profilePicture == null) profilePicture = User.DEFAULT_PFP;
+                else if (profilePicture.startsWith("http")) return profilePicture;
+                return linkTo(methodOn(Users.class).getProfilePicture(profilePicture)).toString();
+            })
+            .map(User::getProfilePicture, UserDTO::setProfilePicture)
         );
     }
 

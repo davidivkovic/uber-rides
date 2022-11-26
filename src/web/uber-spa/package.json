@@ -29,6 +29,8 @@
     "@angular/cli": "~14.2.5",
     "@angular/compiler-cli": "^14.2.0",
     "@tailwindcss/forms": "^0.5.3",
+    "@types/facebook-js-sdk": "^3.3.6",
+    "@types/google-one-tap": "^1.2.2",
     "@types/jasmine": "~4.0.0",
     "autoprefixer": "^10.4.12",
     "jasmine-core": "~4.3.0",

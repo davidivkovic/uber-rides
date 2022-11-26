@@ -9,18 +9,18 @@ import { resource } from '@app/utils'
   standalone: true,
   imports: [NgIf, FormsModule],
   template: `
-    <form 
+    <form
       ngNativeValidate
       #form="ngForm"
-      (ngSubmit)="updateUser(form)"
+      (ngSubmit)="updateUser()"
       *ngIf="!user.loading || user?.value"
       class="w-full space-y-8 max-w-md"
     >
       <div class="flex space-x-3 items-center">
         <label for="files">
           <img
+            [src]="user.value.profilePicture" alt=""
             class="h-16 w-16 rounded-full cursor-pointer bg-zinc-100 object-cover"
-            [src]="img"
           />
         </label>
         <div>
@@ -91,6 +91,7 @@ import { resource } from '@app/utils'
           />
         </div>
       </div>
+      <p class="text-red-600 text-center text-sm">{{ error }}</p>
       <div class="flex justify-end space-x-3">
         <button *ngIf="form.dirty" (click)="cancel(form)" type="button" class="secondary">Cancel</button>
         <button class="primary float-right">Save changes</button>
@@ -100,26 +101,38 @@ import { resource } from '@app/utils'
 })
 export class Settings {
 
-  img: string | ArrayBuffer = 'https://upload.wikimedia.org/wikipedia/commons/9/99/Sample_User_Icon.png'
+  image: File
+  error = ''
   user = resource(users.getProfile)
 
   changeProfileImage = (fileEvent: Event) => {
-    console.log('img')
     const reader = new FileReader()
 
     reader.onload = e => {
-      this.img = e.target.result
+      this.user?.value && (this.user.value.profilePicture = e.target.result)
     }
 
-    const file = (fileEvent.target as HTMLInputElement).files[0]
-    reader.readAsDataURL(file)
-
-    console.log(this.img)
-    console.log(file)
+    this.image = (fileEvent.target as HTMLInputElement).files[0]
+    reader.readAsDataURL(this.image)
   }
 
-  updateUser = (from: NgForm) => {
-    notificationStore.show('Your profile has been successfully updated.')
+  updateUser = async () => {
+    try {
+      this.error = ''
+      await users.update(
+        {
+          firstName: this.user?.value?.firstName,
+          lastName: this.user?.value?.lastName,
+          city: this.user?.value?.city,
+          phoneNumber: this.user?.value?.phoneNumber
+        },
+        this.image
+      )
+      notificationStore.show('Your profile has successfully been updated.')
+    }
+    catch (error) {
+      this.error = error.message
+    }
   }
 
   cancel = (form: NgForm) => {

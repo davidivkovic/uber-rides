@@ -3,8 +3,6 @@ package com.uber.rides;
 import java.io.IOException;
 import java.util.Collections;
 
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 
@@ -21,6 +19,8 @@ import com.google.api.client.json.gson.GsonFactory;
 
 public class Utils {
 
+    private Utils() { }
+    
     /* Global Constants */
 
     public static final String USER_ID = "USER_ID";

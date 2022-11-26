@@ -1,9 +1,14 @@
 package com.uber.rides.controller;
 
 import java.io.IOException;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.net.http.HttpResponse.BodyHandlers;
 import java.security.GeneralSecurityException;
 import java.time.LocalDateTime;
-import java.util.LinkedHashMap;
+import java.util.Map;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
@@ -22,8 +27,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.client.HttpClientErrorException;
-import org.springframework.web.client.RestTemplate;
 
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken.Payload;
 
@@ -81,6 +84,7 @@ public class Authentication extends Controller {
         } 
 
         return ok();
+
     }
 
     @Transactional
@@ -107,23 +111,23 @@ public class Authentication extends Controller {
         } catch (BadCredentialsException e) {
             return badRequest("The email and password combination is invalid.");
         }
+        
     }
 
     @Transactional
     @PostMapping("/signin/google")
-    public Object googleSignIn(@RequestParam(name = "idToken") @NotBlank String token) {
+    public Object googleSignIn(@RequestParam(name = "token") @NotBlank String token) {
 
         try {
             var result = googleAuth.verify(token);
             if (result == null) return badRequest("Google Token is not valid.");
 
             Payload payload = result.getPayload();
-
             var user = userService.findByEmail(payload.getEmail());
             if (user == null) {
                 user = User
                     .builder()
-                    .email((String) payload.get("email"))
+                    .email(payload.getEmail())
                     .emailConfirmed(payload.getEmailVerified())
                     .profilePicture((String) payload.get("picture"))
                     .firstName((String) payload.get("given_name"))
@@ -137,9 +141,10 @@ public class Authentication extends Controller {
                 JWT.getJWT(user)
             );
 
-        } catch (GeneralSecurityException | IOException e) {
+        } catch (GeneralSecurityException | IOException | IllegalArgumentException e) {
             return badRequest("Google Authentication is not possible at this moment.");
         }
+        
     }
 
     @Transactional
@@ -147,15 +152,21 @@ public class Authentication extends Controller {
     @PostMapping("/signin/facebook")
     public Object facebookSignIn(
         @RequestParam(name = "userId") @NotBlank String userId,
-        @RequestParam(name = "accessToken") @NotBlank String token
+        @RequestParam(name = "token") @NotBlank String token
     ) {
-        if (!isValidAccessToken(token)) {
-            return badRequest("Invalid access token");
-        }
-        var url = "https://graph.facebook.com/%s?fields=id,email,first_name,last_name&access_token=%s".formatted(userId, token);
+        var url = "https://graph.facebook.com/" + userId + "?fields=email,first_name,last_name&access_token=" + token;
         try {
-            var response = new RestTemplate().getForEntity(url, Object.class);
-            var payload = (LinkedHashMap<String, String>) response.getBody();
+            Map<String, String> payload = HttpClient.newHttpClient().sendAsync(
+                HttpRequest.newBuilder(new URI(url)).GET().build(),
+                BodyHandlers.ofString()
+            )
+            .thenApply(HttpResponse::body)
+            .thenApply(body -> {
+                try { return jsonMapper.readValue(body, Map.class); } 
+                catch (Exception e) { return null; }
+            })
+            .get();
+
             if (payload == null) {
                 return badRequest("An error occurred");
             }
@@ -179,29 +190,10 @@ public class Authentication extends Controller {
                 JWT.getJWT(user)
             );
         }
-        catch (HttpClientErrorException.BadRequest e) {
-            return badRequest("Invalid access token");
+        catch (Exception e) {
+            return badRequest("Facebook Authentication is not possible at this moment.");
         }
-    }
 
-    @SuppressWarnings(UNCHECKED)
-    private boolean isValidAccessToken(String token) {
-        var appAccessToken = getAppAccessToken();
-        if (appAccessToken == null) return false;
-        var url = "https://graph.facebook.com/debug_token?input_token=%s&access_token=%s".formatted(token, appAccessToken);
-        var response = new RestTemplate().getForEntity(url, Object.class);
-        var payload = (LinkedHashMap<String, LinkedHashMap<String, String>>) response.getBody();
-        if (payload == null) return false;
-        return !payload.get("data").containsKey("error");
-    }
-
-    @SuppressWarnings(UNCHECKED)
-    private String getAppAccessToken() {
-        var url = "https://graph.facebook.com/oauth/access_token?client_id=1762946884038679&client_secret=dd81ed25eddb336b08a544644d8c9658&grant_type=client_credentials";
-        var response = new RestTemplate().getForEntity(url, Object.class);
-        var payload = (LinkedHashMap<String, String>) response.getBody();
-        if (payload == null) return null;
-        return payload.get("access_token");
     }
 
     @Transactional

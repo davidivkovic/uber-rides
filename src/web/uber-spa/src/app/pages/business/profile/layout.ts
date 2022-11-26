@@ -7,13 +7,11 @@ import Banner from '@app/components/common/banner'
   standalone: true,
   imports: [RouterOutlet, ProfileSidebar, Banner],
   template: `
-    <div class="flex h-full w-[1265px] mx-auto mt-10 space-x-10">
+    <div class="flex w-[1265px] mx-auto pt-10 space-x-10">
       <ProfileSidebar></ProfileSidebar>
-      <div class="flex justify-center w-full">
-        <router-outlet></router-outlet>
-      </div>
+      <router-outlet></router-outlet>
       <Banner></Banner>
     </div>
   `
 })
-export default class Layout {}
+export default class Layout { }

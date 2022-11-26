@@ -8,6 +8,7 @@ class NotificationData {
 }
 
 class NotificationStore {
+
   @state
   notifications: NotificationData[] = []
 
@@ -25,6 +26,11 @@ class NotificationStore {
   @action
   close(id: string) {
     this.notifications = this.notifications.filter(d => d.id != id)
+  }
+
+  @action
+  closeAll() {
+    this.notifications.length = 0
   }
 }
 

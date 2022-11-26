@@ -7,11 +7,13 @@ import NotificationOutlet from '@app/components/ui/notification/notificationOutl
   standalone: true,
   imports: [Header, NotificationOutlet, RouterOutlet],
   template: `
-    <Header></Header>
-    <NotificationOutlet></NotificationOutlet>
-    <div class="flex justify-center" style="min-height: calc(100vh - 64px);">
-      <router-outlet></router-outlet>
+    <div class="h-screen flex flex-col">
+      <Header></Header>
+      <NotificationOutlet></NotificationOutlet>
+      <div class="flex-1">
+        <router-outlet></router-outlet>
+      </div>
     </div>
   `
 })
-export default class Layout {}
+export default class Layout { }

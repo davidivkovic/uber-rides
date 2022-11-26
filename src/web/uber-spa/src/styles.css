@@ -4,26 +4,26 @@
 @tailwind utilities;
 
 @layer base {
-  [type='text'],
-  [type='email'],
-  [type='url'],
-  [type='password'],
-  [type='number'],
-  [type='date'],
-  [type='datetime-local'],
-  [type='month'],
-  [type='search'],
-  [type='tel'],
-  [type='time'],
-  [type='week'],
+  [type="text"],
+  [type="email"],
+  [type="url"],
+  [type="password"],
+  [type="number"],
+  [type="date"],
+  [type="datetime-local"],
+  [type="month"],
+  [type="search"],
+  [type="tel"],
+  [type="time"],
+  [type="week"],
   [multiple],
   textarea,
   select {
     @apply w-full text-[15px] rounded-md h-11 px-4 border-0 bg-[#eeeeee] outline-none focus:border-black focus:ring-black focus:ring-2 focus:bg-gray-50 placeholder:text-gray-500;
   }
 
-  [type='checkbox'],
-  [type='radio'] {
+  [type="checkbox"],
+  [type="radio"] {
     @apply border-gray-300 rounded text-black focus:ring-0 ring-offset-0;
   }
 
@@ -50,12 +50,13 @@
     margin: 0; /* <-- Apparently some margin are still there even though it's hidden */
   }
 
-  input[type='number'] {
+  input[type="number"] {
     -moz-appearance: textfield; /* Firefox */
   }
 
   router-outlet + * {
     width: 100%;
+    flex: 1 1 0%;
   }
 
   ::-webkit-scrollbar {

@@ -6,14 +6,17 @@ import { CloseButton } from '../base/closeButton'
   selector: 'Notification',
   imports: [CloseButton],
   template: `
-    <div class="relative w-full bg-black text-white h-min px-8 py-5 text-[15px]">
-      <ng-content></ng-content>
-      <CloseButton 
-        (click)="closed.emit()" 
-        [small]="true" 
-        class="absolute flex right-7 inset-y-0"
-      >
-      </CloseButton>
+    <div class="w-full bg-[#f1f1f1] text-black h-min py-5 text-[15px]">
+      <div class="relative max-w-[1280px] flex items-center justify-between mx-auto px-2">
+        <p>
+          <ng-content></ng-content>
+        </p>
+        <CloseButton 
+          (click)="closed.emit()" 
+          [small]="true" 
+        >
+        </CloseButton>
+      </div>
     </div>
   `
 })

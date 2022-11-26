@@ -3,7 +3,10 @@
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "outDir": "./out-tsc/app",
-    "types": []
+    "types": [
+      "facebook-js-sdk",
+      "google-one-tap"
+    ]
   },
   "files": [
     "src/main.ts",

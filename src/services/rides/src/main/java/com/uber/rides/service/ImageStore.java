@@ -2,12 +2,10 @@ package com.uber.rides.service;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.util.UUID;
 
-import javax.servlet.ServletContext;
-
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
@@ -16,13 +14,20 @@ import org.springframework.web.multipart.MultipartFile;
 @Component
 public class ImageStore {
 
-    public static final String STORAGE_PATH = new FileSystemResource("").getFile().getPath() + "../../../images/";
+    String storagePath;
 
-    @Autowired ServletContext context;
+    private ImageStore() throws IOException, SecurityException, NullPointerException, InvalidPathException {
+        storagePath = new File(
+            Path.of(
+                new FileSystemResource("").getFile().getPath(),
+                "../../../images/"
+            )
+            .toString()
+        )
+        .getCanonicalPath();
+    }
 
-    private ImageStore() {}
-
-    public static String persist(MultipartFile image) {
+    public String persist(MultipartFile image) {
 
         try {
             var contentType = image.getContentType();
@@ -33,7 +38,7 @@ public class ImageStore {
             if (!isPng && !isJpeg) return null;
 
             var filename = UUID.randomUUID().toString().replace("-", "") + (isPng ? ".png" : ".jpeg");
-            var file = new File(Path.of(STORAGE_PATH, filename).toAbsolutePath().toString());
+            var file = new File(Path.of(storagePath, filename).toAbsolutePath().toString());
 
             file.mkdirs();
             image.transferTo(file);
@@ -46,19 +51,20 @@ public class ImageStore {
 
     }
 
-    public static String getPath(String imageId) {
+    public String getPath(String imageId) {
 
         try {
-            String normalizedPath = Path.of(STORAGE_PATH, imageId).normalize().toString();
-            if (!normalizedPath.startsWith(STORAGE_PATH)) return null;
+            String normalizedPath = Path.of(storagePath, imageId).normalize().toString();
+            if (!normalizedPath.startsWith(storagePath)) return null;
 
             var file = new File(normalizedPath);
-            if (file.isAbsolute() ||
-                !file.getCanonicalPath().equals(file.getAbsolutePath()) ||
-                !file.exists()
-            ) return null;
+            var canonicalPath = file.getCanonicalPath();
 
-            return file.getAbsolutePath();
+            if (!canonicalPath.startsWith(storagePath) ||
+                !file.exists()
+            ) return null;  
+
+            return canonicalPath;
         } 
         catch (Exception e) {
             return null;

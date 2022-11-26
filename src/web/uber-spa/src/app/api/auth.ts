@@ -13,14 +13,13 @@ const signUp = async (data: {
   role: string
 }) => {
   const response = await fetch(
-    basePath + '/register', 
+    basePath + '/register',
     {
       method: 'POST',
       body: JSON.stringify(data)
     }
   )
-  if (response.ok) return
-  throw new Error(await response.text())
+  if (!response.ok) throw new Error(await response.text())
 }
 
 const confirmEmail = async (data: { email: string, code: string }) => {
@@ -30,8 +29,7 @@ const confirmEmail = async (data: { email: string, code: string }) => {
       method: 'POST'
     }
   )
-  if (response.ok) return
-  throw new Error(await response.text())
+  if (!response.ok) throw new Error(await response.text())
 }
 
 const resendConfirmation = async (email: string) => {
@@ -60,9 +58,41 @@ const login = async (data: { email: string, password: string }) => {
   userStore.setUser(json.user, json.accessToken)
 }
 
+const googleLogin = async (token: string) => {
+  const response = await fetch(
+    basePath + '/signin/google?' + new URLSearchParams({ token }).toString(),
+    {
+      method: 'POST'
+    }
+  )
+  if (!response.ok) throw new Error(await response.text())
+
+  const json = await response.json()
+  userStore.setUser(json.user, json.accessToken)
+
+  return json.user.completedRegistration
+}
+
+const facebookLogin = async (userId: string, token: string) => {
+  const response = await fetch(
+    basePath + '/signin/facebook?' + new URLSearchParams({ userId, token }).toString(),
+    {
+      method: 'POST'
+    }
+  )
+  if (!response.ok) throw new Error(await response.text())
+
+  const json = await response.json()
+  userStore.setUser(json.user, json.accessToken)
+
+  return json.user.completedRegistration
+}
+
 export default {
   signUp,
   confirmEmail,
   resendConfirmation,
-  login
+  login,
+  googleLogin,
+  facebookLogin
 }

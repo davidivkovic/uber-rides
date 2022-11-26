@@ -27,8 +27,7 @@ class UserStore {
     return Object.keys(this.user).length !== 0
   }
 
-  @computed
-  get accessToken() {
+  accessToken() {
     return localStorage.getItem(tokenKey)
   }
 

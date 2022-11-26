@@ -1,5 +1,6 @@
 import { Component } from '@angular/core'
 import { NgComponentOutlet, NgForOf } from '@angular/common'
+import { Router } from '@angular/router'
 import { notificationStore } from '@app/stores'
 import { Notification } from './'
 
@@ -19,6 +20,10 @@ import { Notification } from './'
     </div>
   `
 })
-export default class NotificationOutlet  {
+export default class NotificationOutlet {
   notificationStore = notificationStore
+
+  constructor(public router: Router) {
+    router.events.subscribe(() => notificationStore.closeAll())
+  }
 }

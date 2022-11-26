@@ -19,49 +19,46 @@ import { userStore } from '@app/stores/userStore'
             />
           </a>
           <div>
-            <button routerLink="/" class="primary rounded-3xl px-3 py-2">
+            <a routerLink="/" class="primary rounded-3xl px-3 py-2 text-white">
               Home
-            </button>
+            </a>
             <button class="primary rounded-3xl px-3 py-2">Live support</button>
           </div>
         </div>
-        <div *ngIf="userStore.isAuthenticated; else loginButtons" class="space-x-2">
+        <div *ngIf="userStore.isAuthenticated" class="space-x-2">
           <div class="flex space-x-2">
-            <button
+            <a
               routerLink="profile/settings"
-              class="primary rounded-3xl px-3 py-2"
+              class="primary rounded-3xl px-3 py-2 text-white"
             >
               Settings
-            </button>
+            </a>
             <button (click)="logout()" class="primary rounded-3xl px-3 py-2">
               Sign out
             </button>
           </div>
         </div>
-        <ng-template #loginButtons>
-          <div class="space-x-2">
-            <button
-              routerLink="/auth/login"
-              class="primary rounded-3xl px-3 py-2"
-            >
-              Log in
-            </button>
-            <button
-              routerLink="/auth/signup"
-              class="secondary rounded-3xl px-3 py-2"
-            >
-              Sign up
-            </button>
-          </div>
-        </ng-template>
+        <div *ngIf="!userStore.isAuthenticated" class="space-x-2">
+          <button
+            routerLink="/auth/login"
+            class="primary rounded-3xl px-3 py-2"
+          >
+            Log in
+          </button>
+          <button
+            routerLink="/auth/signup"
+            class="secondary rounded-3xl px-3 py-2"
+          >
+            Sign up
+          </button>
+        </div>
       </div>
-    </div>`   
+    </div>
+  `
 })
 
 export default class Header {
-  isAuthenticated = false
   userStore = userStore
-
   constructor(private router: Router) { }
 
   logout = () => {

@@ -2,6 +2,7 @@ package com.uber.rides.controller;
 
 import java.time.LocalDateTime;
 
+import javax.servlet.ServletContext;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
 
@@ -9,6 +10,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.MediaType;
 import org.springframework.security.access.annotation.Secured;
 import org.springframework.transaction.annotation.Transactional;
@@ -39,6 +41,8 @@ public class Users extends Controller {
     static final long PAGE_SIZE = 8;
 
     @Autowired DbContext context;
+    @Autowired ServletContext servlet;
+    @Autowired ImageStore images;
 
     @ExceptionHandler({ MaxUploadSizeExceededException.class })
     public Object handleFilesizeExceeded() {
@@ -49,12 +53,18 @@ public class Users extends Controller {
         path = "/pictures/{id}",
         produces = { MediaType.IMAGE_PNG_VALUE, MediaType.IMAGE_JPEG_VALUE }
     )
-    public Object getProfilePicture(@PathVariable("id") @NotBlank String imageId) {
+    public Object getProfilePicture(@PathVariable("id") @NotBlank String pictureId) {
 
-        var imagePath = ImageStore.getPath(imageId);
-        if (imagePath == null) return notFound();
+        if (pictureId.equals(User.DEFAULT_PFP)) {
+            return new InputStreamResource(
+                getClass().getResourceAsStream("/images/" + User.DEFAULT_PFP)
+            );
+        }
 
-        return new FileSystemResource(imagePath);
+        var picturePath = images.getPath(pictureId);
+        if (picturePath == null) return notFound();
+
+        return new FileSystemResource(picturePath);
 
     }
 
@@ -92,17 +102,21 @@ public class Users extends Controller {
         if (user == null) return badRequest(USER_NOT_EXIST);
 
         var updateRequest = user.getUpdateRequest();
-        if (updateRequest == null) updateRequest = new UserUpdateRequest();
+        if (updateRequest == null) {
+            updateRequest = mapper.map(user, UserUpdateRequest.class);
+        }
 
         mapper.map(request, updateRequest);
         updateRequest.setRequestedAt(LocalDateTime.now());
 
         var image = request.getProfilePictureFile();
         if (image != null && !image.isEmpty()) {
-            var imageName = ImageStore.persist(image);
-            if (imageName == null) return badRequest("Accepted image extensions are .PNG and .JPEG.");
+            var imageName = images.persist(image);
+            if (imageName == null) return badRequest("Accepted picture extensions are .PNG and .JPEG.");
             
             updateRequest.setProfilePicture(imageName);
+        } else {
+            updateRequest.setProfilePicture(user.getProfilePicture());
         }
 
         if (authenticatedUserRole().equals(Roles.DRIVER)) {

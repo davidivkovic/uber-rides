@@ -65,7 +65,7 @@ export class EmailVerification {
   email = ''
   error = ''
 
-  constructor(public rotuer: Router, public route: ActivatedRoute) {}
+  constructor(public rotuer: Router, public route: ActivatedRoute) { }
 
   ngOnInit(): void {
     this.route.paramMap.subscribe(params => {
@@ -105,7 +105,7 @@ export class EmailVerification {
     if (!form.valid) return
     const code = Object.values(form.value).join('')
     try {
-      await auth.confirmEmail({ email: this.email, code})
+      await auth.confirmEmail({ email: this.email, code })
       dialogStore.openDialog(
         CodeStatusDialog,
         {
@@ -152,27 +152,17 @@ export class EmailVerification {
   standalone: true,
   imports: [NgIf, CloseButton],
   template: `
-    <div class="space-y-5 px-6 py-5 max-w-md text-center">
-      <CloseButton (click)="close()" class="absolute right-2 top-2"></CloseButton>
+    <div class="space-y-5 p-4 max-w-md">
       <div class="space-y-2">
-        <svg 
-          *ngIf="data.props?.success" 
-          class="inline-flex justify-center" 
-          width="72" height="72" viewBox="0 0 24 24" stroke-width="1" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"
-        >
-          <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
-          <circle cx="12" cy="12" r="9"></circle>
-          <path d="M9 12l2 2l4 -4"></path>
-        </svg>
         <h2 class="text-2xl font-normal">
           {{ data.props.title }}
         </h2>
         <p class="text-gray-800">{{ data.props.body }}</p>
       </div>
-      <form method="dialog" class="flex justify-center">
+      <form method="dialog" class="flex justify-end">
         <button type="button" (click)="close('ok')" class="primary mt-3">Continue</button>
       </form>
     </div>
   `
 })
-class CodeStatusDialog extends Dialog {}
+class CodeStatusDialog extends Dialog { }

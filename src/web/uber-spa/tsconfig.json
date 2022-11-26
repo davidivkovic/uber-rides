@@ -4,7 +4,9 @@
   "compilerOptions": {
     "baseUrl": "src",
     "paths": {
-      "@app/*": ["app/*"]
+      "@app/*": [
+        "app/*"
+      ]
     },
     "outDir": "./dist/out-tsc",
     "esModuleInterop": true,

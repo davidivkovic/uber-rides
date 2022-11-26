@@ -13,7 +13,6 @@ public class UpdateRequest {
 
     @NotBlank String firstName;
     @NotBlank String lastName;
-    @NotBlank String email;
     @NotBlank String city;
     @NotBlank String phoneNumber;
     MultipartFile profilePictureFile;

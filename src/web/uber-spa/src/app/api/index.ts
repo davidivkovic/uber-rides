@@ -3,7 +3,6 @@ import { userStore } from '@app/stores'
 const baseUrl = 'http://localhost:8000'
 
 const fetch = (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
-  console.log(input)
   if (typeof input === 'string' && !input.startsWith('http') && input.startsWith('/')) {
     input = baseUrl + input
   }
@@ -14,10 +13,10 @@ const fetch = (input: RequestInfo | URL, init?: RequestInit): Promise<Response> 
       ...init.headers
     }
   }
-  
+
   return window.fetch(input, {
-    headers: { 
-      Authorization: `Bearer ${userStore.accessToken}`,
+    headers: {
+      Authorization: `Bearer ${userStore.accessToken()}`,
       ...init?.headers
     },
     ...init

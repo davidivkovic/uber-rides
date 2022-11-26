@@ -14,7 +14,7 @@ import { RouterModule } from '@angular/router'
       />
       <div>
         <h2 class="text-xl">Get a ride in minutes</h2>
-        <p class="text-gray-500">Book an Uber from a web browser, no app installation required.</p>
+        <p class="text-gray-500 text-[15px]">Book an Uber from a web browser, no app installation required.</p>
       </div>
       <button routerLink="/" class="primary">Request a ride</button>
     </div>

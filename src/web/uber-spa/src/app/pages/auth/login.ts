@@ -1,9 +1,9 @@
 import { NgIf } from '@angular/common'
 import { Component } from '@angular/core'
 import { NgForm, FormsModule } from '@angular/forms'
-import SocialMedia from '../auth/components/socialMedia'
-import { userStore } from '@app/stores/userStore'
 import { Router, RouterModule } from '@angular/router'
+import { userStore } from '@app/stores/userStore'
+import SocialMedia from '../auth/components/socialMedia'
 import auth from '@app/api/auth'
 
 @Component({
@@ -74,7 +74,7 @@ export class Index {
   login = async (form: NgForm) => {
     this.error = ''
     if (!form.valid) return
-    try{
+    try {
       await auth.login({
         email: form.value.email,
         password: form.value.password

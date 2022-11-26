@@ -8,12 +8,6 @@ import { resource } from '@app/utils'
   imports: [RouterModule, NgIf],
   template: `
     <div class="w-full">
-      <div *ngIf="user.loading">Loading...</div>
-      <div *ngIf="user.value">
-        <div> {{ user.value.title }} {{ user.value.description }}</div>
-      </div>
-      <div *ngIf="user.error">{{ user.error.message }}</div>
-      <button *ngIf="!user.loading" (click)="user.refetch()">Reload Data</button>
       <!-- <img
         alt="Cover image"
         class="h-[660px] w-full object-cover"
@@ -74,16 +68,4 @@ import { resource } from '@app/utils'
     </div>
   `
 })
-export default class Index {
-
-  getUsers = async () => {
-    const result = await fetch('https://dummyjson.com/productsa/1')
-    if(result.ok) {
-      return await result.json()
-    }
-    
-    throw new Error('lmao')
-  }
-
-  user = resource(this.getUsers)
-}
+export default class Index { }

@@ -6,13 +6,10 @@ import Footer from '../../components/common/footer'
   standalone: true,
   imports: [RouterOutlet, Footer],
   template: `
-    <div
-      class="flex justify-center"
-      style="min-height: calc(100vh - 64px - 56px);"
-    >
+    <div class="flex flex-col h-full">
       <router-outlet></router-outlet>
+      <Footer></Footer>
     </div>
-    <Footer></Footer>
   `
 })
-export default class Layout {}
+export default class Layout { }
