@@ -7,10 +7,10 @@ const routes: Routes = [
     component: Layout,
     children: [
       {
-        path: 'settings', loadComponent: () => import('./settings').then(m => m.Settings)
+        path: 'settings', loadComponent: () => import('./settings')
       },
       {
-        path: 'rides', loadComponent: () => import('./rides').then(m => m.Rides)
+        path: 'rides', loadComponent: () => import('./rides')
       }
     ]
   }

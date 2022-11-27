@@ -19,7 +19,7 @@
   [multiple],
   textarea,
   select {
-    @apply w-full text-[15px] rounded-md h-11 px-4 border-0 bg-[#eeeeee] outline-none focus:border-black focus:ring-black focus:ring-2 focus:bg-gray-50 placeholder:text-gray-500;
+    @apply w-full text-[15px] transition rounded-lg h-11 px-4 border-0 bg-[#eeeeee] outline-none focus:border-black focus:ring-black focus:ring-2 focus:bg-gray-50 placeholder:text-gray-500;
   }
 
   [type="checkbox"],
@@ -74,4 +74,13 @@
     border: 4px solid transparent;
     background-clip: padding-box;
   }
+}
+
+.gmnoprint .gm-style-mtc,
+.gmnoprint a,
+.gmnoprint span,
+.gm-style-cc,
+.gm-svpc,
+.gm-control-active.gm-fullscreen-control {
+  display: none;
 }

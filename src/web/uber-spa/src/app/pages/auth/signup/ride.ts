@@ -100,13 +100,14 @@ import auth from '@app/api/auth'
     </div>
   `
 })
-export class Index {
+export default class Index {
   error = ''
   constructor(public router: Router) { }
 
   signUp = async (form: NgForm) => {
     if (!form.valid) return
     try {
+      this.error = ''
       await auth.signUp({
         firstName: form.value.firstName,
         lastName: form.value.lastName,

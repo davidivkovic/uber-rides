@@ -1,1 +1,0 @@
-// Google map view, narucivanje voznje

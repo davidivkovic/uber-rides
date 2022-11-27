@@ -2,6 +2,6 @@ import { Component } from '@angular/core'
 
 @Component({
   standalone: true,
-  template: `<div>Drive signup</div>`
+  template: `<div>Profile rides</div>`
 })
-export default class Index { }
+export default class Rides { }

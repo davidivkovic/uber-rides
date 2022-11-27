@@ -1,4 +1,4 @@
-import { Routes } from "@angular/router";
+import { Routes } from '@angular/router'
 import Layout from "./layout"
 import profile from './profile/routes'
 

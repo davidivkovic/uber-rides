@@ -27,6 +27,21 @@ class UserStore {
     return Object.keys(this.user).length !== 0
   }
 
+  @computed
+  get isAdmin() {
+    return this.user?.role === 'ROLE_ADMIN'
+  }
+
+  @computed
+  get isDriver() {
+    return this.user?.role === 'ROLE_DRIVER'
+  }
+
+  @computed
+  get isRider() {
+    return this.user?.role === 'ROLE_RIDER'
+  }
+
   accessToken() {
     return localStorage.getItem(tokenKey)
   }

@@ -24,7 +24,7 @@ import { resource } from '@app/utils'
           />
         </label>
         <div>
-          <div class="text-xl">{{ user.value?.firstName }} {{ user.value?.lastName }}</div>
+          <h3 class="text-2xl">{{ user.value?.firstName }} {{ user.value?.lastName }}</h3>
           <div>
             <input
               type="file"
@@ -43,7 +43,7 @@ import { resource } from '@app/utils'
         </div>
       </div>
       <div class="space-y-5">
-        <div class="">
+        <div>
           <h2 class="text-xl">Personal information</h2>
           <p class="text-gray-500 text-sm">Update your personal information</p>
         </div>
@@ -99,7 +99,7 @@ import { resource } from '@app/utils'
     </form>
   `
 })
-export class Settings {
+export default class Settings {
 
   image: File
   error = ''

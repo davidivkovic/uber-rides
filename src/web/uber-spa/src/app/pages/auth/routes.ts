@@ -6,22 +6,22 @@ const routes: Routes = [
     children: [
       {
         path: 'login',
-        loadComponent: () => import('./login').then(m => m.Index)
+        loadComponent: () => import('./login')
       },
       {
         path: 'signup',
         children: [
           {
             path: '',
-            loadComponent: () => import('./signup/ride').then(m => m.Index)
+            loadComponent: () => import('./signup/ride')
           },
           {
             path: ':email',
-            loadComponent: () => import('./signup/[email]').then(m => m.EmailVerification)
+            loadComponent: () => import('./signup/[email]')
           },
           {
             path: 'drive',
-            loadComponent: () => import('./signup/drive').then(m => m.Index)
+            loadComponent: () => import('./signup/drive')
           }
         ]
       }

@@ -65,7 +65,7 @@ import auth from '@app/api/auth'
     </div>
   `
 })
-export class Index {
+export default class Index {
   error: string = ''
   userStore = userStore
 

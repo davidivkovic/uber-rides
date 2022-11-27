@@ -2,9 +2,9 @@ type Primitive = number | boolean | string
 type Reference = object | []
 type ShallowSource = () => Primitive | Reference
 
-function computed<T>(source: ShallowSource, getter: () => T): () => T
-function computed<T>(sources: ShallowSource[], getter: () => T): () => T
-function computed<T>(sources: any, getter: () => T): () => T {
+function computed<T>(source: ShallowSource, getter: (previous?: T) => T): () => T
+function computed<T>(sources: ShallowSource[], getter: (previous?: T) => T): () => T
+function computed<T>(sources: any, getter: (previous?: T) => T): () => T {
   if (sources instanceof Function) sources = [sources]
   let cache: T
   if ((sources as ShallowSource[]).some(s => s() !== undefined)) {
@@ -20,7 +20,7 @@ function computed<T>(sources: any, getter: () => T): () => T {
         dirty = true
       }
     }
-    if (dirty) cache = getter()
+    if (dirty) cache = getter(cache)
     return cache
   }
   return update

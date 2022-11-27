@@ -1,44 +1,32 @@
 @font-face {
-  font-family: UberMove;
-  src: url("/assets/fonts/UberMove-Regular.otf");
-  font-weigth: normal;
-}
-
-@font-face {
-  font-family: UberMove;
-  src: url("/assets/fonts/UberMove-Regular.woff2");
-  font-weigth: 600;
-}
-
-@font-face {
-  font-family: UberMove;
-  src: url("/assets/fonts/UberMove-Bold.woff2");
-  font-weigth: bold;
+  font-family: UberMoveText;
+  font-display: fallback;
+  font-weigth: 400;
+  src: url("assets/fonts/UberMoveText-Regular.woff2") format("woff2");
 }
 
 @font-face {
   font-family: UberMoveText;
-  src: url("/assets/fonts/UberMoveText-Regular.woff2");
-  font-weigth: 600;
+  font-display: fallback;
+  font-weigth: 500;
+  src: url("assets/fonts/UberMoveText-Medium.woff2") format("woff2");
 }
 
 @font-face {
-  font-family: UberMoveText;
-  src: url("/assets/fonts/UberMoveText-Medium.woff2");
+  font-family: UberMove;
+  font-display: fallback;
   font-weigth: 700;
+  src: url("assets/fonts/UberMove-Bold.woff2") format("woff2");
 }
 
 * {
-  font-family: UberMoveText;
-}
-
-. {
-  font-family: -apple-system, BlinkMacSystemFont, "SegoeUI", Roboto, Helvetica,
-    Arial, sans-serif, "AppleColorEmoji", "SegoeUIEmoji", "SegoeUISymbol";
+  font-family: UberMoveText, system-ui, "Helvetica Neue", Helvetica, Arial,
+    sans-serif;
 }
 
 h1,
 h2,
 h3 {
-  font-family: UberMove;
+  font-family: UberMove, UberMoveText, system-ui, "Helvetica Neue", Helvetica,
+    Arial, sans-serif;
 }

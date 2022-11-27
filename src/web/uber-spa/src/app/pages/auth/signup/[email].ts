@@ -58,7 +58,7 @@ import auth from '@app/api/auth'
     </div>
   `
 })
-export class EmailVerification {
+export default class EmailVerification {
   @ViewChild('verificationForm') codeForm: NgForm
   @ViewChild('dialog') dialog: ElementRef<HTMLDialogElement>
 
@@ -73,7 +73,7 @@ export class EmailVerification {
     })
   }
 
-  ngForIdentity = (index: number, item: any) => item.index;
+  ngForIdentity = (index: number, item: any) => item.index
 
   handleInput = (e: KeyboardEvent) => {
     const input = e.target as HTMLInputElement

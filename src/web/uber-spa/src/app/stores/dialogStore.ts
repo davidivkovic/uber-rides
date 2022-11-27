@@ -11,11 +11,16 @@ class DialogData {
 }
 
 class DialogStore {
+  
   @state
   dialogs: DialogData[] = []
 
-  @action
-  openDialog(component: typeof Dialog, props: {}, onclose: (param: any) => void = () => { }) {
+  @action 
+  openDialog(
+    component: typeof Dialog,
+    props: {},
+    onclose: (param: any) => void = () => { }
+  ) {
     const id = `dialog-${this.dialogs.length}`
     this.dialogs.push({
       id,

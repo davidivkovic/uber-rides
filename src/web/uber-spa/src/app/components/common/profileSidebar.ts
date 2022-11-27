@@ -12,8 +12,8 @@ import { NgFor } from '@angular/common'
         *ngFor="let option of options; trackBy: trackByName"
         [routerLink]="option.link"
         [routerLinkActiveOptions]="{exact: true}"
-        routerLinkActive="border-l-4 border-black bg-zinc-100"
-        class="w-full block p-3 pl-6 cursor-pointer transition hover:bg-[#f0f0f1]"
+        routerLinkActive="border-l-4 border-black bg-[#f1f1f1]"
+        class="w-full block p-3 pl-6 cursor-pointer transition hover:bg-[#f9f9f9]"
       >
         {{ option.name }}
       </a>
@@ -34,10 +34,10 @@ export default class ProfileSidebar {
       name: 'Settings',
       link: 'settings'
     },
-     {
+    {
       name: 'Change password',
       link: '/'
-     }
+    }
   ]
 
   trackByName = (item: any) => item.name;
