@@ -5,8 +5,11 @@
     "outDir": "./out-tsc/app",
     "types": [
       "facebook-js-sdk",
-      "google-one-tap"
-    ]
+      "google-one-tap",
+      "google.maps"
+    ],
+    "resolveJsonModule": true,
+    "esModuleInterop": true
   },
   "files": [
     "src/main.ts",

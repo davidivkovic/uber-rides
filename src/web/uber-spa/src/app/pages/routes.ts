@@ -24,8 +24,8 @@ const routes: Routes = [
           return null
         },
         loadChildren: async () => [
-          ... await import('./(rides)/routes').then($ => $.default),
-          ... await import('./(business)/routes').then($ => $.default)
+          ... await import('./(rides)/routes').then(m => m.default),
+          ... await import('./(business)/routes').then(m => m.default)
         ] as Routes
       },
       ...auth,

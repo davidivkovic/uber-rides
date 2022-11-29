@@ -1,8 +1,13 @@
 import jailbreak from './jailbreak'
 import mapStyles from './mapStyles.json'
+import icons from './icons'
 
 const scriptName = 'google-maps-script'
-let map, placesService, elementId
+let map: google.maps.Map
+let autocomplete: google.maps.places.AutocompleteService
+let geocoder: google.maps.Geocoder
+let places: google.maps.places.PlacesService
+let elementId: string
 
 const initMap = () => {
   map = new google.maps.Map(document.getElementById(elementId), {
@@ -18,15 +23,20 @@ const initMap = () => {
     // },
     styles: mapStyles
   })
-  placesService = new google.maps.places.PlacesService(map)
+  console.log('[GOOGLE MAPS] Initialized')
+  places = new google.maps.places.PlacesService(map)
+  autocomplete = new google.maps.places.AutocompleteService()
+  geocoder = new google.maps.Geocoder()
+  autocomplete.getPlacePredictions({ input: 'Test' })
 }
 
 const script = Object.assign(
   document.createElement('script'),
   {
     id: scriptName,
-    src: 'https://maps.googleapis.com/maps/api/js?key=AIzaSyB41DRUbKWJHPxaFjMAwdrzWzbVKartNGg&libraries=places,visualization,directions&language=en',
+    src: 'https://maps.googleapis.com/maps/api/js?key=AIzaSyCkUOdZ5y7hMm0yrcCQoCvLwzdM6M8s5qk&libraries=places,directions&language=en',
     async: true,
+    defer: true,
     onload: initMap
   }
 )
@@ -37,7 +47,7 @@ const init = htmlElementId => {
     jailbreak({
       poiClickHandler: placeId => {
         console.log(placeId)
-        // placesService.getDetails(
+        // places.getDetails(
         //   { placeId: e.placeId },
         //   (place, status) => {
         //     console.log({ place, status })
@@ -52,5 +62,4 @@ const init = htmlElementId => {
   }
 }
 
-
-export { init }
+export { init, autocomplete, geocoder, icons }
