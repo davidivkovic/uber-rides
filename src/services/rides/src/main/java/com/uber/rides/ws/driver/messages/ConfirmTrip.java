@@ -9,6 +9,6 @@ public class ConfirmTrip implements Message<DriverData> {
 
     @Override
     public void handle(DriverData sender) {
-        
+        /* Implement */
     }
 }

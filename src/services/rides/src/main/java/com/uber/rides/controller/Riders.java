@@ -32,7 +32,7 @@ public class Riders extends Controller {
 
     @Transactional
     @GetMapping("/")
-    @Secured({ Roles.ADMIN })
+    @Secured({ Roles.ADMIN, Roles.RIDER })
     public Object getRiders(@RequestParam int page, @RequestParam String query) {
 
         return context.query()

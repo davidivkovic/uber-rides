@@ -21,9 +21,9 @@ public class UpdateLocation implements Message<DriverData> {
 
     public static final String TYPE = "UPDATE_LOCATION";
 
-    long driverId;
-    double latitude;
-    double longitude;
+    public long driverId;
+    public double latitude;
+    public double longitude;
 
     @PersistenceContext EntityManager db;
     

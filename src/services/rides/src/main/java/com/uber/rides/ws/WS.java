@@ -1,12 +1,15 @@
 package com.uber.rides.ws;
 
-import java.io.IOException;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
+import javax.persistence.EntityManagerFactory;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import io.jsonwebtoken.Claims;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
@@ -25,11 +28,11 @@ import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 import org.springframework.web.socket.server.HandshakeInterceptor;
 
-import com.uber.rides.database.DbContext;
 import com.uber.rides.model.Trip;
 import com.uber.rides.model.User;
 import com.uber.rides.model.User.Roles;
 import com.uber.rides.security.JWT;
+import com.uber.rides.ws.admin.AdminData;
 import com.uber.rides.ws.driver.DriverData;
 import com.uber.rides.ws.rider.RiderData;
 
@@ -37,14 +40,14 @@ import static com.uber.rides.Utils.*;
 
 @Configuration
 @EnableWebSocket
-class WSDriverConfig implements WebSocketConfigurer {
+class WSConfig implements WebSocketConfigurer {
 
     @Autowired WS handler;
 
     @Override
     public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
         registry
-        .addHandler(handler, "/ws-driver")
+        .addHandler(handler, "/ws")
         .setAllowedOriginPatterns("*")
         .addInterceptors(new HandshakeInterceptor() {
 
@@ -53,18 +56,16 @@ class WSDriverConfig implements WebSocketConfigurer {
                 ServerHttpRequest serverRequest, ServerHttpResponse response,
                 WebSocketHandler wsHandler, Map<String, Object> attributes
             ) throws Exception {
-
                 if (serverRequest instanceof ServletServerHttpRequest request) {
                     var token = request.getServletRequest().getParameter("token");
-                    var jwt = JWT.parseJWT(token);
+                    Claims jwt = JWT.parseJWT(token);
                     if (jwt.getSubject() == null) return false;
 
                     attributes.put(USER_ID, Long.parseLong(jwt.getSubject()));
+                    attributes.put(USER_ROLE, jwt.get(JWT.ROLE_CLAIM, String.class));
                     return true;
                 }
-
                 return false;
-
             }
 
             @Override
@@ -81,7 +82,7 @@ class WSDriverConfig implements WebSocketConfigurer {
 public class WS extends TextWebSocketHandler {
 
     @Autowired MessageHandler messageHandler;
-    @Autowired DbContext context;
+    @Autowired EntityManagerFactory contextFactory;
 
     public Map<Long, DriverData> drivers = new ConcurrentHashMap<>();
     public Map<Long, RiderData> riders = new ConcurrentHashMap<>();
@@ -91,10 +92,10 @@ public class WS extends TextWebSocketHandler {
 
     @Override
     @Transactional
-    public void afterConnectionEstablished(WebSocketSession session) throws IOException {
+    public void afterConnectionEstablished(WebSocketSession session) throws Exception {
 
         var userId = (Long) session.getAttributes().get(USER_ID);
-        var user = context.createDb().find(User.class, userId);
+        var user = contextFactory.createEntityManager().find(User.class, userId);
 
         if (user == null) {
             session.close();
@@ -102,11 +103,12 @@ public class WS extends TextWebSocketHandler {
         }
 
         switch (user.getRole()) {
-            case Roles.ADMIN -> admins.put(userId, new UserData(user, session));
+            case Roles.ADMIN -> admins.put(userId, new AdminData(user, session));
             case Roles.DRIVER -> drivers.put(userId, new DriverData(user, session));
             default -> riders.put(userId, new RiderData(user, session));
         }
 
+        super.afterConnectionEstablished(session);
     }
 
     @Override
@@ -116,18 +118,24 @@ public class WS extends TextWebSocketHandler {
             MESSAGE_TYPE\n
             Json String
         */
-        var tokens = message.getPayload().split("\\\\n", 2);
+        var tokens = message.getPayload().split("\\\\n");
         if (tokens.length == 2) {
-            var driverData = drivers.get(session.getAttributes().get(USER_ID));
-            messageHandler.handle(driverData, tokens[0], tokens[1]);
+            var collection = switch ((String) session.getAttributes().get(USER_ROLE)) {
+                case Roles.ADMIN -> admins;
+                case Roles.DRIVER -> drivers;
+                default -> riders;
+            };
+            var userData = collection.get(session.getAttributes().get(USER_ID));
+            messageHandler.handle(userData, tokens[0], tokens[1]);
         } else {
             sendMessage(session, ErrorMessages.MALFORMED);
         }
     }
 
     @Override
-    public void afterConnectionClosed(WebSocketSession session, CloseStatus status) {
+    public void afterConnectionClosed(WebSocketSession session, CloseStatus status) throws Exception {
         drivers.remove(session.getAttributes().get(USER_ID));
+        super.afterConnectionClosed(session, status);
     }
 
     public void sendMessageToUser(Long driverId, String message) {
@@ -164,7 +172,7 @@ public class WS extends TextWebSocketHandler {
             .ofNullable(riders.get(user.getId()))
             .map(RiderData::getCurrentTrip)
             .orElse(null);
-            
+        
     }
 
 }

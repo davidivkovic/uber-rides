@@ -31,10 +31,10 @@ public class JWT {
     
     static final String ISSUER = "uber-rides";
     static final String AUDIENCE = "uber-spa";
-    static final String ROLE_CLAIM = "rol";
     static final String KEY = "448ba5288b28cc80";
+    public static final String ROLE_CLAIM = "rol";
     
-    static final int DURATION_IN_MILLISECONDS = 24 * 3600000;
+    static final int DURATION_IN_MILLISECONDS = 24 * 60 * 60 * 1000;
 
     static final JwtParser parser = Jwts.parser()
         .requireIssuer(ISSUER)

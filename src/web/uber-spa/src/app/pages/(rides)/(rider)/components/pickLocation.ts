@@ -2,7 +2,7 @@ import { Component, EventEmitter, Input, Output } from '@angular/core'
 import { computed } from '@app/utils'
 
 @Component({
-  selector: 'LocationPicker',
+  selector: 'PickLocation',
   standalone: true,
   template: `
     <div class="h-[700px]">
@@ -15,7 +15,7 @@ import { computed } from '@app/utils'
     </div>
   `
 })
-export default class LocationPicker {
+export default class PickLocation {
   @Input() location: string = '{Location Address}'
   @Input() type: 'pickup' | 'stopover' | 'destination' | any
   @Output() confirm = new EventEmitter()
@@ -24,9 +24,9 @@ export default class LocationPicker {
   title = computed(
     () => this.type,
     () => ({
-      'pickup': 'Choose pickup location',
-      'destination': 'Choose destination location',
-      'stopover': 'Choose location to stop at'
+      'pickup': 'Set pickup location',
+      'destination': 'Set destination',
+      'stopover': 'Set where to stop at'
     })[this.type] ?? 'Choose location'
   )
 

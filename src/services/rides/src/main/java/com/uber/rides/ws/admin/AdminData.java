@@ -1,8 +1,7 @@
-package com.uber.rides.ws.driver;
+package com.uber.rides.ws.admin;
 
 import org.springframework.web.socket.WebSocketSession;
 
-import com.uber.rides.model.Trip;
 import com.uber.rides.model.User;
 import com.uber.rides.model.User.Roles;
 import com.uber.rides.ws.UserData;
@@ -12,17 +11,15 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class DriverData extends UserData {
+public class AdminData extends UserData {
 
-    public Trip currentTrip;
-
-    public DriverData(User user, WebSocketSession session) {
+    public AdminData(User user, WebSocketSession session) {
         super(user, session);
     }
 
     @Override
     public String getRole() {
-        return Roles.DRIVER;
+        return Roles.ADMIN;
     }
     
 }

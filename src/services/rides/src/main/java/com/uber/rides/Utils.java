@@ -24,13 +24,13 @@ public class Utils {
     /* Global Constants */
 
     public static final String USER_ID = "USER_ID";
+    public static final String USER_ROLE = "USER_ROLE";
     public static final String SCHEDULED = "SCHEDULED";
     public static final String UNCHECKED = "unchecked";
 
     /* JSON Mapper */
 
     public static final ObjectMapper jsonMapper = new ObjectMapper()
-        .setVisibility(PropertyAccessor.FIELD, Visibility.ANY)
         .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
     /* DTO Mapper */
