@@ -1,12 +1,22 @@
-import { Routes, UrlSegment } from '@angular/router'
+import { inject } from '@angular/core';
+import { Router, Routes, UrlSegment } from '@angular/router'
 import { userStore } from '@app/stores'
 
 const routes: Routes = [
   {
+    path: '',
+    canActivate: [() => {
+      if (userStore.isDriver) inject(Router).navigate(['drive'])
+      if (userStore.isRider) inject(Router).navigate(['looking'])
+      return false
+    }],
+    children: [],
+  },
+  {
     path: ':path',
     children: [
       {
-        matcher: () => {
+        matcher: (segments: UrlSegment[]) => {
           if (!userStore.isDriver) return null
           return { consumed: [] }
         },
@@ -20,8 +30,7 @@ const routes: Routes = [
           if (index === -1) return { consumed: [] }
           return { consumed: [segments[0]] }
         },
-        loadComponent: () => import('./(rider)'),
-        data: { reuseRoute: true }
+        loadComponent: () => import('./(rider)')
       }]
   }
 ]
