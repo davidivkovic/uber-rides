@@ -1,12 +1,9 @@
-import { Router } from '@angular/router';
 import { Component } from '@angular/core'
-import { NgClass, NgFor, NgIf, Location } from '@angular/common'
+import { NgClass, NgFor, NgIf } from '@angular/common'
+import { ActivatedRoute, Router } from '@angular/router'
 import { FormsModule } from '@angular/forms'
 import { autocomplete, geocoder, icons } from '@app/api/google-maps'
 import { computed, InnerHtml, swap } from '@app/utils'
-import PickLocation from './pickLocation'
-import ChooseTime from './chooseTime'
-import FavoriteRoutes from './favoriteRoutes';
 
 type AutocompleteLocation = {
   id: string
@@ -19,37 +16,15 @@ type AutocompleteLocation = {
 @Component({
   selector: 'Looking',
   standalone: true,
-  imports: [NgFor, NgIf, NgClass, FormsModule, InnerHtml, PickLocation, ChooseTime, FavoriteRoutes],
+  imports: [NgFor, NgIf, NgClass, InnerHtml, FormsModule],
   template: `
-    <PickLocation 
-      *ngIf="pickingLocation"
-      [type]="focusedStopoverType()"
-      (confirm)="togglePickingLocation()"
-      (cancel)="togglePickingLocation()"
-    >
-    </PickLocation>
-    <ChooseTime
-      [hidden]="!choosingTime"
-      (confirm)="toggleChoosingTime()"
-      (cancel)="toggleChoosingTime()"
-    >
-    </ChooseTime>
-    <FavoriteRoutes
-      [hidden]="!pickingFavoriteRoutes"
-      (confirm)="togglePickingFavoriteRoutes()"
-      (cancel)="togglePickingFavoriteRoutes()"
-    >
-    </FavoriteRoutes>
-    <div 
-      *ngIf="!pickingLocation && !pickingFavoriteRoutes && !choosingTime"
-      class="flex flex-col h-[700px] w-[400px] bg-white pointer-events-auto rounded-xl overflow-y-clip"
-    >
+    <div class="flex flex-col h-[700px] w-[400px] bg-white pointer-events-auto rounded-xl overflow-y-clip">
       <div class="p-4 pb-3.5">
         <h1 class="text-4xl leading-[44px] transition">{{ cardTitles[focusedStopoverType()] }}</h1>
         <div [ngClass]="{ 'mr-5' : stopoverInputs.length > 2 }">
           <button 
-            (click)="togglePickingFavoriteRoutes()"
-            class="secondary flex w-full justify-center space-x-2 items-center rounded-full px-3 py-2 mt-3 mb-3.5"
+            (click)="router.navigate(['looking/favorite-routes'])"
+            class="secondary flex w-full justify-center space-x-2 items-center rounded-md px-3 py-2.5 mt-3 mb-3.5"
           >
             <svg width="18" height="18" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
               <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
@@ -57,7 +32,7 @@ type AutocompleteLocation = {
               <circle cx="18" cy="5" r="2"></circle>
               <path d="M12 19h4.5a3.5 3.5 0 0 0 0 -7h-8a3.5 3.5 0 0 1 0 -7h3.5"></path>
             </svg>
-            <span class="tracking-tight"> Favorite routes </span>
+            <span> Favorite routes </span>
             <svg width="1em" height="1em" viewBox="0 0 24 24" fill="none"><title>Chevron down small</title><path d="M18 8v3.8l-6 4.6-6-4.6V8l6 4.6L18 8z" fill="currentColor"></path></svg>
           </button>
         </div>
@@ -107,14 +82,14 @@ type AutocompleteLocation = {
           [ngClass]="{ 'mr-5' : stopoverInputs.length > 2 }"
         >
           <button
-            (click)="toggleChoosingTime()"
+            (click)="router.navigate(['looking/choose-time'])"
             class="secondary flex items-center space-x-2.5 rounded-full mr-auto !py-2 !px-3"
           >
             <svg width="1em" height="1em" viewBox="0 0 24 24" fill="none">
               <title>Clock</title>
               <path d="M12 1C5.9 1 1 5.9 1 12s4.9 11 11 11 11-4.9 11-11S18.1 1 12 1zm6 13h-8V4h3v7h5v3z" fill="currentColor"></path>
             </svg>
-            <span class="text-sm tracking-tight">Depart now</span>
+            <span class="text-sm whitespace-nowrap">Depart now</span>
             <svg width="1em" height="1em" viewBox="0 0 24 24" fill="none"><title>Chevron down small</title><path d="M18 8v3.8l-6 4.6-6-4.6V8l6 4.6L18 8z" fill="currentColor"></path></svg>
           </button>
           <button 
@@ -146,7 +121,7 @@ type AutocompleteLocation = {
           <button 
             *ngIf="stopoverInputs.length < 5"
             (click)="addStop()"
-            class="flex items-center secondary rounded-full px-4 !py-[2px] !text-sm tracking-tight whitespace-nowrap"
+            class="flex items-center secondary rounded-full px-4 !py-[2px] !text-sm whitespace-nowrap"
           >
             Add stop
             <span class="text-2xl ml-2">+</span>
@@ -155,7 +130,7 @@ type AutocompleteLocation = {
       </div>
       <div *ngIf="!locationsCompleted" class="overflow-y-auto scroll-smooth no-scrollbar">
         <div
-          (click)="togglePickingLocation()"
+          (click)="router.navigate(['looking/pick-location'], { queryParams: { type: focusedStopoverType() } })"
           class="flex space-x-4 items-center cursor-pointer hover:bg-[#eeeeee] px-4 py-3"
         >
           <div [innerHTML]="icons.pickerIcon | innerHTML" class="p-2 rounded-full bg-[#ececec]"></div>
@@ -200,7 +175,7 @@ export default class Looking {
   icons = icons
   makeEmptyStopover = () => ({ address: '', secondaryAddress: '', longitude: 0, latitude: 0 })
 
-  constructor(public router: Router, public location: Location) { }
+  constructor(public router: Router, public route: ActivatedRoute) { }
 
   stopoverInputs: {
     address: string,
@@ -223,13 +198,6 @@ export default class Looking {
   activeStopover = this.focusedStopover
 
   locationsCompleted = false
-  pickingLocation = false
-  pickingFavoriteRoutes = false
-  choosingTime = false
-
-  togglePickingLocation = () => this.pickingLocation = !this.pickingLocation
-  togglePickingFavoriteRoutes = () => this.pickingFavoriteRoutes = !this.pickingFavoriteRoutes
-  toggleChoosingTime = () => this.choosingTime = !this.choosingTime
 
   query = (event: Event, index: number) => {
     const text = (event.target as HTMLInputElement)?.value?.trim()
@@ -276,7 +244,7 @@ export default class Looking {
     )
     this.locationsCompleted = this.stopoverInputs.every(s => s.address.trim() !== '')
     if (!this.locationsCompleted) {
-      this.focusStopoverInputElement(Math.min(this.activeStopover + 1, this.stopoverInputs.length - 1))
+      this.focusStopoverInputElement(this.stopoverInputs.findIndex(i => i.address === ''))
     }
   }
 

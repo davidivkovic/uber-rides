@@ -1,42 +1,20 @@
 import { Component } from '@angular/core'
-import { NgClass, NgFor, NgIf, Location } from '@angular/common'
-import { ActivatedRoute, Router } from '@angular/router'
+import { NgClass, NgFor, NgIf } from '@angular/common'
+import { Router, RouterOutlet } from '@angular/router'
 import { init } from '@app/api/google-maps'
-import AddPassengers from './components/addPassengers'
-import Looking from './components/looking'
-import ChooseRide from './components/chooseRide'
-
-type AutocompleteLocation = {
-  id: string
-  primary: string
-  secondary: string
-  icon: string,
-  selected: boolean
-}
 
 @Component({
   standalone: true,
-  imports: [NgFor, NgIf, NgClass, Looking, AddPassengers, ChooseRide],
+  imports: [NgFor, NgIf, NgClass, RouterOutlet],
   template: `
     <div class="h-full relative">
-      <div id="gooogle-map" class="absolute w-full h-full"></div>
+      <div id="google-map-container" class="absolute w-full h-full">
+        <div id="google-map" class="absolute w-full h-full"></div>
+        <div id="google-map-overlay" class="absolute w-full h-full pointer-events-none"></div>
+      </div>
       <div class="h-full w-full absolute z-10 pointer-events-none">
         <div class="max-w-7xl mx-auto w-full h-full flex items-center px-4">
-          <Looking
-            [hidden]="path !== 'looking'"
-          >
-          </Looking>
-          <AddPassengers
-            [hidden]="path !== 'add-passengers'"
-            (confirm)="router.navigate(['choose-ride'])"
-            (cancel)="location.back()"
-          >
-          </AddPassengers>
-          <ChooseRide 
-            [hidden]="path !== 'choose-ride'"
-            (cancel)="location.back()"
-          >
-          </ChooseRide>
+          <router-outlet></router-outlet>
         </div>
       </div>
     </div>
@@ -44,17 +22,12 @@ type AutocompleteLocation = {
 })
 export default class Index {
 
-  path = 'looking'
-
-  constructor(public router: Router, public route: ActivatedRoute, public location: Location) { }
-
-  ngOnInit() {
-    this.route.paramMap.subscribe(params => {
-      this.path = params.get('path')
-    })
+  constructor(public router: Router) {
+    router.navigate(['looking'])
   }
 
   ngAfterViewInit() {
-    init('gooogle-map')
+    init('google-map')
   }
+
 }

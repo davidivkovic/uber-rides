@@ -96,3 +96,8 @@
 .gm-control-active.gm-fullscreen-control {
   display: none;
 }
+
+.gmnoprint > div {
+  box-shadow: none !important;
+  border-radius: 6px !important;
+}
