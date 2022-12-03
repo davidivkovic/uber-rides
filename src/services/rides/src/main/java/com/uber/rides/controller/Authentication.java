@@ -283,10 +283,10 @@ public class Authentication extends Controller {
     @Transactional
     @PostMapping("password/change")
     @Secured({ Roles.ADMIN, Roles.DRIVER, Roles.RIDER })
-    public Object changePassword(@NotBlank String currentPassword, @NotBlank String newPassword) {
+    public Object changePassword(@RequestParam @NotBlank String currentPassword, @RequestParam @NotBlank String newPassword) {
 
         var user = db.find(User.class, authenticatedUserId());
-        if (!passwordEncoder.encode(currentPassword).equals(user.getPassword())) {
+        if (!passwordEncoder.matches(currentPassword, user.getPassword())) {
             return badRequest("The provided password does not match the current one.");
         }
 

@@ -52,6 +52,9 @@ import auth from '@app/api/auth'
         <button type="submit" class="primary block w-full ">Log in</button>
       </form>
       <SocialMedia></SocialMedia>
+      <a href="/auth/password/forgotten" class="underline text-sm text-center cursor-pointer mt-2">
+        Forgotten your password?
+      </a>
       <small class="mt-3 ">
         By proceeding, you consent to get calls, WhatsApp or SMS messages,
         including by automated means, from Uber and its affiliates to the number

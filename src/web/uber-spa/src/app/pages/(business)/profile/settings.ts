@@ -19,7 +19,7 @@ import { resource } from '@app/utils'
       <div class="flex space-x-3 items-center">
         <label for="files">
           <img
-            [src]="user.value.profilePicture" alt=""
+            [src]="user.value.profilePicture"
             class="h-16 w-16 rounded-full cursor-pointer bg-zinc-100 object-cover"
           />
         </label>

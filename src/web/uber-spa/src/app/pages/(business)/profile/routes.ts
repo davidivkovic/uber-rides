@@ -11,6 +11,9 @@ const routes: Routes = [
       },
       {
         path: 'rides', loadComponent: () => import('./rides')
+      },
+      {
+        path: 'password/change', loadComponent: () => import('./changePassword')
       }
     ]
   }

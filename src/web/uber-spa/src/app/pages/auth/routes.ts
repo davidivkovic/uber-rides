@@ -9,6 +9,14 @@ const routes: Routes = [
         loadComponent: () => import('./login')
       },
       {
+        path: 'password/forgotten',
+        loadComponent: () => import('./forgottenPassword')
+      },
+      {
+        path: ':email/reset',
+        loadComponent: () => import('./resetPassword')
+      },
+      {
         path: 'signup',
         children: [
           {
@@ -16,12 +24,12 @@ const routes: Routes = [
             loadComponent: () => import('./signup/ride')
           },
           {
-            path: ':email',
-            loadComponent: () => import('./signup/[email]')
-          },
-          {
             path: 'drive',
             loadComponent: () => import('./signup/drive')
+          },
+          {
+            path: ':email',
+            loadComponent: () => import('./signup/[email]')
           }
         ]
       }

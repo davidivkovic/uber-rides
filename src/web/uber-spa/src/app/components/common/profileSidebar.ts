@@ -36,7 +36,7 @@ export default class ProfileSidebar {
     },
     {
       name: 'Change password',
-      link: '/'
+      link: 'password/change'
     }
   ]
 

@@ -88,11 +88,47 @@ const facebookLogin = async (userId: string, token: string) => {
   return json.user.completedRegistration
 }
 
+const changePassword = async (data: {currentPassword: string, newPassword: string}) => {
+  const response = await fetch(
+    basePath + '/password/change?' + new URLSearchParams({ ...data }).toString(),
+    {
+      method: 'POST',
+    }
+  )
+  if (!response.ok) throw new Error(await response.text())
+}
+
+const forgottenPassword = async (email: string) => {
+  const response = await fetch(
+    basePath + '/password/forgot?email=' + email,
+    {
+      method: 'POST',
+    }
+  )
+  const text = await response.text()
+  if (response.ok) return text
+  throw new Error(text)
+}
+
+const resetPassword = async (data: {email: string, password: string, code: string}) => {
+  const response = await fetch(
+    basePath + '/password/reset',
+    {
+      method: 'POST',
+      body: JSON.stringify(data)
+    }
+  )
+  if (!response.ok) throw new Error(await response.text())
+}
+
 export default {
   signUp,
   confirmEmail,
   resendConfirmation,
   login,
   googleLogin,
-  facebookLogin
+  facebookLogin,
+  changePassword,
+  forgottenPassword,
+  resetPassword
 }
