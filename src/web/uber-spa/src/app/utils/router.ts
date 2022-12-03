@@ -10,6 +10,11 @@ export class CustomReuseStrategy implements RouteReuseStrategy {
 
   store(route: ActivatedRouteSnapshot, handle: DetachedRouteHandle): void {
     const id = this.createIdentifier(route)
+    if (handle) {
+      (handle as any)?.componentRef?.instance?.onDeactivated?.()
+    } else {
+      (this.storedHandles?.[id] as any)?.componentRef?.instance?.onActivated?.()
+    }
     if (route.data['reuseRoute']) {
       this.storedHandles[id] = handle
     }

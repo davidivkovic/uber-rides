@@ -10,8 +10,12 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.OrderBy;
 
+import com.uber.rides.controller.Routes;
+
 import lombok.Getter;
 import lombok.Setter;
+
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.*;
 
 @Getter
 @Setter
@@ -20,7 +24,12 @@ public class Route {
     
     @Id @GeneratedValue Long id;
     String name;
+    String thumbnail;
     @Embedded Location start;
     @ElementCollection(fetch = FetchType.EAGER) @OrderBy("order") List<Location> stops;
+
+    public String getThumbnail() {
+        return linkTo(methodOn(Routes.class).getThumbnail(thumbnail)).toString();
+    }
 
 }

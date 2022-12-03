@@ -2,8 +2,10 @@ import { Component } from '@angular/core'
 import { NgClass, NgFor, NgIf } from '@angular/common'
 import { ActivatedRoute, Router } from '@angular/router'
 import { FormsModule } from '@angular/forms'
-import { autocomplete, geocoder, icons } from '@app/api/google-maps'
+import { autocomplete, geocoder, icons, map } from '@app/api/google-maps'
 import { computed, InnerHtml, swap } from '@app/utils'
+import { ridesStore } from '@app/stores/ridesStore'
+import dayjs from 'dayjs'
 
 type AutocompleteLocation = {
   id: string
@@ -14,7 +16,6 @@ type AutocompleteLocation = {
 }
 
 @Component({
-  selector: 'Looking',
   standalone: true,
   imports: [NgFor, NgIf, NgClass, InnerHtml, FormsModule],
   template: `
@@ -24,7 +25,7 @@ type AutocompleteLocation = {
         <div [ngClass]="{ 'mr-5' : stopoverInputs.length > 2 }">
           <button 
             (click)="router.navigate(['looking/favorite-routes'])"
-            class="secondary flex w-full justify-center space-x-2 items-center rounded-md px-3 py-2.5 mt-3 mb-3.5"
+            class="secondary flex w-full justify-between space-x-2 items-center rounded-md px-3 py-2 mt-3 mb-3.5"
           >
             <svg width="18" height="18" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
               <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
@@ -49,9 +50,12 @@ type AutocompleteLocation = {
                   index === stopoverInputs.length - 1 ? 'Enter destination' : 'Add stop'
                 "
                 [(ngModel)]="stopover.address"
-                (input)="query($event, index)"
+                (input)="query(index)"
+                (input)="locationsCompleted = false"
                 (focus)="focusStopoverInput(index)"
+                (focus)="blurred = false"
                 (blur)="unFocusStopoverInput()"
+                (blur)="blurred = true"
                 class="pl-14 h-12 placeholder:text-[15px] text-base"
               />
             </div>
@@ -82,18 +86,25 @@ type AutocompleteLocation = {
           [ngClass]="{ 'mr-5' : stopoverInputs.length > 2 }"
         >
           <button
-            (click)="router.navigate(['looking/choose-time'])"
             class="secondary flex items-center space-x-2.5 rounded-full mr-auto !py-2 !px-3"
+            (click)="router.navigate(
+              ['looking/choose-time'],
+              { 
+                queryParams: { 
+                  pickup: stopoverInputs[0].address && stopoverInputs[0].address + ', ' + stopoverInputs[0].secondaryAddress
+                } 
+              }
+            )"
           >
             <svg width="1em" height="1em" viewBox="0 0 24 24" fill="none">
               <title>Clock</title>
               <path d="M12 1C5.9 1 1 5.9 1 12s4.9 11 11 11 11-4.9 11-11S18.1 1 12 1zm6 13h-8V4h3v7h5v3z" fill="currentColor"></path>
             </svg>
-            <span class="text-sm whitespace-nowrap">Depart now</span>
+            <span class="text-sm whitespace-nowrap">{{ departureTime }}</span>
             <svg width="1em" height="1em" viewBox="0 0 24 24" fill="none"><title>Chevron down small</title><path d="M18 8v3.8l-6 4.6-6-4.6V8l6 4.6L18 8z" fill="currentColor"></path></svg>
           </button>
           <button 
-            *ngIf="focusedStopover > -1"
+            *ngIf="focusedStopover > -1 && !blurred"
             (mousedown)="moveStop($event, 'up')"
             [ngClass]="{ 'opacity-30 cursor-default hover:!bg-[#eeeeee]' : !canMoveStopUp() }"
             class="secondary rounded-full p-1.5 hover:bg-zinc-200"
@@ -106,10 +117,10 @@ type AutocompleteLocation = {
             </svg>
           </button>
           <button  
-            *ngIf="focusedStopover > -1"
+            *ngIf="focusedStopover > -1 && !blurred"
             (mousedown)="moveStop($event, 'down')"
             [ngClass]="{ 'opacity-30 cursor-default hover:!bg-[#eeeeee]' : !canMoveStopDown() }"
-            class="secondary rounded-full p-1.5 hover:bg-zinc-200"
+            class="secondary rounded-full p-1.5 mr-0.5 hover:bg-zinc-200"
           >
             <svg width="22" height="22" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
               <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
@@ -119,7 +130,7 @@ type AutocompleteLocation = {
             </svg>
           </button>
           <button 
-            *ngIf="stopoverInputs.length < 5"
+            *ngIf="stopoverInputs.length < 5 && blurred"
             (click)="addStop()"
             class="flex items-center secondary rounded-full px-4 !py-[2px] !text-sm whitespace-nowrap"
           >
@@ -130,7 +141,7 @@ type AutocompleteLocation = {
       </div>
       <div *ngIf="!locationsCompleted" class="overflow-y-auto scroll-smooth no-scrollbar">
         <div
-          (click)="router.navigate(['looking/pick-location'], { queryParams: { type: focusedStopoverType() } })"
+          (click)="chooseLocationOnMap()"
           class="flex space-x-4 items-center cursor-pointer hover:bg-[#eeeeee] px-4 py-3"
         >
           <div [innerHTML]="icons.pickerIcon | innerHTML" class="p-2 rounded-full bg-[#ececec]"></div>
@@ -138,7 +149,7 @@ type AutocompleteLocation = {
         </div>
         <div 
           *ngFor="let location of autocompleteLocations[activeStopover]; trackBy: autocompleteIdentity"
-          (click)="selectLocation(location)"
+          (click)="selectLocation(activeStopover, location)"
           class="flex space-x-4 items-center cursor-pointer hover:bg-[#eeeeee] px-4 py-3"
           [ngClass]="{ 'bg-[#eeeeee]' : location.selected }"
         >
@@ -152,7 +163,6 @@ type AutocompleteLocation = {
       <div 
         *ngIf="locationsCompleted" 
         class="px-4 pb-4 flex flex-col h-full"
-        [ngClass]="{ 'mr-5' : stopoverInputs.length > 2 }"
       >
         <button 
           (click)="router.navigate(['add-passengers'])"
@@ -173,11 +183,10 @@ type AutocompleteLocation = {
 export default class Looking {
 
   icons = icons
-  makeEmptyStopover = () => ({ address: '', secondaryAddress: '', longitude: 0, latitude: 0 })
-
-  constructor(public router: Router, public route: ActivatedRoute) { }
+  makeEmptyStopover = () => ({ placeId: '', address: '', secondaryAddress: '', longitude: 0, latitude: 0 })
 
   stopoverInputs: {
+    placeId: string,
     address: string,
     secondaryAddress: string,
     longitude: number,
@@ -196,35 +205,84 @@ export default class Looking {
   */
   focusedStopover = -2
   activeStopover = this.focusedStopover
-
   locationsCompleted = false
+  blurred = true
+  departureTime = 'Depart now'
 
-  query = (event: Event, index: number) => {
-    const text = (event.target as HTMLInputElement)?.value?.trim()
+  constructor(public router: Router, public route: ActivatedRoute) { }
+
+  async onActivated() {
+    if (ridesStore.locationPicked?.address) {
+      if (this.activeStopover <= -1) {
+        this.focusFirstEmptyStopoverInput()
+      }
+      const index = Math.max(this.activeStopover, 0)
+      const location = ridesStore.locationPicked
+      this.stopoverInputs[index].address = location.address
+      if (!this.checkLocationsCompleted()) {
+        this.focusFirstEmptyStopoverInput()
+        this.focusStopoverInputElement(this.focusedStopover)
+      }
+      await this.query(index, location.address + ', ' + location.secondaryAddress)
+      const locationToSelect = this.autocompleteLocations[index].find(l => l.id === ridesStore.locationPicked.placeId)
+      this.selectLocation(index, locationToSelect ?? this.autocompleteLocations[index][0], true)
+      ridesStore.locationPicked = this.makeEmptyStopover()
+    }
+    if (ridesStore.rideBuilder.scheduledAt) {
+      const day = ridesStore.rideBuilder.scheduledAt.isSame(dayjs(), 'day') ? 'Today' : 'Tomorrow'
+      this.departureTime = day + ridesStore.rideBuilder.scheduledAt.format(', h:mm A')
+    } else {
+      this.departureTime = 'Depart now'
+    }
+  }
+
+  checkLocationsCompleted() {
+    this.locationsCompleted = this.stopoverInputs.every(i => i.address !== '')
+    return this.locationsCompleted
+  }
+
+  focusFirstEmptyStopoverInput() {
+    this.focusStopoverInput(this.stopoverInputs.findIndex(i => i.address === ''))
+  }
+
+  query = async (index: number, term?: string) => {
+    const text = term || this.stopoverInputs[index].address?.trim()
     if (text === '') {
       this.autocompleteLocations[index] = []
       return
     }
-    autocomplete.getPlacePredictions(
-      { input: text },
-      (results, status) => {
-        // if (status !== 'OK') return
-        this.autocompleteLocations[this.activeStopover] =
-          results.map(({ place_id, structured_formatting, types }: any) => ({
-            id: place_id,
-            primary: structured_formatting.main_text,
-            secondary: structured_formatting.secondary_text,
-            icon: this.getIcon(types),
-            selected: false
-          }))
-      }
-    )
+    const response = await autocomplete.getPlacePredictions({ input: text })
+    // if (status !== 'OK') return
+    this.autocompleteLocations[index] =
+      response.predictions.map(({ place_id, structured_formatting, types }: any) => ({
+        id: place_id,
+        primary: structured_formatting.main_text,
+        secondary: structured_formatting.secondary_text,
+        icon: this.getIcon(types),
+        selected: false
+      }))
   }
 
   clearSelectedLocations = () => this.autocompleteLocations[this.activeStopover]?.forEach(l => l.selected = false)
 
-  selectLocation = (location: AutocompleteLocation) => {
-    this.stopoverInputs[this.activeStopover] = {
+  chooseLocationOnMap() {
+    this.router.navigate(
+      ['looking/pick-location'],
+      {
+        queryParams: {
+          type: this.focusedStopoverType(),
+          longitude: this.stopoverInputs[this.activeStopover]?.longitude,
+          latitude: this.stopoverInputs[this.activeStopover]?.latitude,
+          address: this.stopoverInputs[this.activeStopover]?.address,
+          secondaryAddress: this.stopoverInputs[this.activeStopover]?.secondaryAddress,
+        }
+      }
+    )
+  }
+
+  selectLocation = async (index: number, location: AutocompleteLocation, skipCompleteCheck = false) => {
+    this.stopoverInputs[index] = {
+      placeId: location.id,
       address: location.primary,
       secondaryAddress: location.secondary,
       latitude: 0,
@@ -232,19 +290,16 @@ export default class Looking {
     }
     this.clearSelectedLocations()
     location.selected = true
-    geocoder.geocode(
-      { placeId: location.id },
-      (results, status) => {
-        // if (status !== 'OK') return
-        // if (!results[0]) return
-        const geometry = results[0]?.geometry?.location
-        this.stopoverInputs[this.activeStopover].longitude = geometry?.lng()
-        this.stopoverInputs[this.activeStopover].latitude = geometry?.lat()
-      }
-    )
-    this.locationsCompleted = this.stopoverInputs.every(s => s.address.trim() !== '')
-    if (!this.locationsCompleted) {
-      this.focusStopoverInputElement(this.stopoverInputs.findIndex(i => i.address === ''))
+    const response = await geocoder.geocode({ placeId: location.id })
+    // if (status !== 'OK') return
+    // if (!results[0]) return
+    const geometry = response.results[0].geometry.location
+    this.stopoverInputs[index].longitude = geometry.lng()
+    this.stopoverInputs[index].latitude = geometry.lat()
+    map.setCenter(geometry)
+    if (!skipCompleteCheck && !this.checkLocationsCompleted()) {
+      this.focusFirstEmptyStopoverInput()
+      this.focusStopoverInputElement(this.focusedStopover)
     }
   }
 
@@ -257,9 +312,9 @@ export default class Looking {
   }
 
   focusedStopoverType = computed<string>(
-    [() => this.focusedStopover, () => this.locationsCompleted],
+    [() => this.activeStopover, () => this.locationsCompleted],
     previous => {
-      const id = this.focusedStopover
+      const id = this.activeStopover
       if (this.locationsCompleted) return 'travel'
       if (id === -1) return previous
       if (id <= 0) return 'pickup'
@@ -283,7 +338,9 @@ export default class Looking {
     this.setFocusedStopover(id)
     this.locationsCompleted = false
   }
-  unFocusStopoverInput = () => this.setFocusedStopover(-1)
+  unFocusStopoverInput = () => {
+    this.setFocusedStopover(-1)
+  }
   focusStopoverInputElement = (index: number) => document.getElementById('stopover-input-' + index)?.focus()
 
   canMoveStopUp = computed(
@@ -300,12 +357,14 @@ export default class Looking {
     this.stopoverInputs.splice(length - 1, 0, this.makeEmptyStopover())
     swap(this.autocompleteLocations, length - 1, length)
     this.locationsCompleted = false
+    this.focusFirstEmptyStopoverInput()
+    this.focusStopoverInputElement(this.focusedStopover)
   }
 
   removeStop = (index: number) => {
     this.stopoverInputs.splice(index, 1)
     this.autocompleteLocations.splice(index, 1)
-    this.locationsCompleted = this.stopoverInputs.every(s => s.address.trim() !== '')
+    this.checkLocationsCompleted()
   }
 
   moveStop = (event: MouseEvent, direction: 'up' | 'down') => {
@@ -326,7 +385,7 @@ export default class Looking {
 
     this.stopoverInputs.splice(index, 0, stop)
     this.focusStopoverInputElement(index)
-    this.locationsCompleted = this.stopoverInputs.every(s => s.address.trim() !== '')
+    // this.checkLocationsCompleted()
   }
 
   ngForIdentity = (index: number, item: any) => index

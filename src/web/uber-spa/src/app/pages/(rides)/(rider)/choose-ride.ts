@@ -1,7 +1,6 @@
 import { Component, EventEmitter, Output } from '@angular/core'
 
 @Component({
-  selector: 'ChooseRide',
   standalone: true,
   template: `
     <div class="h-[700px]">

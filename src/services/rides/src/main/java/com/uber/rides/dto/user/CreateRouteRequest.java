@@ -13,10 +13,14 @@ import lombok.Setter;
 @Setter
 public class CreateRouteRequest {
 
-    public class Location {
+    @Getter
+    @Setter
+    public static class Location {
 
+        @NotEmpty String address;
         @NotNull double longitude;
         @NotNull double latitude;
+        @NotNull int order;
 
     }
 

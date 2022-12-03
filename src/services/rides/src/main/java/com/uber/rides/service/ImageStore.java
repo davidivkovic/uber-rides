@@ -11,6 +11,8 @@ import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.google.common.io.Files;
+
 @Component
 public class ImageStore {
 
@@ -45,7 +47,26 @@ public class ImageStore {
 
             return filename;
         } 
-        catch (NullPointerException | IllegalStateException | IOException e) {
+        catch (Exception e) {
+            return null;
+        }
+
+    }
+
+    public String persist(byte[] image, String extension) {
+
+        try {
+            if (image == null || image.length == 0) return null;
+
+            var filename = UUID.randomUUID().toString().replace("-", "") + extension;
+            var file = new File(Path.of(storagePath, filename).toAbsolutePath().toString());
+            
+            if (!file.createNewFile()) return null;
+            Files.write(image, file);
+
+            return filename;
+        } 
+        catch (Exception e) {
             return null;
         }
 
