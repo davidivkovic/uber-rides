@@ -60,9 +60,9 @@ import { ContinueDialog } from '../components/continueDialog'
           *ngFor="let carType of carTypes; let i = index"
           (click)="selectCarType(carType)"
           [ngClass]="{
-            'outline outline-2 bg-stone-200 transition-none': carType.name === selectedCarType?.name
+            'ring-2 ring-black ring-offset-[3px] bg-stone-200 transition-none': carType.name === selectedCarType?.name
           }"
-          class="rounded-xl bg-[#eeeeee] p-5 w-full hover:bg-stone-200 cursor-pointer transition-all duration-150"
+          class="rounded-md bg-[#eeeeee] p-5 w-full hover:bg-stone-200 cursor-pointer transition-all duration-150"
         >
           <img [src]="carImages[i]" class="mx-auto" />
           <div class="flex justify-between">

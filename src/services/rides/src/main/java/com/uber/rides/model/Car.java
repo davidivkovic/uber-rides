@@ -6,7 +6,9 @@ import javax.persistence.Embeddable;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Getter
@@ -21,22 +23,16 @@ public class Car {
     }
 
     @Embeddable
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Getter
+    @Setter
     public static class Type { 
-        public Types carType;
-        public String name;
-        public int seats;
-        public double paymentMultiplier;
-        public String description;
-
-        public Type() {}
-        
-        public Type(Types type, String name, int seats, double paymentMultiplier, String description) {
-            this.carType = type;
-            this.name = name;
-            this.seats = seats;
-            this.paymentMultiplier = paymentMultiplier;
-            this.description = description;
-        }
+        private Types carType;
+        private String name;
+        private int seats;
+        private double paymentMultiplier;
+        private String description;
     }
 
     @Id
@@ -54,6 +50,6 @@ public class Car {
     );
 
     public static Type getByType(Types type) {
-        return availableTypes.stream().filter(t -> t.carType.equals(type)).findFirst().orElse(null);
+        return availableTypes.stream().filter(t -> t.getCarType().equals(type)).findFirst().orElse(null);
     }
 }
