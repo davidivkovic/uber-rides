@@ -15,6 +15,7 @@ import com.uber.rides.dto.user.RegisterCarRequest;
 import com.uber.rides.model.Car;
 import com.uber.rides.model.User;
 import com.uber.rides.model.User.Roles;
+import com.uber.rides.service.UserService;
 
 import static com.uber.rides.Utils.*;
 
@@ -23,13 +24,15 @@ import static com.uber.rides.Utils.*;
 public class Cars extends Controller {
     
     @Autowired DbContext context;
+    @Autowired UserService userService;
+
 
     @Transactional
-    @PostMapping("/")
+    @PostMapping("")
     @Secured({ Roles.ADMIN })
     public Object registerCar(@Validated @RequestBody RegisterCarRequest request) {
 
-        var user = context.db().getReference(User.class, request.getUserId());
+        var user = userService.findById(request.getUserId());
         if (user == null) {
             return badRequest(USER_NOT_EXIST);
         }

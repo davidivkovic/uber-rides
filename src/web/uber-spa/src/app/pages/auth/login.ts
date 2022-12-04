@@ -9,7 +9,7 @@ import auth from '@app/api/auth'
 @Component({
   standalone: true,
   imports: [NgIf, FormsModule, SocialMedia, RouterModule],
-  template: ` 
+  template: `
     <div class="flex-1 flex flex-col w-[320px] py-10 gap-4 mx-auto justify-center h-full">
       <div class="text-2xl ">What are your email and password?</div>
       <form
@@ -27,12 +27,6 @@ import auth from '@app/api/auth'
           placeholder="Enter email"
           class=""
         />
-        <label
-          *ngIf="!email.value && loginForm.submitted"
-          class="text-red-600 text-sm -mt-5 "
-        >
-          Please enter an email
-        </label>
         <input
           ngModel
           #password="ngModel"
@@ -42,12 +36,6 @@ import auth from '@app/api/auth'
           placeholder="Enter password"
           class=""
         />
-        <label
-          *ngIf="!password.value && loginForm.submitted"
-          class=" text-red-600 text-sm -mt-5 "
-        >
-          Please enter password
-        </label>
         <p class="text-red-600 text-center text-sm">{{ error }}</p>
         <button type="submit" class="primary block w-full ">Log in</button>
       </form>
@@ -56,9 +44,8 @@ import auth from '@app/api/auth'
         Forgotten your password?
       </a>
       <small class="mt-3 ">
-        By proceeding, you consent to get calls, WhatsApp or SMS messages,
-        including by automated means, from Uber and its affiliates to the number
-        provided.</small
+        By proceeding, you consent to get calls, WhatsApp or SMS messages, including by automated
+        means, from Uber and its affiliates to the number provided.</small
       >
       <small class="mt-10">
         This site is protected by reCAPTCHA and the Google
@@ -72,7 +59,7 @@ export default class Index {
   error: string = ''
   userStore = userStore
 
-  constructor(private router: Router) { }
+  constructor(private router: Router) {}
 
   login = async (form: NgForm) => {
     this.error = ''
@@ -83,8 +70,7 @@ export default class Index {
         password: form.value.password
       })
       this.router.navigate(['/'])
-    }
-    catch (error) {
+    } catch (error) {
       this.error = error.message
     }
   }

@@ -14,10 +14,13 @@ const fetch = (input: RequestInfo | URL, init?: RequestInit): Promise<Response> 
     }
   }
 
+  if (userStore.isAuthenticated) {
+    init.headers = {...init?.headers, Authorization: `Bearer ${userStore.accessToken()}`}
+  }
+
   return window.fetch(input, {
     headers: {
-      Authorization: `Bearer ${userStore.accessToken()}`,
-      ...init?.headers
+      ...init?.headers,
     },
     ...init
   })

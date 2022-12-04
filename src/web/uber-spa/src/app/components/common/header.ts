@@ -19,20 +19,23 @@ import { userStore } from '@app/stores/userStore'
             />
           </a>
           <div>
-            <a routerLink="/" class="primary text-base rounded-3xl px-3 py-2 text-white">
+            <button routerLink="/" class="primary text-base rounded-3xl px-3 py-2 text-white">
               Home
-            </a>
+            </button>
             <button class="primary !text-base rounded-3xl px-3 py-2">Live support</button>
+            <button *ngIf="userStore.isAdmin" routerLink="/auth/signup/drive" class="primary text-base rounded-3xl px-3 py-2 text-white">
+              New driver
+            </button>
           </div>
         </div>
         <div *ngIf="userStore.isAuthenticated" class="space-x-2">
           <div class="flex space-x-2">
-            <a
+            <button
               routerLink="profile/settings"
               class="primary text-base rounded-3xl px-3 py-2 text-white"
             >
               Settings
-            </a>
+            </button>
             <button (click)="logout()" class="primary !text-base rounded-3xl px-3 py-2">
               Sign out
             </button>

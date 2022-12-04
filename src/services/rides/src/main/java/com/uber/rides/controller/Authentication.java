@@ -83,7 +83,7 @@ public class Authentication extends Controller {
             emailSender.send(user.getEmail(), new ConfirmEmailMessage(user));
         } 
 
-        return ok();
+        return ok(user.getId());
 
     }
 

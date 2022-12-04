@@ -23,6 +23,15 @@ public class UserService implements UserDetailsService {
             .orElse(null);
     }
 
+    public User findById(Long id) {
+        return context
+            .query()
+            .stream(User.class)
+            .filter(User$.id.equal(id)) 
+            .findFirst()
+            .orElse(null);       
+        }
+
     /* Do not use this method as it throws a runtime exception.
      * It is implemented only to provide for the AuthenticationManager.
      * Use findByEmail(String email) instead.

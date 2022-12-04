@@ -21,11 +21,15 @@ const routes: Routes = [
         children: [
           {
             path: '',
-            loadComponent: () => import('./signup/ride')
+            loadComponent: () => import('./signup/signup')
           },
           {
             path: 'drive',
-            loadComponent: () => import('./signup/drive')
+            loadComponent: () => import('./signup/signup'),
+          },
+          {
+            path: ':driverId/car',
+            loadComponent: () => import('./signup/drive'),
           },
           {
             path: ':email',

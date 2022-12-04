@@ -20,6 +20,8 @@ const signUp = async (data: {
     }
   )
   if (!response.ok) throw new Error(await response.text())
+  const id = await response.json()
+  return id
 }
 
 const confirmEmail = async (data: { email: string, code: string }) => {

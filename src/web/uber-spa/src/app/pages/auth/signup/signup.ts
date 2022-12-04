@@ -1,10 +1,11 @@
-import { Component } from '@angular/core'
+import { Component, Input } from '@angular/core'
 import { NgIf } from '@angular/common'
-import { Router } from '@angular/router'
+import { ActivatedRoute, Router } from '@angular/router'
 import { NgForm, FormsModule } from '@angular/forms'
 
 import SocialMedia from '../components/socialMedia'
 import auth from '@app/api/auth'
+import { userStore } from '@app/stores'
 
 @Component({
   standalone: true,
@@ -18,8 +19,9 @@ import auth from '@app/api/auth'
         class="space-y-10"
       >
         <div>
-          <div class="text-2xl">Personal information</div>
-          <p class="text-gray-700">Let us know how to properly address you.</p>
+          <div *ngIf="userStore.isAdmin" class="text-3xl">Registration of a new driver</div>
+          <div class="text-xl mt-5">Personal information</div>
+          <p *ngIf="!userStore.isAdmin" class="text-gray-700">Let us know how to properly address you.</p>
           <div class="flex w-full space-x-5 mt-5">
             <input
               required
@@ -58,8 +60,8 @@ import auth from '@app/api/auth'
           </div>
         </div>
         <div>
-          <div class="text-2xl">Additional information</div>
-          <p class="text-gray-700">Tell us more information about yourself.</p>
+          <div class="text-xl">Additional information</div>
+          <p *ngIf="!userStore.isAdmin" class="text-gray-700">Tell us more information about yourself.</p>
           <div class="flex w-full space-x-5 mt-3">
             <input
               required
@@ -96,28 +98,43 @@ import auth from '@app/api/auth'
           <button class="primary w-full">Sign up</button>
         </div>
       </form>
-      <SocialMedia class="w-full"></SocialMedia>
+      <SocialMedia *ngIf="!userStore.isAdmin" class="w-full"></SocialMedia>
     </div>
   `
 })
 export default class Index {
   error = ''
-  constructor(public router: Router) { }
+  role = 'ROLE_RIDER'
+  userStore = userStore
+
+  constructor(public router: Router, public route: ActivatedRoute) {}
+
+  ngOnInit(): void {
+    this.route.toString().includes('drive') && (this.role = 'ROLE_DRIVER')
+  }
 
   signUp = async (form: NgForm) => {
     if (!form.valid) return
     try {
       this.error = ''
-      await auth.signUp({
+      const userId = await auth.signUp({
         firstName: form.value.firstName,
         lastName: form.value.lastName,
         email: form.value.email,
         password: form.value.password,
         phoneNumber: form.value.phoneNumber,
         city: form.value.city,
-        role: 'ROLE_RIDER'
+        role: this.role
       })
-      this.router.navigate(['auth/signup/' + form.value.email])
+      console.log(userId)
+      let path
+      if(this.role === 'ROLE_DRIVER') {
+        path = `auth/signup/${userId}/car`
+      }
+      else {
+        path = 'auth/signup/' + form.value.email
+      }
+      this.router.navigate([path])
     }
     catch (error) {
       this.error = error.message
