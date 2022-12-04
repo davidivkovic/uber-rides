@@ -21,7 +21,23 @@ public class Car {
     }
 
     @Embeddable
-    public record Type(Types type, String name, int seats, double paymentMultiplier, String description) { }
+    public static class Type { 
+        public Types carType;
+        public String name;
+        public int seats;
+        public double paymentMultiplier;
+        public String description;
+
+        public Type() {}
+        
+        public Type(Types type, String name, int seats, double paymentMultiplier, String description) {
+            this.carType = type;
+            this.name = name;
+            this.seats = seats;
+            this.paymentMultiplier = paymentMultiplier;
+            this.description = description;
+        }
+    }
 
     @Id
     String registration;
@@ -38,6 +54,6 @@ public class Car {
     );
 
     public static Type getByType(Types type) {
-        return availableTypes.stream().filter(t -> t.type().equals(type)).findFirst().orElse(null);
+        return availableTypes.stream().filter(t -> t.carType.equals(type)).findFirst().orElse(null);
     }
 }

@@ -19,7 +19,7 @@ import { userStore } from '@app/stores'
         class="space-y-10"
       >
         <div>
-          <div *ngIf="userStore.isAdmin" class="text-3xl">Registration of a new driver</div>
+          <div *ngIf="userStore.isAdmin" class="text-3xl">Register a new driver</div>
           <div class="text-xl mt-5">Personal information</div>
           <p *ngIf="!userStore.isAdmin" class="text-gray-700">Let us know how to properly address you.</p>
           <div class="flex w-full space-x-5 mt-5">
@@ -126,7 +126,6 @@ export default class Index {
         city: form.value.city,
         role: this.role
       })
-      console.log(userId)
       let path
       if(this.role === 'ROLE_DRIVER') {
         path = `auth/signup/${userId}/car`

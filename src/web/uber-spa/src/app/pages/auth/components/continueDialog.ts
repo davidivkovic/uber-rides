@@ -7,7 +7,7 @@ import { NgIf } from '@angular/common'
     standalone: true,
     imports: [NgIf, CloseButton],
     template: `
-      <div class="space-y-5 p-4 max-w-md">
+      <div class="space-y-5 p-5 max-w-md">
         <div class="space-y-2">
           <h2 class="text-2xl font-normal">
             {{ data.props.title }}

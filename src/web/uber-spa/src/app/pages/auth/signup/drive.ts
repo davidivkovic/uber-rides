@@ -52,7 +52,7 @@ import { ContinueDialog } from '../components/continueDialog'
       <div class="w-full">
         <div class="text-2xl">Choose a uber car type</div>
         <p class="text-gray-500">
-          You must decide what type of car the driver has. His earnings are depend on it.
+          Driver's earnings depend on the type of car he drives.
         </p>
       </div>
       <div *ngIf="carTypes.length !== 0" class="flex space-x-5">
@@ -149,10 +149,9 @@ export default class Index {
     }
     this.error = ''
     const form = Object.fromEntries(new FormData(event.target as HTMLFormElement).entries())
-    console.log(form)
     try {
       await cars.registerCar({
-        type: this.selectedCarType.type,
+        type: this.selectedCarType.carType,
         userId: Number(this.driverId),
         make: form['make'].toString(),
         model: form['model'].toString(),
@@ -184,5 +183,5 @@ class CarType {
   seats: number
   paymentMultiplier: number
   selected: boolean
-  type: string
+  carType: string
 }
