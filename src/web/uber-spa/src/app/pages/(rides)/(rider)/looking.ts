@@ -106,7 +106,7 @@ type AutocompleteLocation = {
               <title>Clock</title>
               <path d="M12 1C5.9 1 1 5.9 1 12s4.9 11 11 11 11-4.9 11-11S18.1 1 12 1zm6 13h-8V4h3v7h5v3z" fill="currentColor"></path>
             </svg>
-            <h3 class="text-[13.5px] tracking-wide whitespace-nowrap">{{ departureTime }}</h3>
+            <span class="text-sm whitespace-nowrap">{{ departureTime }}</span>
             <svg width="1em" height="1em" viewBox="0 0 24 24" fill="none"><title>Chevron down small</title><path d="M18 8v3.8l-6 4.6-6-4.6V8l6 4.6L18 8z" fill="currentColor"></path></svg>
           </button>
           <button 
@@ -140,7 +140,7 @@ type AutocompleteLocation = {
             (click)="addStop()"
             class="flex items-center secondary rounded-full px-4 !py-[2px] !text-sm whitespace-nowrap"
           >
-            <h3 class="text-[13.5px] tracking-wide">Add stop</h3>
+            <span class="text-sm">Add stop</span>
             <span class="text-2xl ml-2">+</span>
           </button>
         </div>

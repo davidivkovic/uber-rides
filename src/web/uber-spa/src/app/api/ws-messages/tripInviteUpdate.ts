@@ -11,6 +11,8 @@ export default (message: { passengerId: number, status: string }) => {
       if (!passenger) return
       passenger.accepted = message.status === 'ACCEPTED'
       passenger.declined = message.status === 'DECLINED'
+
+      store.state?.chooseRidesView?.checkPassengersReady?.()
     }
   })
 }

@@ -8,6 +8,7 @@ import { notificationStore } from '@app/stores'
 import trips from '@app/api/trips'
 import { createMessage, OutboundMessages } from '@app/api/ws-messages/messages'
 import { send } from '@app/api/ws'
+import { computed } from '@app/utils';
 
 @Component({
   standalone: true,
@@ -16,7 +17,7 @@ import { send } from '@app/api/ws'
     <div class="h-[700px] w-[400px] flex flex-col py-4 bg-white rounded-xl pointer-events-auto">
       <h3 class="text-4xl px-4">Choose a Ride</h3>
       <div 
-        *ngIf="ridesStore.state?.directions?.carTypes?.length"
+        *ngIf="ridesStore.state?.directions?.carTypes?.length > 0"
         class="py-3 px-3.5 space-y-3 overflow-y-auto no-scrollbar w-full"
         [ngClass]="{ 'max-h-[340px]': ridesStore.state?.passengers?.length == 3 }"
       >
@@ -25,10 +26,10 @@ import { send } from '@app/api/ws'
           (click)="selectCarType(carType)"
           class="rounded-md w-full flex items-center py-1 pr-2.5 transition"
           [ngClass]="{
-            'ring-2 ring-neutral-500 ring-offset-[3px] transition-none': carType.carType === selectedCarType.carType && !ridesStore.state.rideChosen,
+            'ring-2 ring-neutral-500 ring-offset-[3px] transition-none': carType.carType === selectedCarType?.carType && !ridesStore.state.rideChosen,
             'cursor-pointer': !ridesStore.state.rideChosen,
             'pointer-events-none': ridesStore.state.rideChosen,
-            'bg-zinc-100': carType.carType === selectedCarType.carType && ridesStore.state.rideChosen
+            'bg-zinc-100': carType.carType === selectedCarType?.carType && ridesStore.state.rideChosen
           }"
           
         >
@@ -93,10 +94,11 @@ import { send } from '@app/api/ws'
         Invite Passengers
       </button>
       <button 
+        [disabled]="!passengersReady"
         (click)="location.back()"
         class="primary mx-4 !text-base mt-1"
       >
-        Request an {{ selectedCarType?.name }}
+        {{ passengersReady ? 'Request an ' + this.selectedCarType?.name : 'Watiting for passengers...' }}
       </button>
     </div>
   `
@@ -105,10 +107,23 @@ export default class ChooseRide {
 
   selectedCarType: any = {}
   ridesStore = ridesStore
+  passengersReady = true
 
   constructor(public location: Location, public router: Router, public detector: ChangeDetectorRef) {
+    ridesStore.setState(store => store.state.chooseRidesView = this)
     subscribe(ridesStore, () => detector?.detectChanges())
+    watch(
+      ridesStore,
+      () => ridesStore.state?.passengers,
+      () => this.checkPassengersReady()
+    )
     this.selectFirstCarType()
+  }
+
+  checkPassengersReady() {
+    this.passengersReady =
+      ridesStore.state?.passengers?.every((p: any) => p.accepted || p.declined) ||
+      ridesStore.state?.passengers?.length === 0
   }
 
   selectFirstCarType() {

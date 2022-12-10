@@ -34,7 +34,7 @@ import { notificationStore } from '@app/stores'
           />
           <ul 
             role="listbox"
-            class="w-full max-h-[400px] mt-2 bg-white border border-zinc-400 overflow-y-auto rounded-md" 
+            class="w-full max-h-[400px] mt-2 bg-white border border-zinc-300 shadow-lg overflow-y-auto rounded-md" 
             [ngClass]="inputFocused && users.length ? 'absolute' : 'hidden'"
           >
             <li 
@@ -49,7 +49,7 @@ import { notificationStore } from '@app/stores'
               }"
             >
               <div class="flex items-center space-x-3">
-                <img [src]="user.profilePicture" class="w-9 h-9 rounded-full"/>
+                <img [src]="user.profilePicture" class="w-9 h-9 rounded-full object-cover"/>
                 <div>
                   <p class="leading-4">{{ user.firstName}} {{ user.lastName }}</p>
                   <p class="text-sm text-zinc-600">{{ user.email }}</p>
