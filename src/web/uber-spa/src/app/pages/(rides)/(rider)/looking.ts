@@ -433,10 +433,6 @@ export default class Looking {
     )
   }
 
-  drawPolyline() {
-
-  }
-
   selectLocation = async (index: number, location: AutocompleteLocation, recenter = true, skipCompleteCheck = false) => {
     this.stopoverInputs[index] = {
       placeId: location.id,
@@ -466,7 +462,6 @@ export default class Looking {
   }
 
   chooseRide() {
-
     this.router.navigate(['looking/choose-ride'])
   }
 

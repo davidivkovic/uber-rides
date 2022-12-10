@@ -23,7 +23,9 @@ import { init } from '@app/api/google-maps'
 export default class Index {
 
   constructor(public router: Router) {
-    router.navigate(['looking'])
+    if (window.location.pathname === '/') {
+      router.navigate(['looking'])
+    }
   }
 
   ngAfterViewInit() {

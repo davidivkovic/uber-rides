@@ -110,6 +110,9 @@ export default class ChooseRide {
   passengersReady = true
 
   constructor(public location: Location, public router: Router, public detector: ChangeDetectorRef) {
+    if (!ridesStore.state?.directions) {
+      router.navigate(['/looking'])
+    }
     ridesStore.setState(store => store.state.chooseRidesView = this)
     subscribe(ridesStore, () => detector?.detectChanges())
     watch(
