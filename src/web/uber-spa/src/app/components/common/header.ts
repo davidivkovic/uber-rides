@@ -19,12 +19,12 @@ import { userStore } from '@app/stores/userStore'
             />
           </a>
           <div>
-            <button routerLink="/" class="primary text-base rounded-3xl px-3 py-2 text-white">
+            <button routerLink="/" class="primary rounded-3xl px-3 py-2 text-white">
               Home
             </button>
-            <button class="primary !text-base rounded-3xl px-3 py-2">Live support</button>
+            <button class="primary rounded-3xl px-3 py-2">Live support</button>
             <div *ngIf="userStore.isAdmin" class="inline-block relative group">
-              <button class="primary text-base rounded-3xl px-3 py-2 ">Register</button>
+              <button class="primary rounded-3xl px-3 py-2 ">Register</button>
               <div
                 id="content"
                 class="absolute hidden top-10 w-[150px] z-10 group-hover:block bg-[#eeeeee]  rounded-md "
@@ -46,11 +46,11 @@ import { userStore } from '@app/stores/userStore'
             <button
               *ngIf="!userStore.isAdmin"
               routerLink="profile/settings"
-              class="primary text-base rounded-3xl px-3 py-2 text-white"
+              class="primary rounded-3xl px-3 py-2 text-white"
             >
               Settings
             </button>
-            <button (click)="logout()" class="primary !text-base rounded-3xl px-3 py-2">
+            <button (click)="logout()" class="primary rounded-3xl px-3 py-2">
               Sign out
             </button>
           </div>

@@ -16,7 +16,7 @@ import com.uber.rides.model.User;
 import com.uber.rides.model.User.Roles;
 import com.uber.rides.service.UserService;
 
-import static com.uber.rides.Utils.*;
+import static com.uber.rides.util.Utils.*;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
@@ -50,8 +50,6 @@ public class Cars extends Controller {
     }
 
     @GetMapping("/types")
-    public Object getTypes() {
-        return Car.availableTypes;
-    }
+    public Object getTypes() { return Car.getAvailableTypes(); }
 
 }

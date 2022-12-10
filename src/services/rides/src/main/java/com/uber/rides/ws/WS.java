@@ -1,8 +1,10 @@
 package com.uber.rides.ws;
 
+import static com.uber.rides.util.Utils.*;
+
+import java.io.IOException;
 import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.ConcurrentHashMap;
 
 import javax.persistence.EntityManagerFactory;
 
@@ -28,15 +30,14 @@ import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 import org.springframework.web.socket.server.HandshakeInterceptor;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.uber.rides.database.DbContext;
 import com.uber.rides.model.Trip;
 import com.uber.rides.model.User;
 import com.uber.rides.model.User.Roles;
 import com.uber.rides.security.JWT;
-import com.uber.rides.ws.admin.AdminData;
 import com.uber.rides.ws.driver.DriverData;
 import com.uber.rides.ws.rider.RiderData;
-
-import static com.uber.rides.Utils.*;
 
 @Configuration
 @EnableWebSocket
@@ -82,33 +83,36 @@ class WSConfig implements WebSocketConfigurer {
 public class WS extends TextWebSocketHandler {
 
     @Autowired MessageHandler messageHandler;
-    @Autowired EntityManagerFactory contextFactory;
-
-    public Map<Long, DriverData> drivers = new ConcurrentHashMap<>();
-    public Map<Long, RiderData> riders = new ConcurrentHashMap<>();
-    public Map<Long, UserData> admins = new ConcurrentHashMap<>();
+    @Autowired EntityManagerFactory dbFactory;
+    @Autowired public Store store;
 
     Logger logger = LoggerFactory.getLogger(WS.class);
 
     @Override
     @Transactional
-    public void afterConnectionEstablished(WebSocketSession session) throws Exception {
+    public void afterConnectionEstablished(WebSocketSession session) {
 
         var userId = (Long) session.getAttributes().get(USER_ID);
-        var user = contextFactory.createEntityManager().find(User.class, userId);
-
-        if (user == null) {
-            session.close();
-            return;
+        User user = null;
+        try {
+            var db = dbFactory.createEntityManager();
+            user = db.find(User.class, userId);
+            db.close();
         }
+        catch (Exception e) { user = null; }
 
-        switch (user.getRole()) {
-            case Roles.ADMIN -> admins.put(userId, new AdminData(user, session));
-            case Roles.DRIVER -> drivers.put(userId, new DriverData(user, session));
-            default -> riders.put(userId, new RiderData(user, session));
+        if (user != null) {
+            try {
+                store.put(user, session);
+                super.afterConnectionEstablished(session);
+            } 
+            catch (Exception e) { store.remove(userId); }
         }
-
-        super.afterConnectionEstablished(session);
+        
+        else {
+            try { session.close(CloseStatus.NOT_ACCEPTABLE); } 
+            catch (IOException e) { /* Ignore */}
+        }
     }
 
     @Override
@@ -118,41 +122,55 @@ public class WS extends TextWebSocketHandler {
             MESSAGE_TYPE\n
             Json String
         */
-        var tokens = message.getPayload().split("\\\\n");
+        var tokens = message.getPayload().split("\n");
         if (tokens.length == 2) {
-            var collection = switch ((String) session.getAttributes().get(USER_ROLE)) {
-                case Roles.ADMIN -> admins;
-                case Roles.DRIVER -> drivers;
-                default -> riders;
-            };
-            var userData = collection.get(session.getAttributes().get(USER_ID));
-            messageHandler.handle(userData, tokens[0], tokens[1]);
-        } else {
-            sendMessage(session, ErrorMessages.MALFORMED);
-        }
+            var userData = store.get((Long) session.getAttributes().get(USER_ID));
+            if (userData != null) {
+                messageHandler.handle(userData, tokens[0], tokens[1]);
+            } 
+            else { sendMessage(session, ErrorMessages.DISCONNECTED);  }
+        } 
+        else { sendMessage(session, ErrorMessages.MALFORMED); }
     }
 
     @Override
-    public void afterConnectionClosed(WebSocketSession session, CloseStatus status) throws Exception {
-        drivers.remove(session.getAttributes().get(USER_ID));
-        super.afterConnectionClosed(session, status);
+    public void afterConnectionClosed(WebSocketSession session, CloseStatus status) {
+        store.remove((Long) session.getAttributes().get(USER_ID));
+        try { session.close(); } 
+        catch (IOException e) { /* Ignore */}
+        try { super.afterConnectionClosed(session, status); }
+        catch (Exception e) { /* Ignore */ }
     }
 
-    public void sendMessageToUser(Long driverId, String message) {
-        var data = drivers.get(driverId);
+    public static void sendMessage(WebSocketSession session, String message) {
+        sendMessage(session, new TextMessage(message));
+    }
+
+    public static void sendMessage(WebSocketSession session, TextMessage message) {
+        if (session != null && session.isOpen()) {
+            try { session.sendMessage(message); }
+            catch (IOException e) { /* Nothing special */ }
+        }
+    }
+
+    public void sendMessageToUser(Long userId, OutboundMessage message) {
+        var data = store.get(userId);
+        if (data == null) return;
+        try { sendMessage(data.session, message.serialize()); }
+        catch (JsonProcessingException e) { 
+            logger.error("Could not serialize message of type {}", message.getClass()); 
+        }
+    }
+
+    public void sendMessageToUser(Long userId, String message) {
+        var data = store.get(userId);
         if (data != null) {
             sendMessage(data.session, message);
         }
     }
 
     public void broadcast(String role, String message) {
-
-        var iterator = switch (role) {
-            case Roles.ADMIN -> admins.values().iterator();
-            case Roles.DRIVER -> drivers.values().iterator();
-            default -> riders.values().iterator();
-        };
-
+        var iterator = store.getMap(role).values().iterator();
         while (iterator.hasNext()) {
             var data = iterator.next();
             if (data != null) {
@@ -164,15 +182,16 @@ public class WS extends TextWebSocketHandler {
     public Trip getCurrentTrip(User user) {   
 
         if (user.getRole().equals(Roles.DRIVER)) return Optional
-            .ofNullable(drivers.get(user.getId()))
+            .ofNullable(store.drivers.get(user.getId()))
             .map(DriverData::getCurrentTrip)
             .orElse(null);
 
         else return Optional
-            .ofNullable(riders.get(user.getId()))
+            .ofNullable(store.riders.get(user.getId()))
             .map(RiderData::getCurrentTrip)
             .orElse(null);
         
     }
+    
 
 }

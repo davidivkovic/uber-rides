@@ -1,4 +1,4 @@
-package com.uber.rides;
+package com.uber.rides.util;
 
 import java.io.IOException;
 import java.util.Collections;
@@ -6,8 +6,6 @@ import java.util.Collections;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 
-import com.fasterxml.jackson.annotation.PropertyAccessor;
-import com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -25,8 +23,11 @@ public class Utils {
 
     public static final String USER_ID = "USER_ID";
     public static final String USER_ROLE = "USER_ROLE";
-    public static final String SCHEDULED = "SCHEDULED";
+    public static final String STORE_MAP = "STORE_MAP";
     public static final String UNCHECKED = "unchecked";
+    public static final String GM_KEY = "QUl6YVN5Q2h6alBMdjNyLS1CalVqaGx2Si1sUnlnb2VyM0NWMm9F";
+    public static final String GM_KEY_STATIC = "QUl6YVN5Q2tVT2RaNXk3aE1tMHlyY0NRb0N2THd6ZE02TThzNXFr";
+    
 
     /* JSON Mapper */
 
@@ -39,19 +40,6 @@ public class Utils {
 
     static {
         mapper.getConfiguration().setAmbiguityIgnored(true);
-    }
-
-    /* WebSocket Methods */
-
-    public static void sendMessage(WebSocketSession session, String message) {
-        sendMessage(session, new TextMessage(message));
-    }
-
-    public static void sendMessage(WebSocketSession session, TextMessage message) {
-        if (session != null && session.isOpen()) {
-            try { session.sendMessage(message); }
-            catch (IOException e) { /* Nothing special */ }
-        }
     }
 
     /* Google Auth */

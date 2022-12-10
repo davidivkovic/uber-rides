@@ -1,5 +1,7 @@
 package com.uber.rides.ws;
 
+import static com.uber.rides.util.Utils.*;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -11,11 +13,11 @@ import org.springframework.beans.factory.config.AutowireCapableBeanFactory;
 import org.springframework.stereotype.Component;
 
 import com.uber.rides.model.User.Roles;
-import com.uber.rides.ws.driver.messages.ConfirmTrip;
-import com.uber.rides.ws.driver.messages.StartTrip;
-import com.uber.rides.ws.driver.messages.UpdateLocation;
-
-import static com.uber.rides.Utils.*;
+import com.uber.rides.ws.driver.messages.in.ConfirmTrip;
+import com.uber.rides.ws.driver.messages.in.StartTrip;
+import com.uber.rides.ws.driver.messages.in.UpdateLocation;
+import com.uber.rides.ws.rider.messages.in.AnswerTripInvite;
+import com.uber.rides.ws.rider.messages.in.RemoveTripPassenger;
 
 @Component
 @SuppressWarnings(UNCHECKED)
@@ -28,7 +30,7 @@ public class MessageHandler {
     
     public void handle(UserData sender, String type, String payload) {
 
-        Class<? extends Message<? extends UserData>> messageType = EmptyMessage.class;
+        Class<? extends InboundMessage<? extends UserData>> messageType = EmptyMessage.class;
         
         if (Roles.DRIVER.equals(sender.getRole())) messageType = switch (type) {
             case UpdateLocation.TYPE -> UpdateLocation.class;
@@ -39,6 +41,8 @@ public class MessageHandler {
         };
 
         else if (Roles.RIDER.equals(sender.getRole())) messageType = switch (type) {
+            case AnswerTripInvite.TYPE -> AnswerTripInvite.class;
+            case RemoveTripPassenger.TYPE -> RemoveTripPassenger.class;
             default -> EmptyMessage.class;
         };
         
@@ -50,17 +54,17 @@ public class MessageHandler {
             if (messageType == EmptyMessage.class) {
                 emptyMessage.handle(sender);
             } else {
-                var message = (Message<UserData>) jsonMapper
+                var message = (InboundMessage<UserData>) jsonMapper
                     .readerForUpdating(container.getBean(messageType))
                     .readValue(payload);
                 message.handle(sender);
             }
         } 
         catch (JsonProcessingException e) { 
-            sendMessage(sender.session, ErrorMessages.MALFORMED_BODY);
+            WS.sendMessage(sender.session, ErrorMessages.MALFORMED_BODY);
         } 
         catch (BeansException e) {
-            sendMessage(sender.session, ErrorMessages.INTERNAL_SERVER_ERROR);
+            WS.sendMessage(sender.session, ErrorMessages.INTERNAL_SERVER_ERROR);
             log.error("Failed to create service of type {}.", messageType.getName());
         }
     }

@@ -36,4 +36,7 @@ public class TripDTO {
     double totalPrice;
     String currency;
     
+    double distanceInMeters;
+    double durationInSeconds;
+    
 }

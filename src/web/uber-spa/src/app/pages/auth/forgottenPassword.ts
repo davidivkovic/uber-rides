@@ -35,10 +35,9 @@ export default class ForgottenPassword {
   error: string = ''
   email: string = ''
 
-  constructor(private router: Router) {}
+  constructor(private router: Router) { }
 
   resetPassword = async () => {
-    console.log(this.email)
     this.error = ''
     try {
       const message = await auth.forgottenPassword(this.email)

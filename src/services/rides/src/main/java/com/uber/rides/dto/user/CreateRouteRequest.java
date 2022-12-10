@@ -17,6 +17,7 @@ public class CreateRouteRequest {
     @Setter
     public static class Location {
 
+        @NotEmpty String placeId;
         @NotEmpty String address;
         @NotNull double longitude;
         @NotNull double latitude;

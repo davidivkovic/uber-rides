@@ -2,10 +2,12 @@ import { Component } from '@angular/core'
 import { NgClass, NgFor, NgIf } from '@angular/common'
 import { ActivatedRoute, Router } from '@angular/router'
 import { FormsModule } from '@angular/forms'
-import { autocomplete, geocoder, icons, map } from '@app/api/google-maps'
-import { computed, InnerHtml, swap } from '@app/utils'
+import { autocomplete, geocoder, directions, icons, map } from '@app/api/google-maps'
+import { computed, formatDistance, formatDuration, InnerHtml, swap } from '@app/utils'
 import { ridesStore } from '@app/stores/ridesStore'
 import dayjs from 'dayjs'
+import { maps } from 'google-one-tap'
+import routes from '@app/api/routes'
 
 type AutocompleteLocation = {
   id: string
@@ -33,7 +35,7 @@ type AutocompleteLocation = {
               <circle cx="18" cy="5" r="2"></circle>
               <path d="M12 19h4.5a3.5 3.5 0 0 0 0 -7h-8a3.5 3.5 0 0 1 0 -7h3.5"></path>
             </svg>
-            <span> Favorite routes </span>
+            <h3 class="text-sm tracking-wide"> Favorite routes </h3>
             <svg width="1em" height="1em" viewBox="0 0 24 24" fill="none"><title>Chevron down small</title><path d="M18 8v3.8l-6 4.6-6-4.6V8l6 4.6L18 8z" fill="currentColor"></path></svg>
           </button>
         </div>
@@ -73,7 +75,11 @@ type AutocompleteLocation = {
             </button>
           </div>
           <div class="absolute -mt-[42px] ml-7 z-10">
-            <div class="w-1.5 h-1.5 border-2 border-black rounded-full"></div>
+            <div 
+              class="w-1.5 h-1.5 border-2 border-black"
+              [ngClass]="{ 'rounded-full' : index !== stopoverInputs.length - 1 }"
+            >
+            </div>
             <div 
               *ngIf="index !== stopoverInputs.length - 1" 
               class="w-[2px] h-12 ml-[2px] my-[5px] bg-black"
@@ -100,7 +106,7 @@ type AutocompleteLocation = {
               <title>Clock</title>
               <path d="M12 1C5.9 1 1 5.9 1 12s4.9 11 11 11 11-4.9 11-11S18.1 1 12 1zm6 13h-8V4h3v7h5v3z" fill="currentColor"></path>
             </svg>
-            <span class="text-sm whitespace-nowrap">{{ departureTime }}</span>
+            <h3 class="text-[13.5px] tracking-wide whitespace-nowrap">{{ departureTime }}</h3>
             <svg width="1em" height="1em" viewBox="0 0 24 24" fill="none"><title>Chevron down small</title><path d="M18 8v3.8l-6 4.6-6-4.6V8l6 4.6L18 8z" fill="currentColor"></path></svg>
           </button>
           <button 
@@ -134,7 +140,7 @@ type AutocompleteLocation = {
             (click)="addStop()"
             class="flex items-center secondary rounded-full px-4 !py-[2px] !text-sm whitespace-nowrap"
           >
-            Add stop
+            <h3 class="text-[13.5px] tracking-wide">Add stop</h3>
             <span class="text-2xl ml-2">+</span>
           </button>
         </div>
@@ -164,17 +170,27 @@ type AutocompleteLocation = {
         *ngIf="locationsCompleted" 
         class="px-4 pb-4 flex flex-col h-full"
       >
+        <h3 class="pl-1 pb-1.5 mt-auto">Routing preference</h3>
+        <div class="flex items-center space-x-4">
+          <select 
+            [(ngModel)]="routingPreference" 
+            (change)="getDirections()"
+            class="w-[220px] cursor-pointer"
+          >
+          <option *ngIf="stopoverInputs.length > 2" value="respect-waypoints">Keep Waypoint Order</option>
+          <option value="fastest-route">Fastest Route</option>
+          <option *ngIf="stopoverInputs.length === 2" value="cheapest-route">Shortest Route</option>
+          </select>
+          <div>
+            <h3 class="text-xl leading-5 mt-0.5">{{ distance }}</h3>
+            <p class="text-[15px] text-zinc-500">approx. {{ duration }}</p>
+          </div>
+        </div>
         <button 
-          (click)="router.navigate(['add-passengers'])"
-          class="secondary w-full !text-base mt-auto mb-1.5"
+          (click)="chooseRide()"
+          class="primary w-full !text-base mt-6"
         >
-          Add passengers
-        </button>
-        <button 
-          (click)="router.navigate(['choose-ride'])"
-          class="primary w-full !text-base"
-        >
-          Choose a ride
+          Continue
         </button>
       </div>
     </div>
@@ -182,9 +198,9 @@ type AutocompleteLocation = {
 })
 export default class Looking {
 
-  icons = icons
   makeEmptyStopover = () => ({ placeId: '', address: '', secondaryAddress: '', longitude: 0, latitude: 0 })
 
+  icons = icons
   stopoverInputs: {
     placeId: string,
     address: string,
@@ -207,37 +223,174 @@ export default class Looking {
   activeStopover = this.focusedStopover
   locationsCompleted = false
   blurred = true
+  routingPreference: 'respect-waypoints' | 'fastest-route' | 'cheapest-route' = 'respect-waypoints'
   departureTime = 'Depart now'
+  polyline: maps.Polyline
+  markers: maps.Marker[] = []
+  infoWindows: maps.InfoWindow[]
+  distance: string
+  duration: string
 
   constructor(public router: Router, public route: ActivatedRoute) { }
 
-  async onActivated() {
-    if (ridesStore.locationPicked?.address) {
+  async onActivated(navigatedFrom: string) {
+    if (ridesStore.favoriteRoutePicked) {
+      const route = ridesStore.favoriteRoutePicked
+      this.autocompleteLocations = []
+      this.stopoverInputs.length = route.stops.length + 1
+      this.autocompleteLocations.length = this.stopoverInputs.length
+      for (let i = 0; i < route.stops.length + 1; i++) {
+        if (i === 0) this.stopoverInputs[i] = route.start
+        else this.stopoverInputs[i] = route.stops[i - 1]
+
+        this.query(i, this.stopoverInputs[i].address + ', ' + this.stopoverInputs[i].secondaryAddress).then(async () => {
+          let locationToSelect = this.autocompleteLocations[i].find(l => l.id === this.stopoverInputs[i].placeId)
+          await this.selectLocation(i, locationToSelect ?? this.autocompleteLocations[i][0], false, true)
+          this.checkLocationsCompleted()
+        })
+      }
+      ridesStore.setState(store => store.favoriteRoutePicked = null)
+    }
+
+    if (ridesStore.locationPicked) {
       if (this.activeStopover <= -1) {
         this.focusFirstEmptyStopoverInput()
       }
+
       const index = Math.max(this.activeStopover, 0)
       const location = ridesStore.locationPicked
       this.stopoverInputs[index].address = location.address
+
       if (!this.checkLocationsCompleted()) {
         this.focusFirstEmptyStopoverInput()
         this.focusStopoverInputElement(this.focusedStopover)
       }
+
       await this.query(index, location.address + ', ' + location.secondaryAddress)
-      const locationToSelect = this.autocompleteLocations[index].find(l => l.id === ridesStore.locationPicked.placeId)
-      this.selectLocation(index, locationToSelect ?? this.autocompleteLocations[index][0], true)
-      ridesStore.locationPicked = this.makeEmptyStopover()
+      let locationToSelect =
+        this.autocompleteLocations[index].find(l => l.id === ridesStore.locationPicked.placeId)
+        ?? this.autocompleteLocations[index][0]
+
+      const geometry = await this.selectLocation(index, locationToSelect, false, true)
+      this.markers.push(
+        this.createMarker(geometry.lat(), geometry.lng(), index === this.stopoverInputs.length - 1)
+      )
+
+      this.checkLocationsCompleted()
+      ridesStore.locationPicked = null
     }
-    if (ridesStore.rideBuilder.scheduledAt) {
-      const day = ridesStore.rideBuilder.scheduledAt.isSame(dayjs(), 'day') ? 'Today' : 'Tomorrow'
-      this.departureTime = day + ridesStore.rideBuilder.scheduledAt.format(', h:mm A')
-    } else {
-      this.departureTime = 'Depart now'
+
+    if (navigatedFrom === 'choose-time') {
+      if (ridesStore.state.scheduledAt) {
+        const day = ridesStore.state.scheduledAt.isSame(dayjs(), 'day') ? 'Today' : 'Tomorrow'
+        this.departureTime = day + ridesStore.state.scheduledAt.format(', h:mm A')
+      } else {
+        this.departureTime = 'Depart now'
+      }
+      if (this.locationsCompleted) await this.getDirections()
     }
+
+  }
+
+  createMarker(latitude: number, longitude: number, isTerminal: boolean) {
+    return new google.maps.Marker({
+      position: {
+        lat: latitude,
+        lng: longitude
+      },
+      icon: {
+        url: '/assets/images/' + (!isTerminal
+          ? 'map-marker-location.png'
+          : 'map-marker-destination.png'
+        ),
+        anchor: {
+          x: 8,
+          y: 8
+        } as any
+      },
+      map
+    })
+  }
+
+  async getDirections() {
+    if (this.routingPreference === 'cheapest-route' && this.stopoverInputs.length > 2) {
+      this.routingPreference = 'respect-waypoints'
+    }
+    if (this.routingPreference === 'respect-waypoints' && this.stopoverInputs.length == 2) {
+      this.routingPreference = 'fastest-route'
+    }
+    const directions = await routes.preview({
+      originPlaceId: this.stopoverInputs[0].placeId,
+      destinationPlaceId: this.stopoverInputs[this.stopoverInputs.length - 1].placeId,
+      waypointPlaceIds: this.stopoverInputs.slice(1, -1).map(s => s.placeId),
+      routingPreference: this.routingPreference,
+      scheduledAt: ridesStore.state.scheduledAt
+    })
+
+    ridesStore.setState(store => store.state.directions = directions)
+
+    this.distance = formatDistance(directions.distanceInMeters)
+    this.duration = formatDuration(directions.durationInSeconds)
+
+    const route = directions.routes[0]
+
+    this.polyline?.setMap(null)
+    this.markers?.forEach(m => m.setMap(null))
+    this.infoWindows?.forEach(w => w.close())
+
+
+    map.fitBounds(new google.maps.LatLngBounds(route.bounds.southwest, route.bounds.northeast))
+    map.panBy(-180, 0)
+    // map.setZoom(map.getZoom() - 1)
+
+    this.polyline = new google.maps.Polyline({
+      path: google.maps.geometry.encoding.decodePath(route.overviewPolyline.encodedPath),
+      map,
+      strokeColor: '#000',
+      strokeOpacity: 0.7,
+      strokeWeight: 4,
+      clickable: false,
+    })
+
+    this.markers = this.stopoverInputs.map((stopover, index) =>
+      this.createMarker(stopover.latitude, stopover.longitude, index === this.stopoverInputs.length - 1)
+    )
+
+    this.infoWindows = this.stopoverInputs.map((stopover, index) => {
+      const verb = {
+        0: 'From',
+        [this.stopoverInputs.length - 1]: 'To'
+      }[index] ?? 'Stop'
+
+      return new google.maps.InfoWindow({
+        position: {
+          lat: stopover.latitude,
+          lng: stopover.longitude
+        },
+        content: /*html*/`
+          <div id="gm-iw-c-${index}" class="flex items-center px-3 py-2 space-x-2 cursor-pointer">
+            <span class="text-[15px]">${verb}: ${stopover.address}</span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+              <path d="M16.9 12l-4.6 6H8.5l4.6-6-4.6-6h3.8l4.6 6z" fill="currentColor">
+              </path>
+            </svg>
+          </div>
+        `
+      })
+    })
+
+    this.infoWindows.forEach((w, index) => {
+      google.maps.event.addListener(w, 'domready', () => {
+        const windowWidth = document.getElementById(`gm-iw-c-${index}`)?.clientWidth ?? 0
+        w.setOptions({ pixelOffset: new google.maps.Size(windowWidth / 2 + 8, 0) })
+      })
+      w.open(map)
+    })
   }
 
   checkLocationsCompleted() {
     this.locationsCompleted = this.stopoverInputs.every(i => i.address !== '')
+    if (this.stopoverInputs.every(i => i.latitude !== 0 && i.longitude !== 0)) this.getDirections()
     return this.locationsCompleted
   }
 
@@ -246,7 +399,7 @@ export default class Looking {
   }
 
   query = async (index: number, term?: string) => {
-    const text = term || this.stopoverInputs[index].address?.trim()
+    const text = term?.trim() || this.stopoverInputs[index].address?.trim()
     if (text === '') {
       this.autocompleteLocations[index] = []
       return
@@ -280,7 +433,11 @@ export default class Looking {
     )
   }
 
-  selectLocation = async (index: number, location: AutocompleteLocation, skipCompleteCheck = false) => {
+  drawPolyline() {
+
+  }
+
+  selectLocation = async (index: number, location: AutocompleteLocation, recenter = true, skipCompleteCheck = false) => {
     this.stopoverInputs[index] = {
       placeId: location.id,
       address: location.primary,
@@ -296,11 +453,21 @@ export default class Looking {
     const geometry = response.results[0].geometry.location
     this.stopoverInputs[index].longitude = geometry.lng()
     this.stopoverInputs[index].latitude = geometry.lat()
-    map.setCenter(geometry)
+
+
     if (!skipCompleteCheck && !this.checkLocationsCompleted()) {
       this.focusFirstEmptyStopoverInput()
       this.focusStopoverInputElement(this.focusedStopover)
     }
+
+    !this.locationsCompleted && recenter && map.panTo(geometry)
+
+    return geometry
+  }
+
+  chooseRide() {
+
+    this.router.navigate(['looking/choose-ride'])
   }
 
   getIcon = (locationTypes: string[]) => {
@@ -324,7 +491,7 @@ export default class Looking {
   )
 
   cardTitles = {
-    'travel': 'Choose a ride or add passengers first',
+    'travel': 'Choose your routing preference',
     'pickup': 'Where can we pick you up?',
     'stopover': 'Where are we stopping at?',
     'destination': 'Where are you heading to?'

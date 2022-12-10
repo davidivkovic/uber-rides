@@ -1,4 +1,5 @@
-import { action, state, createStore, computed } from 'usm-mobx'
+import { action, state, createStore, computed, watch } from 'usm-mobx'
+import { connect, disconnect } from '@app/api/ws'
 
 const userKey = 'authenticated-user'
 const tokenKey = 'access-token'
@@ -8,18 +9,26 @@ class UserStore {
   @state
   user = JSON.parse(localStorage.getItem(userKey)) ?? {}
 
+  constructor() {
+    this.user?.id && connect(this.accessToken())
+    watch(this, () => this.user, (curr, prev) => {
+      if (curr?.id) connect(this.accessToken())
+      else disconnect()
+    })
+  }
+
   @action
   setUser(user: {}, accessToken = '') {
-    this.user = user
     localStorage.setItem(userKey, JSON.stringify(user))
     localStorage.setItem(tokenKey, accessToken)
+    this.user = user
   }
 
   @action
   removeUser() {
-    this.user = {}
     localStorage.removeItem(userKey)
     localStorage.removeItem(tokenKey)
+    this.user = {}
   }
 
   @computed

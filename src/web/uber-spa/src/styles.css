@@ -110,6 +110,8 @@
   }
 }
 
+/* Google maps */
+
 .gmnoprint .gm-style-mtc,
 .gmnoprint a,
 .gmnoprint span,
@@ -122,4 +124,20 @@
 .gmnoprint > div {
   box-shadow: none !important;
   border-radius: 6px !important;
+}
+
+.gm-style-iw {
+  @apply !p-0 !shadow-lg !rounded-sm;
+}
+
+.gm-style-iw-d {
+  @apply !overflow-hidden;
+}
+
+.gm-style-iw button {
+  @apply !hidden;
+}
+
+div.gm-style-iw-tc {
+  @apply !hidden;
 }

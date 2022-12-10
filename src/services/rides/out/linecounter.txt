@@ -1,0 +1,174 @@
+===============================================================================
+EXTENSION NAME : linecounter
+EXTENSION VERSION : 0.2.7
+-------------------------------------------------------------------------------
+count time : 2022-12-08 06:48:47
+count workspace : d:\Projects\uber-rides\src\services\rides
+total files : 151
+total code lines : 3767
+total comment lines : 328
+total blank lines : 802
+
+    statistics
+   |      extension|     total code|  total comment|    total blank|percent|
+   -------------------------------------------------------------------------
+   |          .java|           2847|            273|            733|     76|
+   |           .lst|             53|              0|              0|    1.4|
+   |          .html|            300|             48|              0|    8.0|
+   |    .properties|             70|              4|             10|    1.9|
+   |           .xml|            186|              0|             27|    4.9|
+   |           .cmd|             64|              1|             11|    1.7|
+   |               |            247|              2|             21|    6.6|
+   -------------------------------------------------------------------------
+.classpath, code is 44, comment is 0, blank is 0.
+.gitignore, code is 29, comment is 0, blank is 4.
+.mvn\wrapper\maven-wrapper.jar, it is a binary file.
+.mvn\wrapper\maven-wrapper.properties, code is 2, comment is 2, blank is 0.
+mvnw, code is 174, comment is 2, blank is 17.
+mvnw.cmd, code is 64, comment is 1, blank is 11.
+pom.xml, code is 186, comment is 0, blank is 27.
+src\main\java\com\uber\rides\controller\Authentication.java, code is 243, comment is 0, blank is 56.
+src\main\java\com\uber\rides\controller\Cars.java, code is 40, comment is 0, blank is 15.
+src\main\java\com\uber\rides\controller\Controller.java, code is 49, comment is 0, blank is 13.
+src\main\java\com\uber\rides\controller\Drivers.java, code is 58, comment is 0, blank is 11.
+src\main\java\com\uber\rides\controller\Riders.java, code is 71, comment is 1, blank is 15.
+src\main\java\com\uber\rides\controller\Routes.java, code is 150, comment is 0, blank is 38.
+src\main\java\com\uber\rides\controller\Trips.java, code is 98, comment is 0, blank is 21.
+src\main\java\com\uber\rides\controller\Users.java, code is 154, comment is 0, blank is 45.
+src\main\java\com\uber\rides\database\DbContext.java, code is 45, comment is 0, blank is 18.
+src\main\java\com\uber\rides\dto\authentication\PasswordResetRequest.java, code is 9, comment is 0, blank is 5.
+src\main\java\com\uber\rides\dto\authentication\RegistrationRequest.java, code is 19, comment is 0, blank is 6.
+src\main\java\com\uber\rides\dto\authentication\SignInRequest.java, code is 8, comment is 0, blank is 5.
+src\main\java\com\uber\rides\dto\authentication\SignInResponse.java, code is 8, comment is 0, blank is 5.
+src\main\java\com\uber\rides\dto\route\PreviewRouteRequest.java, code is 21, comment is 0, blank is 7.
+src\main\java\com\uber\rides\dto\route\PreviewRouteResponse.java, code is 14, comment is 0, blank is 5.
+src\main\java\com\uber\rides\dto\TripDTO.java, code is 26, comment is 0, blank is 13.
+src\main\java\com\uber\rides\dto\user\CreateRouteRequest.java, code is 23, comment is 0, blank is 9.
+src\main\java\com\uber\rides\dto\user\DriverDTO.java, code is 9, comment is 0, blank is 5.
+src\main\java\com\uber\rides\dto\user\RegisterCarRequest.java, code is 18, comment is 0, blank is 6.
+src\main\java\com\uber\rides\dto\user\UpdateRequest.java, code is 14, comment is 0, blank is 6.
+src\main\java\com\uber\rides\dto\user\UserDTO.java, code is 34, comment is 0, blank is 8.
+src\main\java\com\uber\rides\model\Car.java, code is 72, comment is 0, blank is 14.
+src\main\java\com\uber\rides\model\Location.java, code is 22, comment is 0, blank is 6.
+src\main\java\com\uber\rides\model\Payment.java, code is 23, comment is 0, blank is 8.
+src\main\java\com\uber\rides\model\Rating.java, code is 27, comment is 1, blank is 10.
+src\main\java\com\uber\rides\model\Route.java, code is 27, comment is 0, blank is 9.
+src\main\java\com\uber\rides\model\Trip.java, code is 52, comment is 6, blank is 21.
+src\main\java\com\uber\rides\model\User.java, code is 100, comment is 0, blank is 29.
+src\main\java\com\uber\rides\model\UserUpdateRequest.java, code is 26, comment is 0, blank is 10.
+src\main\java\com\uber\rides\security\Config.java, code is 83, comment is 0, blank is 20.
+src\main\java\com\uber\rides\security\JWT.java, code is 95, comment is 0, blank is 34.
+src\main\java\com\uber\rides\service\EmailSender.java, code is 62, comment is 0, blank is 10.
+src\main\java\com\uber\rides\service\GoogleMaps.java, code is 114, comment is 0, blank is 20.
+src\main\java\com\uber\rides\service\ImageStore.java, code is 69, comment is 0, blank is 26.
+src\main\java\com\uber\rides\service\messages\ConfirmEmailMessage.java, code is 12, comment is 0, blank is 7.
+src\main\java\com\uber\rides\service\messages\EmailMessage.java, code is 16, comment is 0, blank is 6.
+src\main\java\com\uber\rides\service\messages\ForgotPasswordMessage.java, code is 12, comment is 0, blank is 6.
+src\main\java\com\uber\rides\service\UserService.java, code is 26, comment is 4, blank is 7.
+src\main\java\com\uber\rides\UberRidesApplication.java, code is 13, comment is 0, blank is 4.
+src\main\java\com\uber\rides\Utils.java, code is 41, comment is 5, blank is 21.
+src\main\java\com\uber\rides\ws\admin\AdminData.java, code is 18, comment is 0, blank is 7.
+src\main\java\com\uber\rides\ws\driver\DriverData.java, code is 20, comment is 0, blank is 8.
+src\main\java\com\uber\rides\ws\driver\messages\ConfirmTrip.java, code is 11, comment is 1, blank is 5.
+src\main\java\com\uber\rides\ws\driver\messages\StartTrip.java, code is 11, comment is 1, blank is 5.
+src\main\java\com\uber\rides\ws\driver\messages\UpdateLocation.java, code is 42, comment is 5, blank is 14.
+src\main\java\com\uber\rides\ws\ErrorMessages.java, code is 11, comment is 1, blank is 5.
+src\main\java\com\uber\rides\ws\Message.java, code is 14, comment is 0, blank is 8.
+src\main\java\com\uber\rides\ws\MessageHandler.java, code is 52, comment is 1, blank is 14.
+src\main\java\com\uber\rides\ws\rider\RiderData.java, code is 22, comment is 0, blank is 9.
+src\main\java\com\uber\rides\ws\Store.java, code is 48, comment is 1, blank is 11.
+src\main\java\com\uber\rides\ws\UserData.java, code is 20, comment is 0, blank is 10.
+src\main\java\com\uber\rides\ws\WS.java, code is 124, comment is 5, blank is 30.
+src\main\resources\application.properties, code is 34, comment is 1, blank is 5.
+src\main\resources\email-templates\confirm-email-uber.html, code is 89, comment is 12, blank is 0.
+src\main\resources\email-templates\forgot-password-uber.html, code is 61, comment is 12, blank is 0.
+src\main\resources\images\default_pfp.png, it is a binary file.
+src\test\java\com\uber\rides\UberRidesApplicationTests.java, code is 9, comment is 0, blank is 4.
+target\classes\application.properties, code is 34, comment is 1, blank is 5.
+target\classes\com\uber\rides\controller\Authentication.class, it is a binary file.
+target\classes\com\uber\rides\controller\Cars.class, it is a binary file.
+target\classes\com\uber\rides\controller\Controller.class, it is a binary file.
+target\classes\com\uber\rides\controller\Drivers.class, it is a binary file.
+target\classes\com\uber\rides\controller\Riders.class, it is a binary file.
+target\classes\com\uber\rides\controller\Routes.class, it is a binary file.
+target\classes\com\uber\rides\controller\Trips.class, it is a binary file.
+target\classes\com\uber\rides\controller\Users.class, it is a binary file.
+target\classes\com\uber\rides\database\DbContext$Factory.class, it is a binary file.
+target\classes\com\uber\rides\database\DbContext.class, it is a binary file.
+target\classes\com\uber\rides\dto\authentication\PasswordResetRequest.class, it is a binary file.
+target\classes\com\uber\rides\dto\authentication\RegistrationRequest.class, it is a binary file.
+target\classes\com\uber\rides\dto\authentication\SignInRequest.class, it is a binary file.
+target\classes\com\uber\rides\dto\authentication\SignInResponse.class, it is a binary file.
+target\classes\com\uber\rides\dto\route\PreviewRouteRequest.class, it is a binary file.
+target\classes\com\uber\rides\dto\route\PreviewRouteResponse.class, it is a binary file.
+target\classes\com\uber\rides\dto\TripDTO.class, it is a binary file.
+target\classes\com\uber\rides\dto\user\CreateRouteRequest$Location.class, it is a binary file.
+target\classes\com\uber\rides\dto\user\CreateRouteRequest.class, it is a binary file.
+target\classes\com\uber\rides\dto\user\DriverDTO.class, it is a binary file.
+target\classes\com\uber\rides\dto\user\RegisterCarRequest.class, it is a binary file.
+target\classes\com\uber\rides\dto\user\UpdateRequest.class, it is a binary file.
+target\classes\com\uber\rides\dto\user\UserDTO.class, it is a binary file.
+target\classes\com\uber\rides\model\Car$.class, it is a binary file.
+target\classes\com\uber\rides\model\Car$Type.class, it is a binary file.
+target\classes\com\uber\rides\model\Car$Types.class, it is a binary file.
+target\classes\com\uber\rides\model\Car.class, it is a binary file.
+target\classes\com\uber\rides\model\Location$LocationBuilder.class, it is a binary file.
+target\classes\com\uber\rides\model\Location.class, it is a binary file.
+target\classes\com\uber\rides\model\Payment$.class, it is a binary file.
+target\classes\com\uber\rides\model\Payment.class, it is a binary file.
+target\classes\com\uber\rides\model\Rating.class, it is a binary file.
+target\classes\com\uber\rides\model\Route$.class, it is a binary file.
+target\classes\com\uber\rides\model\Route.class, it is a binary file.
+target\classes\com\uber\rides\model\Trip$.class, it is a binary file.
+target\classes\com\uber\rides\model\Trip$Status.class, it is a binary file.
+target\classes\com\uber\rides\model\Trip.class, it is a binary file.
+target\classes\com\uber\rides\model\User$.class, it is a binary file.
+target\classes\com\uber\rides\model\User$OTP.class, it is a binary file.
+target\classes\com\uber\rides\model\User$Roles.class, it is a binary file.
+target\classes\com\uber\rides\model\User$UserBuilder.class, it is a binary file.
+target\classes\com\uber\rides\model\User.class, it is a binary file.
+target\classes\com\uber\rides\model\UserUpdateRequest$.class, it is a binary file.
+target\classes\com\uber\rides\model\UserUpdateRequest.class, it is a binary file.
+target\classes\com\uber\rides\security\Config$OperationAuth.class, it is a binary file.
+target\classes\com\uber\rides\security\Config.class, it is a binary file.
+target\classes\com\uber\rides\security\JWT$Interceptor.class, it is a binary file.
+target\classes\com\uber\rides\security\JWT.class, it is a binary file.
+target\classes\com\uber\rides\service\EmailSender$EmailConfig.class, it is a binary file.
+target\classes\com\uber\rides\service\EmailSender.class, it is a binary file.
+target\classes\com\uber\rides\service\GoogleMaps.class, it is a binary file.
+target\classes\com\uber\rides\service\ImageStore.class, it is a binary file.
+target\classes\com\uber\rides\service\messages\ConfirmEmailMessage.class, it is a binary file.
+target\classes\com\uber\rides\service\messages\EmailMessage.class, it is a binary file.
+target\classes\com\uber\rides\service\messages\ForgotPasswordMessage.class, it is a binary file.
+target\classes\com\uber\rides\service\UserService.class, it is a binary file.
+target\classes\com\uber\rides\UberRidesApplication.class, it is a binary file.
+target\classes\com\uber\rides\Utils.class, it is a binary file.
+target\classes\com\uber\rides\ws\admin\AdminData.class, it is a binary file.
+target\classes\com\uber\rides\ws\driver\DriverData.class, it is a binary file.
+target\classes\com\uber\rides\ws\driver\messages\ConfirmTrip.class, it is a binary file.
+target\classes\com\uber\rides\ws\driver\messages\StartTrip.class, it is a binary file.
+target\classes\com\uber\rides\ws\driver\messages\UpdateLocation.class, it is a binary file.
+target\classes\com\uber\rides\ws\driver\messages\UpdateLocationTask.class, it is a binary file.
+target\classes\com\uber\rides\ws\EmptyMessage.class, it is a binary file.
+target\classes\com\uber\rides\ws\ErrorMessages.class, it is a binary file.
+target\classes\com\uber\rides\ws\Message.class, it is a binary file.
+target\classes\com\uber\rides\ws\MessageHandler.class, it is a binary file.
+target\classes\com\uber\rides\ws\rider\RiderData.class, it is a binary file.
+target\classes\com\uber\rides\ws\Store.class, it is a binary file.
+target\classes\com\uber\rides\ws\UserData.class, it is a binary file.
+target\classes\com\uber\rides\ws\WS.class, it is a binary file.
+target\classes\com\uber\rides\ws\WSConfig$1.class, it is a binary file.
+target\classes\com\uber\rides\ws\WSConfig.class, it is a binary file.
+target\classes\email-templates\confirm-email-uber.html, code is 89, comment is 12, blank is 0.
+target\classes\email-templates\forgot-password-uber.html, code is 61, comment is 12, blank is 0.
+target\classes\images\default_pfp.png, it is a binary file.
+target\generated-sources\annotations\com\uber\rides\model\Car$.java, code is 44, comment is 25, blank is 3.
+target\generated-sources\annotations\com\uber\rides\model\Payment$.java, code is 57, comment is 31, blank is 4.
+target\generated-sources\annotations\com\uber\rides\model\Route$.java, code is 31, comment is 19, blank is 4.
+target\generated-sources\annotations\com\uber\rides\model\Trip$.java, code is 120, comment is 61, blank is 4.
+target\generated-sources\annotations\com\uber\rides\model\User$.java, code is 136, comment is 70, blank is 4.
+target\generated-sources\annotations\com\uber\rides\model\UserUpdateRequest$.java, code is 54, comment is 35, blank is 4.
+target\maven-status\maven-compiler-plugin\compile\default-compile\createdFiles.lst, code is 6, comment is 0, blank is 0.
+target\maven-status\maven-compiler-plugin\compile\default-compile\inputFiles.lst, code is 47, comment is 0, blank is 0.
+target\test-classes\com\uber\rides\UberRidesApplicationTests.class, it is a binary file.
+===============================================================================

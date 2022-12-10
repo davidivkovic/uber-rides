@@ -24,13 +24,13 @@ import { ContinueDialog } from '../components/continueDialog'
       </div>
       <div class="flex justify-between w-full gap-8">
         <select required #maker (change)="changeSelectedMaker(maker.value)" name="make">
-          <option value="" selected disabled hidden>--Select car maker--</option>
+          <option value="" selected disabled hidden>Select car maker</option>
           <option *ngFor="let maker of types" [value]="maker">
             {{ maker }}
           </option>
         </select>
         <select required #model name="model" class="">
-          <option value="" selected disabled hidden>--Select car model--</option>
+          <option value="" selected disabled hidden>Select car model</option>
           <option *ngFor="let model of models()" [value]="model">
             {{ model }}
           </option>
@@ -55,36 +55,31 @@ import { ContinueDialog } from '../components/continueDialog'
           Driver's earnings depend on the type of car he drives.
         </p>
       </div>
-      <div *ngIf="carTypes.length !== 0" class="flex space-x-5">
+      <div *ngIf="carTypes.length !== 0" class="flex space-x-4">
         <div
-          *ngFor="let carType of carTypes; let i = index"
+          *ngFor="let carType of carTypes"
           (click)="selectCarType(carType)"
           [ngClass]="{
-            'ring-2 ring-black ring-offset-[3px] bg-stone-200 transition-none': carType.name === selectedCarType?.name
+            'ring-2 ring-black ring-offset-[3px] bg-zinc-50 transition-none': carType.name === selectedCarType?.name
           }"
-          class="rounded-md bg-[#eeeeee] p-5 w-full hover:bg-stone-200 cursor-pointer transition-all duration-150"
+          class="rounded-md bg-[#eeeeee] p-5 w-full hover:bg-zinc-50 cursor-pointer transition-all duration-150"
         >
-          <img [src]="carImages[i]" class="mx-auto" />
+          <img [src]="carType.image" class="mx-auto" />
           <div class="flex justify-between">
-            <p class="font-bold text-lg">{{ carType.name }}</p>
+            <h3 class="font-bold text-lg">{{ carType.name }}</h3>
             <div class="flex space-x-2 font-medium">
-              <div class="flex  items-center font-medium">
-                {{ carType.seats }}
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  class="icon icon-tabler icon-tabler-user"
-                  class="h-4 w-4"
-                  viewBox="0 0 24 24"
-                  stroke-width="2.8"
-                  stroke="#2c3e50"
-                  fill="none"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                >
-                  <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                  <circle cx="12" cy="7" r="4" />
-                  <path d="M6 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2" />
+              <div class="flex items-center font-medium">
+                <svg class="mb-0.5 mr-0.5" width="12" height="12" viewBox="0 0 24 24" fill="none">
+                  <title>Person</title>
+                  <path 
+                    fill-rule="evenodd" 
+                    clip-rule="evenodd" 
+                    d="M17.5 6.5a5.5 5.5 0 11-11 0 5.5 5.5 0 0111 0zM3 20c0-3.3 2.7-6 6-6h6c3.3 0 6 2.7 6 6v3H3v-3z" 
+                    fill="currentColor"
+                    >
+                  </path>
                 </svg>
+                {{ carType.seats }}
               </div>
             </div>
           </div>
@@ -109,12 +104,6 @@ export default class Index {
   types = []
   error = ''
   driverId = ''
-
-  carImages = [
-    'https://i.pinimg.com/originals/41/ae/f1/41aef11685c001bc3a19aaacfcf9a145.png',
-    'https://pngimg.com/uploads/audi/audi_PNG1715.png',
-    'https://media-assets.mazda.eu/image/upload/c_fill,w_768,q_auto,f_auto/mazdauk/globalassets/cars/mazda-mx-30/clearcut_cc/mx-30-clear-cut2.png?rnd=49bb03'
-  ]
 
   constructor(public router: Router, public route: ActivatedRoute) { }
 
@@ -184,4 +173,5 @@ class CarType {
   paymentMultiplier: number
   selected: boolean
   carType: string
+  image: string
 }

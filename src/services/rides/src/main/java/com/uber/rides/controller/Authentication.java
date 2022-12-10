@@ -1,5 +1,7 @@
 package com.uber.rides.controller;
 
+import static com.uber.rides.util.Utils.*;
+
 import java.io.IOException;
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -42,7 +44,6 @@ import com.uber.rides.service.EmailSender;
 import com.uber.rides.service.UserService;
 import com.uber.rides.service.messages.ConfirmEmailMessage;
 import com.uber.rides.service.messages.ForgotPasswordMessage;
-import static com.uber.rides.Utils.*;
 
 @RestController
 @RequestMapping("/authentication")

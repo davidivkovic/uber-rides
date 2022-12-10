@@ -10,6 +10,7 @@ public class Controller {
 
     static final String USER_NOT_EXIST = "User does not exist.";
     static final String EMAIL_NOT_FOUND = "The email you entered doesn't belong to an account.";
+    static final String CONNECTION_ENDED = "Your connection has ended. Please refresh the page to connect again.";
  
     public Object badRequest(Object response) {
         return ResponseEntity.badRequest().body(response);

@@ -16,11 +16,17 @@ import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.Column;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Getter
 @Setter
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
 @Entity
 public class Trip {
 
@@ -31,7 +37,7 @@ public class Trip {
     // 5. VOZAC ZAPOCINJE ILI OTKAZUJE VOZNJU UZ OPRAVDANJE
 
     public enum Status {
-        CREATED, PAID, AWAITING_PICKUP, IN_PROGRESS, CANCELLED, COMPLETED
+        BUILDING, CREATED, PAID, AWAITING_PICKUP, IN_PROGRESS, CANCELLED, COMPLETED
     }
 
     @Id @GeneratedValue Long id;
@@ -48,8 +54,8 @@ public class Trip {
     @JoinColumn(name = "car_id") 
     Car car;
 
-    @ManyToMany Set<User> riders = new HashSet<>();
-    @OneToMany List<Payment> payments = new ArrayList<>();
+    @ManyToMany @Builder.Default Set<User> riders = new HashSet<>();
+    @OneToMany @Builder.Default List<Payment> payments = new ArrayList<>();
 
     Status status;
     LocalDateTime startedAt;
@@ -64,6 +70,9 @@ public class Trip {
 
     double totalPrice;
     String currency;
+
+    double distanceInMeters;
+    double durationInSeconds;
 
     /* Navigation FK's */
 

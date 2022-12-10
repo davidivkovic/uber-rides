@@ -1,4 +1,4 @@
-package com.uber.rides.ws.driver.messages;
+package com.uber.rides.ws.driver.messages.in;
 
 import java.time.Duration;
 
@@ -9,7 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.uber.rides.model.User;
 import com.uber.rides.model.User.Roles;
-import com.uber.rides.ws.Message;
+import com.uber.rides.ws.InboundMessage;
 import com.uber.rides.ws.driver.DriverData;
 import com.uber.rides.ws.WS;
 
@@ -17,7 +17,7 @@ import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 
 @Service
-public class UpdateLocation implements Message<DriverData> {
+public class UpdateLocation implements InboundMessage<DriverData> {
 
     public static final String TYPE = "UPDATE_LOCATION";
 

@@ -6,10 +6,14 @@ import { DialogData } from '@app/stores'
   template: ``
 })
 export class Dialog {
-  constructor(public data: DialogData) { }
+
+  props: any
+
+  constructor(public data: DialogData) {
+    this.props = data.props
+  }
 
   close = (data?: any) => {
-    console.log(this.data.onclose)
     this.data.onclose(data)
     this.data.close()
   }

@@ -1,3 +1,4 @@
+import dayjs from 'dayjs'
 import { fetch } from '.'
 
 type Location = {
@@ -43,4 +44,27 @@ const removeFavorite = async (routeId: string) => {
   if (!response.ok) throw new Error(await response.text())
 }
 
-export default { favorites, createFavorite, removeFavorite }
+const preview = async (data: {
+  originPlaceId: string
+  destinationPlaceId: string
+  waypointPlaceIds: string[],
+  routingPreference: 'respect-waypoints' | 'fastest-route' | 'cheapest-route',
+  scheduledAt: dayjs.Dayjs
+}) => {
+  const response = await fetch(
+    basePath + '/preview',
+    {
+      method: 'POST',
+      body: JSON.stringify(data)
+    }
+  )
+  if (response.ok) return await response.json()
+  throw new Error(await response.text())
+}
+
+export default {
+  favorites,
+  createFavorite,
+  removeFavorite,
+  preview
+}

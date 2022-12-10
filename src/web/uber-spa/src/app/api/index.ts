@@ -1,10 +1,11 @@
 import { userStore } from '@app/stores'
 
-const baseUrl = 'http://localhost:8000'
+const scheme = 'http://'
+const baseUrl = 'localhost:8000'
 
 const fetch = (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
   if (typeof input === 'string' && !input.startsWith('http') && input.startsWith('/')) {
-    input = baseUrl + input
+    input = scheme + baseUrl + input
   }
 
   if (init?.body && typeof init.body === 'string') {
@@ -15,7 +16,7 @@ const fetch = (input: RequestInfo | URL, init?: RequestInit): Promise<Response> 
   }
 
   if (userStore.isAuthenticated) {
-    init.headers = {...init?.headers, Authorization: `Bearer ${userStore.accessToken()}`}
+    init.headers = { ...init?.headers, Authorization: `Bearer ${userStore.accessToken()}` }
   }
 
   return window.fetch(input, {
@@ -26,4 +27,4 @@ const fetch = (input: RequestInfo | URL, init?: RequestInit): Promise<Response> 
   })
 }
 
-export { fetch }
+export { fetch, baseUrl }

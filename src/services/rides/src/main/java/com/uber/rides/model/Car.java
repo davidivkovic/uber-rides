@@ -1,18 +1,24 @@
 package com.uber.rides.model;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import javax.persistence.Embeddable;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Getter
 @Setter
+@AllArgsConstructor
+@NoArgsConstructor
+@Builder
 @Entity
 public class Car {
  
@@ -28,11 +34,12 @@ public class Car {
     @Getter
     @Setter
     public static class Type { 
-        private Types carType;
-        private String name;
-        private int seats;
-        private double paymentMultiplier;
-        private String description;
+        Types carType;
+        String name;
+        int seats;
+        double paymentMultiplier;
+        String description;
+        String image;
     }
 
     @Id
@@ -43,13 +50,44 @@ public class Car {
     Type type;
     double rating;
 
-    public static final List<Type> availableTypes = List.of(
-        new Type(Types.UBER_X, "UberX", 4, 1, "Cheap rides, just for you"),
-        new Type(Types.UBER_BLACK, "Uber Black", 4, 1.2, "Premium rides in luxury cars"),
-        new Type(Types.UBER_GREEN, "Uber Green", 4, 0.95, "Eco-friendly rides")
+    static final Map<Types, Type> types = Map.of(
+        Types.UBER_X, new Type(
+            Types.UBER_X,
+            "UberX",
+            4, 
+            1, 
+            "Cheap rides, just for you", 
+            "https://d1a3f4spazzrp4.cloudfront.net/car-types/haloProductImages/v1.1/UberX_v1.png"
+        ),
+        Types.UBER_BLACK, new Type(
+            Types.UBER_BLACK, 
+            "Uber Black", 
+            4, 
+            1.5, 
+            "Premium rides in luxury cars", 
+            "https://d1a3f4spazzrp4.cloudfront.net/car-types/haloProductImages/v1.1/Black_v1.png"
+        ),
+        Types.UBER_GREEN, new Type(
+            Types.UBER_GREEN,
+            "Uber Green", 
+            4, 
+            0.95, 
+            "Eco-friendly rides", 
+            "https://d1a3f4spazzrp4.cloudfront.net/car-types/haloProductImages/v1.1/UberX_Green.png"
+        )
     );
 
+    static final List<Type> typesCollection = types .values()
+        .stream()
+        .sorted((c1, c2) -> Double.compare(c1.paymentMultiplier, c2.paymentMultiplier))
+        .toList();
+
+    public static List<Type> getAvailableTypes() {
+        return typesCollection;
+    }
+
     public static Type getByType(Types type) {
-        return availableTypes.stream().filter(t -> t.getCarType().equals(type)).findFirst().orElse(null);
+        if (type == null) return null;
+        return types.get(type);
     }
 }

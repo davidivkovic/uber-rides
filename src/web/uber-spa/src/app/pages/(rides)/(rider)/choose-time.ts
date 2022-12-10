@@ -11,7 +11,7 @@ import dayjs from 'dayjs'
   template: `
     <div class="w-[400px] h-[700px] flex flex-col bg-white rounded-xl pointer-events-auto">
       <div class="flex justify-between items-center">
-        <button (click)="location.back()" class="p-3.5">
+        <button (click)="cancel()" class="p-3.5">
           <svg width="20" height="20" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
             <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
             <line x1="5" y1="12" x2="19" y2="12"></line>
@@ -51,7 +51,7 @@ import dayjs from 'dayjs'
               <svg width="1em" height="1em" viewBox="0 0 24 24" fill="none"><title>Clock</title><path d="M12 1C5.9 1 1 5.9 1 12s4.9 11 11 11 11-4.9 11-11S18.1 1 12 1zm6 13h-8V4h3v7h5v3z" fill="currentColor"></path></svg>
             </div>
             <select 
-              [(ngModel)]="selectedTime" 
+              [(ngModel)]="selectedTime"
               class="text-center text-base cursor-pointer"
               style="text-align: center; text-align-last: center;"
             >
@@ -79,11 +79,12 @@ export default class ChooseTime {
 
   pickupAddress: string
   tomorrowAllowed = false
-  allowedTimes = []
+  allowedTimes: dayjs.Dayjs[] = []
   now: dayjs.Dayjs
   selectedTime: dayjs.Dayjs
+  selectedTimeBackup: dayjs.Dayjs
   selectedDay: 'Today' | 'Tomorrow' = 'Today'
-  // now = 
+  selectedDayBackup: 'Today' | 'Tomorrow' = 'Today'
 
   constructor(public route: ActivatedRoute, public router: Router, public location: Location) {
     this.setPickupAddress()
@@ -93,11 +94,13 @@ export default class ChooseTime {
   onActivated() {
     this.setPickupAddress()
     this.calculateAllowedTimes()
+    this.selectedDayBackup = this.selectedDay
+    this.selectedTimeBackup = this.selectedTime
   }
 
   setCurrentTime() {
-    this.now = dayjs('2022-12-03 21:13')
-    // return dayjs()
+    // this.now = dayjs('2022-12-03 21:13')
+    this.now = dayjs()
   }
 
   calculateAllowedTimes() {
@@ -105,7 +108,7 @@ export default class ChooseTime {
     this.tomorrowAllowed = !this.now.add(5, 'hours').isSame(this.now, 'day')
     this.allowedTimes.length = 0
     const roundedTime = this.now.set('minutes', Math.floor(this.now.minute() / 5) * 5)
-    for (let i = 1; i <= 30; i++) { /* 5h * 10min intervals */
+    for (let i = 0; i <= 30; i++) { /* 5h * 10min intervals */
       const time = roundedTime.add(i * 10, 'minutes')
       if (
         this.selectedDay === 'Today' && time.isSame(this.now, 'day') ||
@@ -114,10 +117,16 @@ export default class ChooseTime {
         this.allowedTimes.push(time)
       }
     }
-    this.selectedTime = this.allowedTimes[0]
+    if (!this.selectedTime || this.now.isAfter(this.selectedTime)) {
+      this.selectedTime = this.allowedTimes[0]
+    }
+    else {
+      this.selectedTime = this.allowedTimes.find(t => t.isSame(this.selectedTime, 'minutes'))
+    }
   }
 
   selectedDayChanged() {
+    this.selectedTime = null
     this.calculateAllowedTimes()
   }
 
@@ -125,13 +134,20 @@ export default class ChooseTime {
     this.pickupAddress = this.route.snapshot.queryParamMap.get('pickup')
   }
 
+  cancel() {
+    this.selectedDay = this.selectedDayBackup
+    this.selectedTime = this.selectedTimeBackup
+    this.location.back()
+  }
+
   deleteTime() {
-    ridesStore.rideBuilder.scheduledAt = null
+    this.selectedTime = null
+    ridesStore.setState(store => store.state.scheduledAt = null)
     this.location.back()
   }
 
   confirmTime() {
-    ridesStore.rideBuilder.scheduledAt = this.selectedTime
+    ridesStore.setState(store => store.state.scheduledAt = this.selectedTime)
     this.location.back()
   }
 

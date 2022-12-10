@@ -32,7 +32,7 @@ export default class ResetPassword {
   email = ''
   error = ''
 
-  constructor(public router: Router, public route: ActivatedRoute) {}
+  constructor(public router: Router, public route: ActivatedRoute) { }
 
   ngOnInit(): void {
     this.route.paramMap.subscribe(params => {
@@ -44,8 +44,8 @@ export default class ResetPassword {
     let code = ''
     for (const [key, value] of Object.entries(form)) {
       if (key.includes('number')) code += value
-     }
-     return code
+    }
+    return code
   }
 
   reset = async (event: Event) => {
@@ -53,24 +53,23 @@ export default class ResetPassword {
     const form = Object.fromEntries(new FormData(event.target as HTMLFormElement).entries())
     const code = this.getCode(form)
     const password = form['password'].toString()
-    console.log(code, password)
 
     try {
-        this.error = ''
-        await auth.resetPassword({ email: this.email, code, password })
-        dialogStore.openDialog(
-            ContinueDialog,
-            {
-              success: true,
-              title: 'Success',
-              body: 'Your account has been successfully verified. You will be redirected to the login page.'
-            },
-            () => setTimeout(() => this.router.navigate(['auth/login']), 200)
-          )
+      this.error = ''
+      await auth.resetPassword({ email: this.email, code, password })
+      dialogStore.openDialog(
+        ContinueDialog,
+        {
+          success: true,
+          title: 'Success',
+          body: 'Your account has been successfully verified. You will be redirected to the login page.'
+        },
+        () => setTimeout(() => this.router.navigate(['auth/login']), 200)
+      )
 
-    } 
-    catch(error) {
-        this.error = error
+    }
+    catch (error) {
+      this.error = error
     }
   }
 }

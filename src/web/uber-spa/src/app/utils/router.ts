@@ -3,6 +3,7 @@ import { ActivatedRouteSnapshot, RouteReuseStrategy, DetachedRouteHandle, UrlSeg
 export class CustomReuseStrategy implements RouteReuseStrategy {
 
   storedHandles: { [key: string]: DetachedRouteHandle } = {}
+  fullRoute: string
 
   shouldDetach(route: ActivatedRouteSnapshot): boolean {
     return route.data['reuseRoute'] || false
@@ -10,10 +11,12 @@ export class CustomReuseStrategy implements RouteReuseStrategy {
 
   store(route: ActivatedRouteSnapshot, handle: DetachedRouteHandle): void {
     const id = this.createIdentifier(route)
+    const fullRoute = route.url.map(s => s.path).join('/')
+    if (fullRoute !== '' && handle) this.fullRoute = fullRoute
     if (handle) {
       (handle as any)?.componentRef?.instance?.onDeactivated?.()
     } else {
-      (this.storedHandles?.[id] as any)?.componentRef?.instance?.onActivated?.()
+      (this.storedHandles?.[id] as any)?.componentRef?.instance?.onActivated?.(this.fullRoute)
     }
     if (route.data['reuseRoute']) {
       this.storedHandles[id] = handle

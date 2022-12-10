@@ -9,6 +9,7 @@ public class ErrorMessages {
     /* WebSockets Error Messages */
 
     public static final TextMessage DISCONNECTED = new TextMessage("DISCONNECTED");
+    public static final TextMessage USER_NOT_CONNECTED = new TextMessage("USER_NOT_CONNECTED");
     public static final TextMessage UNKNOWN_MESSAGE_TYPE = new TextMessage("UNKNOWN_MESSAGE_TYPE");
     public static final TextMessage MALFORMED = new TextMessage("MALFORMED_MESSAGE");
     public static final TextMessage MALFORMED_BODY = new TextMessage("MALFORMED_MESSAGE_BODY");

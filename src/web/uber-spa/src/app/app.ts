@@ -1,6 +1,7 @@
 import { Component } from '@angular/core'
 import { RouterOutlet } from '@angular/router'
 import DialogOutlet from './components/ui/dialog/dialogOutlet'
+import '@app/stores/userStore'
 
 @Component({
   selector: 'app-root',

@@ -1,5 +1,7 @@
 package com.uber.rides.model;
 
+import static com.uber.rides.util.Utils.mapper;
+
 import java.time.LocalDateTime;
 
 import javax.persistence.Id;
@@ -8,8 +10,6 @@ import javax.persistence.GeneratedValue;
 
 import lombok.Getter;
 import lombok.Setter;
-
-import static com.uber.rides.Utils.mapper;
 
 @Getter
 @Setter

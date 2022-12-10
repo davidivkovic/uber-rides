@@ -1,11 +1,12 @@
 import { Component } from '@angular/core'
-import { Location } from '@angular/common'
+import { Location, NgClass } from '@angular/common'
 import { ActivatedRoute } from '@angular/router'
 import { geocoder, map } from '@app/api/google-maps'
 import { ridesStore } from '@app/stores/ridesStore'
 
 @Component({
   standalone: true,
+  imports: [NgClass],
   template: `
     <div class="h-[700px]">
       <div class="w-[400px] p-4 bg-white rounded-xl pointer-events-auto">
@@ -14,7 +15,13 @@ import { ridesStore } from '@app/stores/ridesStore'
         <p [hidden]="isDragging || location.address ===''" class="text-lg pt-0.5 pb-2 text-zinc-700">
           {{ location.address }}, {{location.secondaryAddress}}
         </p>
-        <button (click)="pickLocation()" class="primary w-full !text-base">{{ confirmationText }}</button>
+        <button 
+          (click)="pickLocation()"
+          class="primary w-full !text-base"
+          [ngClass]="{ 'cursor-default pointer-events-none' : isDragging }"
+        >
+          {{ confirmationText }}
+        </button>
         <button (click)="routerLocation.back()" class="secondary w-full mt-1 !text-base">Cancel</button>
       </div>
     </div>
@@ -89,14 +96,21 @@ export default class PickLocation {
     }
 
     this.mapListeners = [
-      google.maps.event.addListener(map, 'center_changed', () => marker.setPosition(map.getCenter())),
       google.maps.event.addListener(map, 'dragstart', () => {
         this.isDragging = true
         setMarker(this.mapOverlay)
       }),
-      google.maps.event.addListener(map, 'dragend', async () => {
+      // google.maps.event.addListener(map, 'dragend', async () => {
+      //   this.isDragging = false
+      //   setMarker(this.mapOverlay)
+      // }),
+      google.maps.event.addListener(map, 'center_changed', () => {
+        marker.setPosition(map.getCenter())
+      }),
+      google.maps.event.addListener(map, 'idle', () => {
         this.isDragging = false
         setMarker(this.mapOverlay)
+        marker.setPosition(map.getCenter())
         getAddress()
       })
     ]
@@ -106,7 +120,7 @@ export default class PickLocation {
   }
 
   pickLocation = () => {
-    ridesStore.locationPicked = this.location
+    ridesStore.setState(store => store.locationPicked = this.location)
     this.routerLocation.back()
   }
 

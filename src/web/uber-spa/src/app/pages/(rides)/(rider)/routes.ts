@@ -26,13 +26,18 @@ const routes: Routes = [
           {
             path: 'pick-location',
             loadComponent: () => import('./pick-location')
-          }
+          },
+          {
+            path: 'add-passengers',
+            data: { reuseRoute: true },
+            loadComponent: () => import('./add-passengers')
+          },
+          {
+            path: 'choose-ride',
+            data: { reuseRoute: true },
+            loadComponent: () => import('./choose-ride')
+          },
         ]
-      },
-      {
-        path: 'add-passengers',
-        data: { reuseRoute: true },
-        loadComponent: () => import('./add-passengers')
       },
     ]
   }

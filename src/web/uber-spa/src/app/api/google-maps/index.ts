@@ -8,6 +8,7 @@ let mapHtmlElement: HTMLElement
 let autocomplete: google.maps.places.AutocompleteService
 let geocoder: google.maps.Geocoder
 let places: google.maps.places.PlacesService
+let directions: google.maps.DirectionsService
 let elementId: string
 
 const initMap = () => {
@@ -21,6 +22,7 @@ const initMap = () => {
   places = new google.maps.places.PlacesService(map)
   autocomplete = new google.maps.places.AutocompleteService()
   geocoder = new google.maps.Geocoder()
+  directions = new google.maps.DirectionsService()
 }
 
 jailbreak()
@@ -28,7 +30,7 @@ const script = Object.assign(
   document.createElement('script'),
   {
     id: scriptName,
-    src: 'https://maps.googleapis.com/maps/api/js?key=AIzaSyCkUOdZ5y7hMm0yrcCQoCvLwzdM6M8s5qk&libraries=places,directions&language=en',
+    src: 'https://maps.googleapis.com/maps/api/js?libraries=places,directions,geometry&language=en&key=AIzaSyB41DRUbKWJHPxaFjMAwdrzWzbVKartNGg',
     async: true,
     defer: true,
     onload: initMap
@@ -45,4 +47,12 @@ const init = (htmlElementId: string) => {
   }
 }
 
-export { init, map, mapHtmlElement, autocomplete, geocoder, icons }
+export {
+  init,
+  map,
+  mapHtmlElement,
+  autocomplete,
+  geocoder,
+  directions,
+  icons
+}

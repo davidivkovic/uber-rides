@@ -80,7 +80,7 @@ public class User implements UserDetails {
     OTP confirmationCode;
     
     @OneToOne(fetch = FetchType.LAZY) UserUpdateRequest updateRequest;
-    @OneToOne Car car;
+    @OneToOne(fetch = FetchType.LAZY) Car car;
     
     @ManyToMany @Builder.Default List<Route> favoriteRoutes = new ArrayList<>();
     

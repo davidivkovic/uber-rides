@@ -12,19 +12,26 @@ import javax.persistence.OrderBy;
 
 import com.uber.rides.controller.Routes;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.*;
 
 @Getter
 @Setter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 @Entity
 public class Route {
     
     @Id @GeneratedValue Long id;
     String name;
     String thumbnail;
+    double distance;
     @Embedded Location start;
     @ElementCollection(fetch = FetchType.EAGER) @OrderBy("order") List<Location> stops;
 

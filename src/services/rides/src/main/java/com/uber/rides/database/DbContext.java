@@ -7,11 +7,12 @@ import javax.persistence.PersistenceContext;
 import org.hibernate.Session;
 import org.hibernate.engine.spi.SessionFactoryDelegatingImpl;
 import org.hibernate.internal.SessionFactoryImpl;
+
+import com.speedment.jpastreamer.application.JPAStreamer;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 import org.springframework.web.context.annotation.RequestScope;
-
-import com.speedment.jpastreamer.application.JPAStreamer;
 
 @Repository
 @RequestScope

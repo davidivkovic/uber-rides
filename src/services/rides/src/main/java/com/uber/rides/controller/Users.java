@@ -24,6 +24,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import static com.speedment.jpastreamer.streamconfiguration.StreamConfiguration.*;
+import static com.uber.rides.util.Utils.*;
 
 import com.uber.rides.database.DbContext;
 import com.uber.rides.dto.user.UpdateRequest;
@@ -31,8 +32,6 @@ import com.uber.rides.dto.user.UserDTO;
 import com.uber.rides.model.*;
 import com.uber.rides.model.User.Roles;
 import com.uber.rides.service.ImageStore;
-
-import static com.uber.rides.Utils.*;
 
 @RestController
 @RequestMapping("/users")
