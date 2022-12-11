@@ -55,7 +55,15 @@ import { send } from '@app/api/ws'
           <div class="flex-1">
             <div class="flex items-center justify-between">
               <div class="text-center">
-                <h3 class="text-[22px]">{{ ridesStore.state.directions.carPricesInUsd[carType.carType] | currency:'USD'}}</h3>
+                <h3 class="text-[22px]">
+                  {{ ridesStore.state.directions.carPricesInUsd[carType.carType] | currency:'USD'}}
+                </h3>
+                <p 
+                  *ngIf="anyPassengerReady" 
+                  class="text-[13px] ml-0.5 -mt-1 mb-0.5 text-zinc-500"
+                >
+                  Per person
+                </p>
                 <p class="text-[13px] ml-0.5 -mt-1 text-zinc-500">Including tax</p>
               </div>
               <svg class="text-gray-500 mb-2" width="24" height="24" viewBox="0 0 24 24" fill="none"><title>Chevron right small</title><path d="M16.9 12l-4.6 6H8.5l4.6-6-4.6-6h3.8l4.6 6z" fill="currentColor"></path></svg>
@@ -77,7 +85,7 @@ import { send } from '@app/api/ws'
             </svg>
             <p *ngIf="!passenger.accepted && !passenger.declined" class="text-sm">Pending...</p>
             <div *ngIf="passenger.accepted" class="w-[7px] h-[7px] ml-auto rounded-full bg-green-600"></div>
-            <p *ngIf="passenger.declined" class="ml-auto rounded text-white px-2 py-px text-[13.5px] bg-red-600">Declined</p>
+            <p *ngIf="passenger.declined" class="ml-auto rounded text-white px-2 py-px text-[13px] bg-red-600">Declined</p>
             <CloseButton 
               class="mt-1"
               [extraSmall]="true"
@@ -107,6 +115,7 @@ export default class ChooseRide {
   selectedCarType: any = {}
   ridesStore = ridesStore
   passengersReady = true
+  anyPassengerReady = false
 
   constructor(public location: Location, public router: Router, public detector: ChangeDetectorRef) {
     if (!ridesStore.state?.directions) {
@@ -126,6 +135,7 @@ export default class ChooseRide {
     this.passengersReady =
       ridesStore.state?.passengers?.every((p: any) => p.accepted || p.declined) ||
       ridesStore.state?.passengers?.length === 0
+    this.anyPassengerReady = ridesStore.state?.passengers?.some((p: any) => p.accepted)
   }
 
   selectFirstCarType() {
