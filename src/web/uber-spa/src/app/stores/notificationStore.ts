@@ -1,5 +1,4 @@
 import { action, state, createStore } from 'usm-mobx'
-import { Notification } from '@app/components/ui/notification'
 
 class NotificationData {
   id: string
@@ -21,11 +20,13 @@ class NotificationStore {
       message,
       close: () => this.close(id)
     })
+    window.detector.detectChanges()
   }
 
   @action
   close(id: string) {
     this.notifications = this.notifications.filter(d => d.id != id)
+    window.detector.detectChanges()
   }
 
   @action

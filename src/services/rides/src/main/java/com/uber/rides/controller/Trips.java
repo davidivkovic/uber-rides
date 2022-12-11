@@ -69,6 +69,7 @@ public class Trips extends Controller {
             return badRequest("You are currenly not looking for a ride. Please start by choosing a route.");
         }
 
+        riderData.setInvitedPassengerIds(passengerIds);
         var inviter = mapper.map(riderData.user, UserDTO.class);
         var tripDTO = mapper.map(trip, TripDTO.class);
         for (var id : passengerIds) {

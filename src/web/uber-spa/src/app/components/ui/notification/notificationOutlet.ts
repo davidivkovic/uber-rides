@@ -1,6 +1,7 @@
+import { watch } from 'usm-mobx';
 import { Component } from '@angular/core'
 import { NgComponentOutlet, NgForOf } from '@angular/common'
-import { Router } from '@angular/router'
+import { NavigationEnd, Router } from '@angular/router'
 import { notificationStore } from '@app/stores'
 import { Notification } from './'
 
@@ -24,6 +25,6 @@ export default class NotificationOutlet {
   notificationStore = notificationStore
 
   constructor(public router: Router) {
-    router.events.subscribe(() => notificationStore.closeAll())
+    router.events.subscribe(e => e instanceof NavigationEnd && notificationStore.closeAll())
   }
 }

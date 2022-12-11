@@ -1,7 +1,16 @@
-import { Component } from '@angular/core'
-import { RouterOutlet } from '@angular/router'
+import { ChangeDetectorRef, Component } from '@angular/core'
+import { Router, RouterOutlet } from '@angular/router'
 import DialogOutlet from './components/ui/dialog/dialogOutlet'
 import '@app/stores/userStore'
+
+export { }
+
+declare global {
+  interface Window {
+    router: Router,
+    detector: ChangeDetectorRef
+  }
+}
 
 @Component({
   selector: 'app-root',
@@ -13,5 +22,12 @@ import '@app/stores/userStore'
   `
 })
 export class AppComponent {
+
   title = 'uber-spa'
+
+  constructor(router: Router, detector: ChangeDetectorRef) {
+    window.router = router
+    window.detector = detector
+  }
+
 }

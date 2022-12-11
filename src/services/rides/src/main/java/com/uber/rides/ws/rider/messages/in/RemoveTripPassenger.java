@@ -1,5 +1,8 @@
 package com.uber.rides.ws.rider.messages.in;
 
+import java.util.Map.Entry;
+import java.util.stream.Collectors;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -27,25 +30,31 @@ public class RemoveTripPassenger implements InboundMessage<RiderData> {
         if (trip == null) return; // add some message handling
         
         var riders = trip.getRiders();
-        riders.removeIf(r -> r.getId().equals(passengerId));
+        if (riders.size() == 1) return;
+
+        var carPrices = sender
+            .getCarPricesInUsd()
+            .entrySet()
+            .stream()
+            .collect(Collectors
+                .toMap(
+                    Entry::getKey,
+                    e -> e.getValue() / (riders.size() - 1)
+                )
+            );
 
         for (var passenger : riders) {
             ws.sendMessageToUser(
                 passenger.getId(),
                 new TripInviteUpdate(
                     passengerId,
-                    Status.REMOVED
+                    Status.REMOVED,
+                    carPrices
                 )
             );
         }
 
-        ws.sendMessageToUser(
-            passengerId,
-            new TripInviteUpdate(
-                passengerId,
-                Status.REMOVED
-            )
-        );
+        riders.removeIf(r -> r.getId().equals(passengerId));
 
     }
 

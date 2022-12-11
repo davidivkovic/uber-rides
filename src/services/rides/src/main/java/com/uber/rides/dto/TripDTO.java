@@ -6,6 +6,7 @@ import java.util.List;
 import lombok.Getter;
 import lombok.Setter;
 
+import com.uber.rides.model.Car;
 import com.uber.rides.model.Route;
 import com.uber.rides.model.Trip.Status;
 import com.uber.rides.dto.user.UserDTO;
@@ -19,8 +20,9 @@ public class TripDTO {
     UserDTO rider;
     UserDTO driver;
     Route route;
+    Car car;
     
-    List<UserDTO> passengers;
+    List<UserDTO> riders;
 
     Status status;
     LocalDateTime startedAt;

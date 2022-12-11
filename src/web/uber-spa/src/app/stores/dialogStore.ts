@@ -11,11 +11,11 @@ class DialogData {
 }
 
 class DialogStore {
-  
+
   @state
   dialogs: DialogData[] = []
 
-  @action 
+  @action
   openDialog(
     component: typeof Dialog,
     props: {},
@@ -40,6 +40,7 @@ class DialogStore {
   closeDialog(id: string) {
     this.dialogs.find(d => d.id == id).nativeElement.close()
     this.dialogs = this.dialogs.filter(d => d.id != id)
+    window.detector.detectChanges()
   }
 
   getData = (id: string) => this.dialogs.find(d => d.id == id)

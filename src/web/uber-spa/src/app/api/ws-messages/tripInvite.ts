@@ -13,14 +13,19 @@ export default (message: { inviter: any, trip: any }) => {
       body: 'From ' + message.trip.route.start.address + 'to ' + message.trip.route.stops[message.trip.route.stops.length - 1].address
     },
     status => {
+      const accepted = status === 'accept'
       send(
         createMessage(
           OutboundMessages.ANSWER_TRIP_INVITE,
-          { inviterId: message.inviter.id, accepted: status === 'accept' }
+          { inviterId: message.inviter.id, accepted }
         )
       )
+      if (accepted) {
+        window.router.navigate(['passengers'])
+      }
     }
   )
+  window.detector.detectChanges()
 }
 
 @Component({

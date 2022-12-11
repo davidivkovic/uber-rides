@@ -23,6 +23,7 @@ public class RiderData extends UserData {
     Trip currentTrip;
     DirectionsResult directions;
     Map<Car.Types, Double> carPricesInUsd;
+    List<Long> invitedPassengerIds;
     Route route;
 
     public RiderData(User user, WebSocketSession session) {

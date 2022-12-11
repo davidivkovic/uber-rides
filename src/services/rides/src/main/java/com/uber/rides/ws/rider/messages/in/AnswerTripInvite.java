@@ -1,5 +1,8 @@
 package com.uber.rides.ws.rider.messages.in;
 
+import java.util.Map.Entry;
+import java.util.stream.Collectors;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -29,16 +32,32 @@ public class AnswerTripInvite implements InboundMessage<RiderData> {
         var trip = inviterData.getCurrentTrip();
         if (trip == null) return; // add some message handling
 
+        if (!inviterData.getInvitedPassengerIds().contains(sender.getUser().getId())) {
+            return;
+        }
+
         if (accepted) {
             trip.getRiders().add(sender.user);
         }
+
+        var carPrices = inviterData
+            .getCarPricesInUsd()
+            .entrySet()
+            .stream()
+            .collect(Collectors
+                .toMap(
+                    Entry::getKey,
+                    e -> e.getValue() / trip.getRiders().size()
+                )
+            );
 
         for (var passenger : trip.getRiders()) {
             ws.sendMessageToUser(
                 passenger.getId(),
                 new TripInviteUpdate(
                     sender.user.getId(), 
-                    accepted ? Status.ACCEPTED : Status.DECLINED
+                    accepted ? Status.ACCEPTED : Status.DECLINED,
+                    carPrices
                 )
             );
         }

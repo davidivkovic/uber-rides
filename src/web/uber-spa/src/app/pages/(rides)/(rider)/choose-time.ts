@@ -1,9 +1,9 @@
-import { ridesStore } from '@app/stores/ridesStore';
 import { Component } from '@angular/core'
 import { Location, NgFor, NgIf } from '@angular/common'
 import { FormsModule } from '@angular/forms'
 import { ActivatedRoute, Router } from '@angular/router'
 import dayjs from 'dayjs'
+import { ridesStore } from '@app/stores/ridesStore'
 
 @Component({
   standalone: true,

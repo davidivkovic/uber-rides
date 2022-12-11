@@ -1,14 +1,13 @@
-import { subscribe, watch } from 'usm-mobx';
-import { CloseButton } from '@app/components/ui/base/closeButton';
 import { ChangeDetectorRef, Component } from '@angular/core'
 import { Location, NgFor, NgIf, NgClass, CurrencyPipe } from '@angular/common'
 import { Router } from '@angular/router'
+import { subscribe, watch } from 'usm-mobx'
+import { CloseButton } from '@app/components/ui/base/closeButton'
 import { ridesStore } from '@app/stores/ridesStore'
 import { notificationStore } from '@app/stores'
 import trips from '@app/api/trips'
 import { createMessage, OutboundMessages } from '@app/api/ws-messages/messages'
 import { send } from '@app/api/ws'
-import { computed } from '@app/utils';
 
 @Component({
   standalone: true,
@@ -113,7 +112,7 @@ export default class ChooseRide {
     if (!ridesStore.state?.directions) {
       router.navigate(['/looking'])
     }
-    ridesStore.setState(store => store.state.chooseRidesView = this)
+    ridesStore.setState(store => store.state.chooseRidesPage = this)
     subscribe(ridesStore, () => detector?.detectChanges())
     watch(
       ridesStore,
@@ -144,10 +143,14 @@ export default class ChooseRide {
           await trips.chooseRide(this.selectedCarType.carType)
           ridesStore.setState(store => store.state.rideChosen = true)
         }
-        await trips.invitePassengers(ridesStore.state.passengers.map((p: any) => p.id))
+        console.log(ridesStore.state?.passengersChanged)
+        if (ridesStore.state?.passengersChanged) {
+          await trips.invitePassengers(ridesStore.state.passengers.map((p: any) => p.id))
+        }
       }
       catch (error) {
         notificationStore.show(error.message)
+        setTimeout(() => window.router.navigate(['/looking']), 150)
       }
     }
   }

@@ -81,7 +81,7 @@ import { notificationStore } from '@app/stores'
           </div>
         </div>
         <button (click)="confirmPassengers()" class="primary w-full !text-base mt-auto">Invite passengers</button>
-        <button (click)="location.back()" class="secondary w-full mt-1 !text-base">Cancel</button>
+        <button (click)="cancel()" class="secondary w-full mt-1 !text-base">Cancel</button>
       </div>
     </div>
   `
@@ -128,8 +128,16 @@ export default class AddPassengers {
   async confirmPassengers() {
     ridesStore.setState(store => {
       store.state.passengers = this.passengers.map(p => ({ accepted: false, declined: false, ...p }))
+      store.state.passengersChanged = true
+      this.location.back()
     })
-    this.location.back()
+  }
+
+  cancel() {
+    ridesStore.setState(store => {
+      store.state.passengersChanged = false
+      this.location.back()
+    })
   }
 
   ngForIdentity = (index: number, item: any) => item.id

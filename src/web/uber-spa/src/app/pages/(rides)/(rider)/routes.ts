@@ -39,6 +39,14 @@ const routes: Routes = [
           },
         ]
       },
+      {
+        path: 'passengers',
+        loadComponent: () => import('./passengers')
+      },
+      {
+        path: 'riding',
+        loadComponent: () => import('./riding')
+      }
     ]
   }
 ]
