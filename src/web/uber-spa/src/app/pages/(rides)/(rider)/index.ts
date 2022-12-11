@@ -1,6 +1,6 @@
 import { Component } from '@angular/core'
 import { NgClass, NgFor, NgIf } from '@angular/common'
-import { Router, RouterOutlet } from '@angular/router'
+import { RouterOutlet } from '@angular/router'
 import { init } from '@app/api/google-maps'
 
 @Component({
@@ -21,15 +21,7 @@ import { init } from '@app/api/google-maps'
   `
 })
 export default class Index {
-
-  constructor(public router: Router) {
-    if (window.location.pathname === '/') {
-      router.navigate(['looking'])
-    }
-  }
-
   ngAfterViewInit() {
     init('google-map')
   }
-
 }

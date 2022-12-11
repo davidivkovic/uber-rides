@@ -7,7 +7,7 @@ const routes: Routes = [
       if (userStore.isDriver) return { consumed: [] }
       return null
     },
-    loadComponent: () => import('./(driver)')
+    loadComponent: () => import('./(driver)') // adapt to the latter route
   },
   {
     matcher: () => {

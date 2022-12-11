@@ -2,7 +2,7 @@ import { Component } from '@angular/core'
 import { NgClass, NgFor, NgIf } from '@angular/common'
 import { ActivatedRoute, Router } from '@angular/router'
 import { FormsModule } from '@angular/forms'
-import { autocomplete, geocoder, directions, icons, map } from '@app/api/google-maps'
+import { autocomplete, geocoder, directions, icons, map, createMarker, createPolyline, createInfoWindow } from '@app/api/google-maps'
 import { computed, formatDistance, formatDuration, InnerHtml, swap } from '@app/utils'
 import { ridesStore } from '@app/stores/ridesStore'
 import dayjs from 'dayjs'
@@ -273,7 +273,7 @@ export default class Looking {
 
       const geometry = await this.selectLocation(index, locationToSelect, false, true)
       this.markers.push(
-        this.createMarker(geometry.lat(), geometry.lng(), index === this.stopoverInputs.length - 1)
+        createMarker(geometry.lat(), geometry.lng(), index === this.stopoverInputs.length - 1)
       )
 
       this.checkLocationsCompleted()
@@ -290,26 +290,6 @@ export default class Looking {
       if (this.locationsCompleted) await this.getDirections()
     }
 
-  }
-
-  createMarker(latitude: number, longitude: number, isTerminal: boolean) {
-    return new google.maps.Marker({
-      position: {
-        lat: latitude,
-        lng: longitude
-      },
-      icon: {
-        url: '/assets/images/' + (!isTerminal
-          ? 'map-marker-location.png'
-          : 'map-marker-destination.png'
-        ),
-        anchor: {
-          x: 8,
-          y: 8
-        } as any
-      },
-      map
-    })
   }
 
   async getDirections() {
@@ -338,54 +318,18 @@ export default class Looking {
     this.markers?.forEach(m => m.setMap(null))
     this.infoWindows?.forEach(w => w.close())
 
-
     map.fitBounds(new google.maps.LatLngBounds(route.bounds.southwest, route.bounds.northeast))
     map.panBy(-180, 0)
     // map.setZoom(map.getZoom() - 1)
 
-    this.polyline = new google.maps.Polyline({
-      path: google.maps.geometry.encoding.decodePath(route.overviewPolyline.encodedPath),
-      map,
-      strokeColor: '#000',
-      strokeOpacity: 0.7,
-      strokeWeight: 4,
-      clickable: false,
-    })
-
+    this.polyline = createPolyline(route.overviewPolyline.encodedPath)
     this.markers = this.stopoverInputs.map((stopover, index) =>
-      this.createMarker(stopover.latitude, stopover.longitude, index === this.stopoverInputs.length - 1)
+      createMarker(stopover.latitude, stopover.longitude, index === this.stopoverInputs.length - 1)
     )
 
-    this.infoWindows = this.stopoverInputs.map((stopover, index) => {
-      const verb = {
-        0: 'From',
-        [this.stopoverInputs.length - 1]: 'To'
-      }[index] ?? 'Stop'
-
-      return new google.maps.InfoWindow({
-        position: {
-          lat: stopover.latitude,
-          lng: stopover.longitude
-        },
-        content: /*html*/`
-          <div id="gm-iw-c-${index}" class="flex items-center px-3 py-2 space-x-2 cursor-pointer">
-            <span class="text-[15px]">${verb}: ${stopover.address}</span>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-              <path d="M16.9 12l-4.6 6H8.5l4.6-6-4.6-6h3.8l4.6 6z" fill="currentColor">
-              </path>
-            </svg>
-          </div>
-        `
-      })
-    })
-
-    this.infoWindows.forEach((w, index) => {
-      google.maps.event.addListener(w, 'domready', () => {
-        const windowWidth = document.getElementById(`gm-iw-c-${index}`)?.clientWidth ?? 0
-        w.setOptions({ pixelOffset: new google.maps.Size(windowWidth / 2 + 8, 0) })
-      })
-      w.open(map)
-    })
+    this.infoWindows = this.stopoverInputs.map((stopover, index) =>
+      createInfoWindow(stopover.latitude, stopover.longitude, stopover.address, index, this.stopoverInputs.length)
+    )
   }
 
   checkLocationsCompleted() {

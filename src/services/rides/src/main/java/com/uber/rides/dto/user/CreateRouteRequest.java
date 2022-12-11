@@ -26,6 +26,8 @@ public class CreateRouteRequest {
     }
 
     @NotBlank String name;
+    @NotNull Location neBounds;
+    @NotNull Location swBounds;
     @NotNull Location start;
     @NotEmpty List<Location> stops;
     

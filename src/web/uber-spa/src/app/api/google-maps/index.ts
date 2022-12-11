@@ -19,10 +19,74 @@ const initMap = () => {
     scrollwheel: false,
     styles: mapStyles
   })
+
   places = new google.maps.places.PlacesService(map)
   autocomplete = new google.maps.places.AutocompleteService()
   geocoder = new google.maps.Geocoder()
   directions = new google.maps.DirectionsService()
+}
+
+const createMarker = (latitude: number, longitude: number, isTerminal: boolean) => {
+  return new google.maps.Marker({
+    position: {
+      lat: latitude,
+      lng: longitude
+    },
+    icon: {
+      url: '/assets/images/' + (!isTerminal
+        ? 'map-marker-location.png'
+        : 'map-marker-destination.png'
+      ),
+      anchor: {
+        x: 8,
+        y: 8
+      } as any
+    },
+    map
+  })
+}
+
+const createPolyline = (encodedPath: string) => new google.maps.Polyline({
+  path: google.maps.geometry.encoding.decodePath(encodedPath),
+  map,
+  strokeColor: '#000',
+  strokeOpacity: 0.7,
+  strokeWeight: 4,
+  clickable: false,
+})
+
+const createInfoWindow = (
+  latitude: number,
+  longitude: number,
+  address: string,
+  index: number,
+  arrayLength: number
+) => {
+  const verb = {
+    0: 'From',
+    [arrayLength - 1]: 'To'
+  }[index] ?? 'Stop'
+  const infoWindow = new google.maps.InfoWindow({
+    position: {
+      lat: latitude,
+      lng: longitude
+    },
+    content: /*html*/`
+      <div id="gm-iw-c-${index}" class="flex items-center px-3 py-2 space-x-2 cursor-pointer">
+        <span class="text-[15px]">${verb}: ${address}</span>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+          <path d="M16.9 12l-4.6 6H8.5l4.6-6-4.6-6h3.8l4.6 6z" fill="currentColor">
+          </path>
+        </svg>
+      </div>
+    `
+  })
+  google.maps.event.addListener(infoWindow, 'domready', () => {
+    const windowWidth = document.getElementById(`gm-iw-c-${index}`)?.clientWidth ?? 0
+    infoWindow.setOptions({ pixelOffset: new google.maps.Size(windowWidth / 2 + 8, 0) })
+  })
+  infoWindow.open(map)
+  return infoWindow
 }
 
 jailbreak()
@@ -38,6 +102,7 @@ const script = Object.assign(
 )
 
 const init = (htmlElementId: string) => {
+  console.log(document.getElementById(scriptName))
   if (!document.getElementById(scriptName)) {
     elementId = htmlElementId
     document.head.appendChild(script)
@@ -54,5 +119,8 @@ export {
   autocomplete,
   geocoder,
   directions,
-  icons
+  icons,
+  createMarker,
+  createPolyline,
+  createInfoWindow
 }

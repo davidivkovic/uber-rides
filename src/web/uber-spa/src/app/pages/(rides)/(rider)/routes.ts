@@ -6,6 +6,11 @@ const routes: Routes = [
     loadComponent: () => import('./index'),
     children: [
       {
+        path: '',
+        pathMatch: 'full',
+        redirectTo: 'looking'
+      },
+      {
         path: 'looking',
         children: [
           {

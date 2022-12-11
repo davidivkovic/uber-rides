@@ -1,5 +1,6 @@
 package com.uber.rides.controller;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
@@ -69,10 +70,13 @@ public class Trips extends Controller {
             return badRequest("You are currenly not looking for a ride. Please start by choosing a route.");
         }
 
+        var newPassengers = new ArrayList<>(passengerIds);
+        newPassengers.removeAll(riderData.getInvitedPassengerIds());
         riderData.setInvitedPassengerIds(passengerIds);
+
         var inviter = mapper.map(riderData.user, UserDTO.class);
         var tripDTO = mapper.map(trip, TripDTO.class);
-        for (var id : passengerIds) {
+        for (var id : newPassengers) {
             if (trip.getRiders().stream().noneMatch(r -> r.getId().equals(id))) {
                 ws.sendMessageToUser(id, new TripInvite(inviter, tripDTO));
             }
@@ -121,6 +125,19 @@ public class Trips extends Controller {
             .builder()
             .start(new Location(leg.startAddress, leg.startLocation.lng, leg.startLocation.lat, 0))
             .distance(distance)
+            .encodedPolyline(directionsRoute.overviewPolyline.getEncodedPath())
+            .neBounds(Location
+                .builder()
+                .longitude(directionsRoute.bounds.northeast.lng)
+                .latitude(directionsRoute.bounds.northeast.lat)
+                .build()
+            )
+            .swBounds(Location
+                .builder()
+                .longitude(directionsRoute.bounds.southwest.lng)
+                .latitude(directionsRoute.bounds.southwest.lat)
+                .build()
+            )
             .thumbnail(thumbnailUrl);
 
         if (directionsRoute.legs.length == 1) { // Only origin and destination

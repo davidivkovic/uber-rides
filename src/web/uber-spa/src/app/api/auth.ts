@@ -90,7 +90,7 @@ const facebookLogin = async (userId: string, token: string) => {
   return json.user.completedRegistration
 }
 
-const changePassword = async (data: {currentPassword: string, newPassword: string}) => {
+const changePassword = async (data: { currentPassword: string, newPassword: string }) => {
   const response = await fetch(
     basePath + '/password/change?' + new URLSearchParams({ ...data }).toString(),
     {
@@ -102,7 +102,7 @@ const changePassword = async (data: {currentPassword: string, newPassword: strin
 
 const forgottenPassword = async (email: string) => {
   const response = await fetch(
-    basePath + '/password/forgot?email=' + email,
+    basePath + '/password/forgot?' + new URLSearchParams({ email }).toString(),
     {
       method: 'POST',
     }
@@ -112,7 +112,7 @@ const forgottenPassword = async (email: string) => {
   throw new Error(text)
 }
 
-const resetPassword = async (data: {email: string, password: string, code: string}) => {
+const resetPassword = async (data: { email: string, password: string, code: string }) => {
   const response = await fetch(
     basePath + '/password/reset',
     {

@@ -31,7 +31,10 @@ public class Route {
     @Id @GeneratedValue Long id;
     String name;
     String thumbnail;
+    String encodedPolyline;
     double distance;
+    @Embedded Location swBounds;
+    @Embedded Location neBounds;
     @Embedded Location start;
     @ElementCollection(fetch = FetchType.EAGER) @OrderBy("order") List<Location> stops;
 

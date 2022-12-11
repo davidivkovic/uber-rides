@@ -170,7 +170,7 @@ public class Routes extends Controller {
         
         context.db().persist(route);
         
-        return ok();
+        return ok(route.getId());
     }
     
     @GetMapping(
