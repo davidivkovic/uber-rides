@@ -4,9 +4,9 @@ import { Router } from '@angular/router'
 import { FormsModule } from '@angular/forms'
 import { CloseButton } from '@app/components/ui/base/closeButton'
 import riders from '@app/api/riders'
-import trips from '@app/api/trips'
 import { ridesStore } from '@app/stores/ridesStore'
-import { notificationStore } from '@app/stores'
+import { send } from '@app/api/ws'
+import { createMessage, OutboundMessages } from '@app/api/ws-messages/messages'
 
 @Component({
   standalone: true,
@@ -91,6 +91,7 @@ export default class AddPassengers {
   query = ''
   users = []
   passengers = []
+  removedPassengers = []
   inputFocused = false
 
   constructor(public router: Router, public location: Location) {
@@ -99,6 +100,7 @@ export default class AddPassengers {
 
   onActivated() {
     this.passengers = JSON.parse(JSON.stringify(ridesStore.state?.passengers ?? []))
+    this.removedPassengers = []
   }
 
   async queryChanged() {
@@ -122,6 +124,7 @@ export default class AddPassengers {
   }
 
   removePassenger(passenger: any) {
+    this.removedPassengers.push(passenger)
     this.passengers = this.passengers.filter(p => p.id !== passenger.id)
   }
 
@@ -130,6 +133,14 @@ export default class AddPassengers {
       store.state.passengers = this.passengers.map(p => ({ accepted: false, declined: false, ...p }))
       store.state.passengersChanged = true
       this.location.back()
+    })
+    this.removedPassengers.forEach(passenger => {
+      send(
+        createMessage(
+          OutboundMessages.REMOVE_TRIP_PASSENGER,
+          { passengerId: passenger.id }
+        )
+      )
     })
   }
 

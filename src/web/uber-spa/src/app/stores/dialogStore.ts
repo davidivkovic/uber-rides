@@ -43,6 +43,13 @@ class DialogStore {
     window.detector.detectChanges()
   }
 
+  @action
+  closeOneByType<T extends typeof Dialog>(type: T) {
+    this.dialogs.find(d => typeof d.component() === typeof type)?.nativeElement?.close()
+    this.dialogs = this.dialogs.filter(d => typeof d.component() !== typeof type)
+    window.detector.detectChanges()
+  }
+
   getData = (id: string) => this.dialogs.find(d => d.id == id)
 }
 

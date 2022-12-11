@@ -63,7 +63,7 @@ public class Car {
             Types.UBER_BLACK, 
             "Uber Black", 
             4, 
-            1.5, 
+            1.65, 
             "Premium rides in luxury cars", 
             "https://d1a3f4spazzrp4.cloudfront.net/car-types/haloProductImages/v1.1/Black_v1.png"
         ),
@@ -71,7 +71,7 @@ public class Car {
             Types.UBER_GREEN,
             "Uber Green", 
             4, 
-            0.95, 
+            1.15, 
             "Eco-friendly rides", 
             "https://d1a3f4spazzrp4.cloudfront.net/car-types/haloProductImages/v1.1/UberX_Green.png"
         )

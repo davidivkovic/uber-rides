@@ -134,23 +134,20 @@ export default class ChooseRide {
 
   async onActivated(navigatedFrom: string) {
     if (!this.selectedCarType?.carType) this.selectFirstCarType()
-    if (
-      navigatedFrom === 'add-passengers' &&
-      ridesStore.state.passengers.length
-    ) {
+    if (navigatedFrom === 'add-passengers') {
       try {
-        if (!ridesStore.state.rideChosen) {
+        if (!ridesStore.state.rideChosen && ridesStore.state.passengers.length) {
           await trips.chooseRide(this.selectedCarType.carType)
           ridesStore.setState(store => store.state.rideChosen = true)
         }
-        console.log(ridesStore.state?.passengersChanged)
+        // ne valjda kad udjes da invite passengere, remove nekoga i ides acceept ne posalje remove passenger ws message
         if (ridesStore.state?.passengersChanged) {
           await trips.invitePassengers(ridesStore.state.passengers.map((p: any) => p.id))
         }
       }
       catch (error) {
+        await window.router.navigate(['/looking'])
         notificationStore.show(error.message)
-        setTimeout(() => window.router.navigate(['/looking']), 150)
       }
     }
   }

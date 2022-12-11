@@ -13,7 +13,7 @@ import routes from '@app/api/routes'
         <h2 class="text-4xl pb-2">Choose a route from your favorites</h2>
         <div *ngIf="favoriteRoutes.loading" class="w-[290px] h-[200px] mb-8 rounded-md bg-zinc-100 animate-pulse"></div>
         <div 
-          *ngIf="!favoriteRoutes.loading && favoriteRoutes.value"
+          *ngIf="!favoriteRoutes.loading && favoriteRoutes.value?.length"
           class="flex space-x-4 my-2 py-2 overflow-x-auto px-1.5"
         >
           <div 
@@ -42,11 +42,11 @@ import routes from '@app/api/routes'
             </div>
           </div>
         </div>
-        <div *ngIf="!favoriteRoutes.loading && !favoriteRoutes.value">
+        <div *ngIf="!favoriteRoutes.loading && !favoriteRoutes.value?.length">
           <p class="text-zinc-700 mb-3">You haven't added any favorite routes yet. Go over to your profile to add one.</p>
         </div>
         <button 
-          *ngIf="favoriteRoutes.loading || favoriteRoutes.value" 
+          *ngIf="favoriteRoutes.loading || favoriteRoutes.value?.length" 
           (click)="confirm()" 
           class="primary w-full !text-base mt-2"
         >

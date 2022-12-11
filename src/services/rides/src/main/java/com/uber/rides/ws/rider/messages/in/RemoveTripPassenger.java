@@ -2,10 +2,12 @@ package com.uber.rides.ws.rider.messages.in;
 
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.uber.rides.model.User;
 import com.uber.rides.ws.InboundMessage;
 import com.uber.rides.ws.Store;
 import com.uber.rides.ws.WS;
@@ -28,9 +30,13 @@ public class RemoveTripPassenger implements InboundMessage<RiderData> {
 
         var trip = sender.getCurrentTrip();
         if (trip == null) return; // add some message handling
-        
-        var riders = trip.getRiders();
-        if (riders.size() == 1) return;
+    
+        var passengers = Stream.concat(
+            sender.getInvitedPassengerIds().stream(),
+            trip.getRiders().stream().map(User::getId)
+        )
+        .distinct()
+        .toList();
 
         var carPrices = sender
             .getCarPricesInUsd()
@@ -39,13 +45,13 @@ public class RemoveTripPassenger implements InboundMessage<RiderData> {
             .collect(Collectors
                 .toMap(
                     Entry::getKey,
-                    e -> e.getValue() / (riders.size() - 1)
+                    e -> e.getValue() / Math.max(1, (passengers.size() - 1))
                 )
             );
 
-        for (var passenger : riders) {
+        for (var passenger : passengers) {
             ws.sendMessageToUser(
-                passenger.getId(),
+                passenger,
                 new TripInviteUpdate(
                     passengerId,
                     Status.REMOVED,
@@ -54,7 +60,8 @@ public class RemoveTripPassenger implements InboundMessage<RiderData> {
             );
         }
 
-        riders.removeIf(r -> r.getId().equals(passengerId));
+        trip.getRiders().removeIf(r -> r.getId().equals(passengerId));
+        sender.getInvitedPassengerIds().removeIf(id -> id.equals(passengerId));
 
     }
 

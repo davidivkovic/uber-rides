@@ -1,5 +1,6 @@
-import { notificationStore, userStore } from '@app/stores'
+import { dialogStore, notificationStore, userStore } from '@app/stores'
 import { ridesStore } from '@app/stores/ridesStore'
+import { TripInviteDialog } from './tripInvite'
 
 export default (message: { passengerId: number, status: string, carPricesInUsd: any }) => {
   ridesStore.setState(async store => {
@@ -15,9 +16,9 @@ export default (message: { passengerId: number, status: string, carPricesInUsd: 
     }
 
     if (message.status === 'REMOVED' && message.passengerId === userStore.user?.id) {
+      dialogStore.closeOneByType(TripInviteDialog)
       await window.router.navigate(['/looking'])
       notificationStore.show('The owner has removed you from the ride.')
-
     }
     else {
       if (!store.state?.directions) store.state.directions = {}

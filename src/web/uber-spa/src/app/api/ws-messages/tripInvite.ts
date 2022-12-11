@@ -7,7 +7,7 @@ import { send } from '../ws'
 
 export default (message: { inviter: any, trip: any }) => {
   dialogStore.openDialog(
-    ContinueDialog,
+    TripInviteDialog,
     {
       title: message.inviter.firstName + ' Invited you on a trip',
       body: 'From ' + message.trip.route.start.address + 'to ' + message.trip.route.stops[message.trip.route.stops.length - 1].address
@@ -46,4 +46,4 @@ export default (message: { inviter: any, trip: any }) => {
     </div>
   `
 })
-class ContinueDialog extends Dialog { }
+export class TripInviteDialog extends Dialog { }
