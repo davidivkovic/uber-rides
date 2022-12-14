@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core'
+import { Component } from '@angular/core'
 import { NgIf } from '@angular/common'
 import { ActivatedRoute, Router } from '@angular/router'
 import { NgForm, FormsModule } from '@angular/forms'

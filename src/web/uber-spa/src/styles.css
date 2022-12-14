@@ -49,6 +49,10 @@
     @apply border-gray-300 rounded text-black focus:ring-0 ring-offset-0;
   }
 
+  label {
+    @apply text-gray-500 
+  }
+
   button {
     @apply px-6 py-3 text-[15px] rounded-md font-medium transition duration-300 focus-visible:outline-none;
   }

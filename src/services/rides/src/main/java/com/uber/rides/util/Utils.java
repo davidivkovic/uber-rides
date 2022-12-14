@@ -27,7 +27,10 @@ public class Utils {
     public static final String UNCHECKED = "unchecked";
     public static final String GM_KEY = "QUl6YVN5Q2h6alBMdjNyLS1CalVqaGx2Si1sUnlnb2VyM0NWMm9F";
     public static final String GM_KEY_STATIC = "QUl6YVN5Q2tVT2RaNXk3aE1tMHlyY0NRb0N2THd6ZE02TThzNXFr";
-    
+    public static final String BT_PR_KEY_STATIC = "M2VhMzYxYTgzZTE4MjlhZGU4N2M0ZDY2ZDUxZDY0YzE=";
+    public static final String BT_PU_KEY_STATIC = "amd2YmQ4OTN2amM3YmY5Zg==";
+    public static final String BT_TOKEN_STATIC = "MjRyNDdncTR4ZHR0NHp5Nw==";
+
 
     /* JSON Mapper */
 

@@ -1,11 +1,10 @@
 import { Component } from '@angular/core'
 import { Dialog } from '@app/components/ui/dialog'
 import { CloseButton } from '@app/components/ui/base/closeButton'
-import { NgIf } from '@angular/common'
 
 @Component({
     standalone: true,
-    imports: [NgIf, CloseButton],
+    imports: [CloseButton],
     template: `
       <div class="space-y-5 p-5 max-w-md">
         <div class="space-y-2">

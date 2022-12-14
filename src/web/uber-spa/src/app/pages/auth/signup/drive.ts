@@ -6,6 +6,7 @@ import { computed } from '@app/utils'
 import { ActivatedRoute, Router } from '@angular/router'
 import { dialogStore } from '@app/stores'
 import { ContinueDialog } from '../components/continueDialog'
+import { max, min } from 'rxjs'
 
 @Component({
   standalone: true,
@@ -29,31 +30,27 @@ import { ContinueDialog } from '../components/continueDialog'
             {{ maker }}
           </option>
         </select>
-        <select required #model name="model" class="">
-          <option value="" selected disabled hidden>Select car model</option>
+        <select required #model name="model">
+          <option value="" selected disabled hidden>--Select car model--</option>
           <option *ngFor="let model of models()" [value]="model">
             {{ model }}
           </option>
         </select>
       </div>
       <div class="flex justify-between w-full gap-8">
-        <input
-          required
-          type="number"
-          min="2012"
-          max="2023"
-          name="year"
-          placeholder="Enter car's manufacturing year"
-        />
-        <input type="text" placeholder="Enter car's registration" name="registration" />
+        <select required #year name="year">
+          <option value="" selected disabled hidden>--Select year of manufacture--</option>
+          <option *ngFor="let year of years" [value]="year">
+            {{ year }}
+          </option>
+        </select>
+        <input required type="text" placeholder="Enter car's registration" name="registration" />
       </div>
     </div>
     <div class="space-y-5">
       <div class="w-full">
         <div class="text-2xl">Choose a uber car type</div>
-        <p class="text-gray-500">
-          Driver's earnings depend on the type of car he drives.
-        </p>
+        <p class="text-gray-500">Driver's earnings depend on the type of car he drives.</p>
       </div>
       <div *ngIf="carTypes.length !== 0" class="flex space-x-4">
         <div
@@ -87,7 +84,7 @@ import { ContinueDialog } from '../components/continueDialog'
         </div>
       </div>
     </div>
-    <div class="w-full">
+    <div class="w-full space-y-3">
       <p class="text-red-600 text-center text-sm">{{ error }}</p>
       <button class="primary w-full">Complete registration</button>
     </div>
@@ -98,6 +95,11 @@ export default class Index {
 
   carTypes: Array<CarType> = []
 
+  minYear = 2012
+  maxYear = new Date().getFullYear()
+
+  years = Array(this.maxYear - this.minYear + 1).fill(0).map((_, idx) => this.minYear + idx)
+
   selectedCarType: CarType
   selectedMaker: string
 
@@ -106,7 +108,6 @@ export default class Index {
   driverId = ''
 
   constructor(public router: Router, public route: ActivatedRoute) { }
-
 
   async ngOnInit(): Promise<void> {
     this.carTypes = await cars.getAllCarTypes()
@@ -146,7 +147,6 @@ export default class Index {
         model: form['model'].toString(),
         year: Number(form['year'].toString()),
         registration: form['registration'].toString()
-
       })
       dialogStore.openDialog(
         ContinueDialog,

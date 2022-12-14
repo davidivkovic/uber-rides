@@ -27,7 +27,7 @@ import { userStore } from '@app/stores/userStore'
               <button class="primary rounded-3xl px-3 py-2 ">Register</button>
               <div
                 id="content"
-                class="absolute hidden top-10 w-[150px] z-10 group-hover:block bg-[#eeeeee]  rounded-md "
+                class="absolute hidden top-9 w-[150px] z-10 group-hover:block bg-[#eeeeee]  rounded-md "
               >
                 <a
                   routerLink="/auth/signup/drive"

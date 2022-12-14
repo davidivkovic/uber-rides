@@ -82,6 +82,9 @@ public class User implements UserDetails {
     @OneToOne(fetch = FetchType.LAZY) UserUpdateRequest updateRequest;
     @OneToOne(fetch = FetchType.LAZY) Car car;
     
+    @OneToMany(cascade = CascadeType.ALL) List<Card> cards = new ArrayList<>();
+    @OneToOne Paypal paypal;
+    
     @ManyToMany @Builder.Default List<Route> favoriteRoutes = new ArrayList<>();
     
     @OneToMany(mappedBy = "driver") List<Trip> tripsAsDriver;
@@ -95,6 +98,14 @@ public class User implements UserDetails {
 
     public void removeFavoriteRoute(Long routeId) {
         favoriteRoutes.removeIf(route -> route.id.equals(routeId));
+    }
+
+    public void addCard(Card card) {
+        cards.add(card);
+    }
+
+    public void removeCard(Long cardId) {
+        cards.removeIf(card -> card.id.equals(cardId));
     }
 
     @Override
