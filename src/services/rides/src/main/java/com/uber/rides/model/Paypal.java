@@ -14,7 +14,10 @@ import lombok.Setter;
 @AllArgsConstructor
 @NoArgsConstructor
 public class Paypal {
-    @Id private String id;
 
-    private String email;
+    public static final String TYPE = "PAYPAL";
+
+    @Id String id;
+    String email;
+    
 }

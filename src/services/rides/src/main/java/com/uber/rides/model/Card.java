@@ -19,11 +19,14 @@ import lombok.Setter;
 @AllArgsConstructor
 @NoArgsConstructor
 public class Card {
+    
+    public static final String TYPE = "CARD";
+    
     @Id @GeneratedValue Long id;
-
-    private String cardNumber;
-    private String cvv;
-    private LocalDate expirationDate;
-    private String nickname; 
-    private String country;
+    String cardNumber;
+    String cvv;
+    LocalDate expirationDate;
+    String nickname; 
+    String country;
+    
 }
