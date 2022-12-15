@@ -182,12 +182,14 @@ public class Payments extends Controller {
             if(expirationDate.isBefore(LocalDate.now())) {
                 return badRequest("The card has expired");
             }
-            var card = new Card();
-            card.setCardNumber(request.getCardNumber());
-            card.setNickname(request.getNickname());
-            card.setCvv(request.getCvv());
-            card.setCountry(request.getCountry());
-            card.setExpirationDate(expirationDate);
+            var card = Card
+            .builder()
+            .cardNumber(request.getCardNumber())
+            .nickname(request.getNickname())
+            .cvv(request.getCvv())
+            .country(request.getCountry())
+            .expirationDate(expirationDate)
+            .build();
     
             user.addCard(card);
             db.persist(user);
