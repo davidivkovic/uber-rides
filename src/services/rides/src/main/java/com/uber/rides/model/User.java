@@ -82,8 +82,8 @@ public class User implements UserDetails {
     @OneToOne(fetch = FetchType.LAZY) UserUpdateRequest updateRequest;
     @OneToOne Car car;
     
-    @OneToMany(cascade = CascadeType.ALL) @Builder.Default List<Card> cards = new ArrayList<>();
-    @OneToOne Paypal paypal;
+    @OneToMany @Builder.Default List<Card> cards = new ArrayList<>();
+    @OneToOne(fetch = FetchType.LAZY) Paypal paypal;
     
     @ManyToMany @Builder.Default List<Route> favoriteRoutes = new ArrayList<>();
     
