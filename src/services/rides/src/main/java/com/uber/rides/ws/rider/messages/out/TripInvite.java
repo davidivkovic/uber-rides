@@ -15,6 +15,6 @@ public class TripInvite implements OutboundMessage {
     public TripDTO trip;
 
     @Override
-    public String type() { return "TRIP_INVITE"; }
+    public String messageType() { return "TRIP_INVITE"; }
 
 }

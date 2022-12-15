@@ -1,61 +1,54 @@
 package com.uber.rides.ws.driver.messages.in;
 
-import java.time.Duration;
+import lombok.Getter;
+import lombok.Setter;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
-import com.uber.rides.model.User;
 import com.uber.rides.model.User.Roles;
+import com.uber.rides.ws.WS;
 import com.uber.rides.ws.InboundMessage;
 import com.uber.rides.ws.driver.DriverData;
-import com.uber.rides.ws.WS;
-
-import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
+import com.uber.rides.ws.rider.messages.out.CarLocation;
 
 @Service
+@Getter
+@Setter
 public class UpdateLocation implements InboundMessage<DriverData> {
 
     public static final String TYPE = "UPDATE_LOCATION";
 
-    public long driverId;
     public double latitude;
     public double longitude;
 
-    @PersistenceContext EntityManager db;
-    
     @Autowired WS ws;
-    @Autowired ThreadPoolTaskScheduler scheduler;
-    @Autowired UpdateLocationTask task;
 
     @Override
-    @Transactional
+    // @Transactional
     public void handle(DriverData sender) {
-        // wsRider.broadcast("Handled UPDATE_DRIVER_LOCATION");
-        // var u = new User();
-        // u.firstName = "David";
-        // u.lastName = "Ivkovic";
-        // db.persist(u);
-        scheduler.scheduleAtFixedRate(() -> task.dostuff(sender), Duration.ofSeconds(2));
+        
+        var car = sender.getUser().getCar();
+        if (car == null) return;
+
+        var heading = Math.toDegrees(Math.atan2(
+            longitude - sender.getLongitude(),
+            latitude - sender.getLatitude())
+        );
+
+        sender.setLongitude(longitude);
+        sender.setLatitude(latitude);
+
+        ws.broadcast(
+            Roles.RIDER,
+            new CarLocation(
+                car.getRegistration(),
+                car.getType().getCarType(),
+                latitude,
+                longitude,
+                heading
+            )
+        );
     }
 
-}
-
-@Service
-class UpdateLocationTask {
-
-    @Autowired WS ws;
-    @PersistenceContext EntityManager db;
-
-    @Transactional
-    public void dostuff(DriverData sender) {
-        ws.broadcast(Roles.RIDER, "Handled UPDATE_DRIVER_LOCATION");
-        var u = new User();
-        u.setFirstName("David");
-        u.setLastName("Ivkovic");
-        db.persist(u);
-    }
 }

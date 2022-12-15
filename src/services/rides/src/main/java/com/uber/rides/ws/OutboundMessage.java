@@ -6,10 +6,10 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 
 public interface OutboundMessage {
 
-    public abstract String type();
+    public abstract String messageType();
 
     public default String serialize() throws JsonProcessingException {
-        return type() + '\n' + jsonMapper.writeValueAsString(this);
+        return messageType() + '\n' + jsonMapper.writeValueAsString(this);
     }
 
 }

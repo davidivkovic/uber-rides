@@ -2,11 +2,10 @@ import { Component } from '@angular/core'
 import { NgClass, NgFor, NgIf } from '@angular/common'
 import { ActivatedRoute, Router } from '@angular/router'
 import { FormsModule } from '@angular/forms'
-import { autocomplete, geocoder, directions, icons, map, createMarker, createPolyline, createInfoWindow } from '@app/api/google-maps'
+import { autocomplete, geocoder, icons, map, createMarker, createPolyline, createInfoWindow, removeAllElements } from '@app/api/google-maps'
 import { computed, formatDistance, formatDuration, InnerHtml, swap } from '@app/utils'
 import { ridesStore } from '@app/stores/ridesStore'
 import dayjs from 'dayjs'
-import { maps } from 'google-one-tap'
 import routes from '@app/api/routes'
 
 type AutocompleteLocation = {
@@ -225,9 +224,6 @@ export default class Looking {
   blurred = true
   routingPreference: 'respect-waypoints' | 'fastest-route' | 'cheapest-route' = 'respect-waypoints'
   departureTime = 'Depart now'
-  polyline: maps.Polyline
-  markers: maps.Marker[] = []
-  infoWindows: maps.InfoWindow[]
   distance: string
   duration: string
 
@@ -272,9 +268,7 @@ export default class Looking {
         ?? this.autocompleteLocations[index][0]
 
       const geometry = await this.selectLocation(index, locationToSelect, false, true)
-      this.markers.push(
-        createMarker(geometry.lat(), geometry.lng(), index === this.stopoverInputs.length - 1)
-      )
+      createMarker(geometry.lat(), geometry.lng(), index === this.stopoverInputs.length - 1)
 
       this.checkLocationsCompleted()
       ridesStore.locationPicked = null
@@ -314,22 +308,17 @@ export default class Looking {
 
     const route = directions.routes[0]
 
-    this.polyline?.setMap(null)
-    this.markers?.forEach(m => m.setMap(null))
-    this.infoWindows?.forEach(w => w.close())
+    removeAllElements()
 
     map.fitBounds(new google.maps.LatLngBounds(route.bounds.southwest, route.bounds.northeast))
     map.panBy(-180, 0)
     // map.setZoom(map.getZoom() - 1)
 
-    this.polyline = createPolyline(route.overviewPolyline.encodedPath)
-    this.markers = this.stopoverInputs.map((stopover, index) =>
+    createPolyline(route.overviewPolyline.encodedPath)
+    this.stopoverInputs.map((stopover, index) => {
       createMarker(stopover.latitude, stopover.longitude, index === this.stopoverInputs.length - 1)
-    )
-
-    this.infoWindows = this.stopoverInputs.map((stopover, index) =>
       createInfoWindow(stopover.latitude, stopover.longitude, stopover.address, index, this.stopoverInputs.length)
-    )
+    })
   }
 
   checkLocationsCompleted() {

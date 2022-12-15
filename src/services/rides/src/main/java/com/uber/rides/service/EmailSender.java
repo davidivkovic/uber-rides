@@ -1,7 +1,11 @@
 package com.uber.rides.service;
 
-import com.uber.rides.service.messages.EmailMessage;
-import org.springframework.beans.factory.annotation.Autowired;
+import javax.mail.internet.MimeMessage;
+
+import org.thymeleaf.spring6.SpringTemplateEngine;
+import org.thymeleaf.templateresolver.ClassLoaderTemplateResolver;
+import org.thymeleaf.templateresolver.ITemplateResolver;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.support.ResourceBundleMessageSource;
@@ -9,11 +13,8 @@ import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
-import org.thymeleaf.spring6.SpringTemplateEngine;
-import org.thymeleaf.templateresolver.ClassLoaderTemplateResolver;
-import org.thymeleaf.templateresolver.ITemplateResolver;
 
-import javax.mail.internet.MimeMessage;
+import com.uber.rides.service.messages.EmailMessage;
 
 @Service
 public class EmailSender {
@@ -49,7 +50,6 @@ public class EmailSender {
     private final JavaMailSender mailSender;
     private final SpringTemplateEngine templateEngine;
 
-    @Autowired
     public EmailSender(JavaMailSender mailSender, SpringTemplateEngine templateEngine) {
         this.mailSender = mailSender;
         this.templateEngine = templateEngine;

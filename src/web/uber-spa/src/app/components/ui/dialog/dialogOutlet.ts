@@ -1,12 +1,12 @@
 import { AfterViewInit, Component, ElementRef, Injector, QueryList, ViewChildren } from '@angular/core'
-import { NgComponentOutlet, NgForOf } from '@angular/common'
+import { NgComponentOutlet, NgForOf, NgIf } from '@angular/common'
 import { DialogData, dialogStore } from '@app/stores'
 import { CloseButton } from '@app/components/ui/base/closeButton'
 
 @Component({
   standalone: true,
   selector: 'DialogOutlet',
-  imports: [NgForOf, NgComponentOutlet, CloseButton],
+  imports: [NgIf, NgForOf, NgComponentOutlet, CloseButton],
   template: `
     <dialog 
       *ngFor="let dialog of dialogStore.dialogs; trackBy: dialogIdentity"
@@ -14,7 +14,7 @@ import { CloseButton } from '@app/components/ui/base/closeButton'
       [id]="dialog.id"
       class="backdrop:bg-black/25 rounded-lg"
     >
-      <CloseButton (click)="dialog.close()" class="absolute right-2 top-2"></CloseButton>
+      <CloseButton *ngIf="!dialog.props?.noCloseButton" (click)="dialog.close()" class="absolute right-2 top-2"></CloseButton>
       <ng-container *ngComponentOutlet="dialog.component(); injector: createInjector(dialog)"></ng-container>
     </dialog>
   `

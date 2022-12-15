@@ -2,16 +2,16 @@ import { ChangeDetectorRef, Component } from '@angular/core'
 import { Location, NgFor, NgIf, NgClass, CurrencyPipe } from '@angular/common'
 import { Router } from '@angular/router'
 import { subscribe, watch } from 'usm-mobx'
-import { CloseButton } from '@app/components/ui/base/closeButton'
 import { ridesStore } from '@app/stores/ridesStore'
 import { notificationStore } from '@app/stores'
 import trips from '@app/api/trips'
 import { createMessage, OutboundMessages } from '@app/api/ws-messages/messages'
 import { send } from '@app/api/ws'
+import PassengersStatus from '@app/components/rides/passengersStatus'
 
 @Component({
   standalone: true,
-  imports: [NgFor, NgIf, NgClass, CloseButton, CurrencyPipe],
+  imports: [NgFor, NgIf, NgClass, PassengersStatus, CurrencyPipe],
   template: `
     <div class="h-[700px] w-[400px] flex flex-col py-4 bg-white rounded-xl pointer-events-auto">
       <h3 class="text-4xl px-4">Choose a Ride</h3>
@@ -71,29 +71,13 @@ import { send } from '@app/api/ws'
           </div>
         </div>
       </div>
-      <div *ngIf="ridesStore.state?.passengers?.length" class="mt-3 px-5">
-          <h3 class="mb-1">Passengers</h3>
-          <div
-            *ngFor="let passenger of ridesStore.state.passengers"
-            class="flex items-center space-x-3 py-1"
-          >
-            <img [src]="passenger.profilePicture" class="w-7 h-7 rounded-full object-cover"/>
-            <h3 class="flex-1 leading-4 text-[15px] tracking-wide mt-0.5">{{ passenger.firstName}} {{ passenger.lastName }}</h3>
-            <svg *ngIf="!passenger.accepted && !passenger.declined" class="animate-spin ml-auto mr-3 h-4 w-4 text-black" fill="none" viewBox="0 0 24 24">
-              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-            </svg>
-            <p *ngIf="!passenger.accepted && !passenger.declined" class="text-sm">Pending...</p>
-            <div *ngIf="passenger.accepted" class="w-[7px] h-[7px] ml-auto rounded-full bg-green-600"></div>
-            <p *ngIf="passenger.declined" class="ml-auto rounded text-white px-2 py-px text-[13px] bg-red-600">Declined</p>
-            <CloseButton 
-              class="mt-1"
-              [extraSmall]="true"
-              (click)="removePassenger(passenger)"
-            >
-            </CloseButton>
-          </div>
-        </div>
+      <PassengersStatus 
+        [passengers]="ridesStore.state?.passengers"
+        [canRemove]="true"
+        (passengerRemoved)="removePassenger($event)"
+        class="mt-3 px-5"
+      >
+      </PassengersStatus>
       <button 
         (click)="router.navigate(['looking/add-passengers'])" 
         class="secondary mx-4 !py-2.5 !text-base mt-auto"
@@ -146,7 +130,7 @@ export default class ChooseRide {
     if (!this.selectedCarType?.carType) this.selectFirstCarType()
     if (navigatedFrom === 'add-passengers') {
       try {
-        if (!ridesStore.state.rideChosen && ridesStore.state.passengers.length) {
+        if (!ridesStore.state.rideChosen && ridesStore.state?.passengers?.length) {
           await trips.chooseRide(this.selectedCarType.carType)
           ridesStore.setState(store => store.state.rideChosen = true)
         }

@@ -27,4 +27,4 @@ const fetch = (input: RequestInfo | URL, init?: RequestInit): Promise<Response> 
   })
 }
 
-export { fetch, baseUrl }
+export { fetch, scheme, baseUrl }

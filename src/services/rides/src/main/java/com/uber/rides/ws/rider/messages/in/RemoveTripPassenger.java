@@ -7,6 +7,7 @@ import java.util.stream.Stream;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.uber.rides.dto.user.UserDTO;
 import com.uber.rides.model.User;
 import com.uber.rides.ws.InboundMessage;
 import com.uber.rides.ws.Store;
@@ -53,7 +54,7 @@ public class RemoveTripPassenger implements InboundMessage<RiderData> {
             ws.sendMessageToUser(
                 passenger,
                 new TripInviteUpdate(
-                    passengerId,
+                    UserDTO.builder().id(passengerId).build(),
                     Status.REMOVED,
                     carPrices
                 )

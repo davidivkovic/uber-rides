@@ -3,6 +3,8 @@ package com.uber.rides.ws;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.config.AutowireCapableBeanFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.WebSocketSession;
 
@@ -14,6 +16,8 @@ import com.uber.rides.ws.rider.RiderData;
 
 @Component
 public class Store {
+
+    @Autowired AutowireCapableBeanFactory container;
     
     public Map<Long, DriverData> drivers = new ConcurrentHashMap<>();
     public Map<Long, RiderData> riders = new ConcurrentHashMap<>();
@@ -24,15 +28,21 @@ public class Store {
     public void put(User user, WebSocketSession session) {
         switch (user.getRole()) {
             case Roles.ADMIN -> {
-                admins.put(user.getId(), new AdminData(user, session));
+                var admin = new AdminData(user, session);
+                container.autowireBean(admin);
+                admins.put(user.getId(), admin);
                 index.put(user.getId(), admins);
             }
             case Roles.DRIVER -> {
-                drivers.put(user.getId(), new DriverData(user, session));
+                var driver = new DriverData(user, session);
+                container.autowireBean(driver);
+                drivers.put(user.getId(), driver);
                 index.put(user.getId(), drivers);
             }
             default -> {
-                riders.put(user.getId(), new RiderData(user, session));
+                var rider = new RiderData(user, session);
+                container.autowireBean(rider);
+                riders.put(user.getId(), rider);
                 index.put(user.getId(), riders);
             }
         }

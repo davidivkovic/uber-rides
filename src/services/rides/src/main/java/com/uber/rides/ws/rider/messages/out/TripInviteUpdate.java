@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 
 import java.util.Map;
 
+import com.uber.rides.dto.user.UserDTO;
 import com.uber.rides.model.Car;
 import com.uber.rides.ws.OutboundMessage;
 
@@ -18,11 +19,11 @@ public class TripInviteUpdate implements OutboundMessage {
         REMOVED
     }
     
-    public Long passengerId;
+    public UserDTO passenger;
     public Status status;
     public Map<Car.Types, Double> carPricesInUsd;
 
     @Override
-    public String type() { return "TRIP_INVITE_UPDATE"; }
+    public String messageType() { return "TRIP_INVITE_UPDATE"; }
 
 }

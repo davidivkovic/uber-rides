@@ -1,5 +1,7 @@
 package com.uber.rides.ws;
 
+import org.springframework.beans.factory.BeanFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.ConcurrentWebSocketSessionDecorator;
 
@@ -18,6 +20,8 @@ public abstract class UserData {
     public User user;
     public WebSocketSession session;
 
+    @Autowired public WS ws;
+
     protected UserData(User user, WebSocketSession session) {
         this.user = user;
         this.session = new ConcurrentWebSocketSessionDecorator(session, waitForMilliseconds, bufferSizeBytes);
@@ -26,5 +30,9 @@ public abstract class UserData {
     protected UserData() {}
 
     public abstract String getRole();
+
+    public void onConnected() {}
+
+    public void onDisconnected() {}
 
 }

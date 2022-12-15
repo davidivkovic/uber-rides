@@ -141,9 +141,15 @@
 		</dependency>
 
 		<dependency>
-  			<groupId>com.braintreepayments.gateway</groupId>
-  			<artifactId>braintree-java</artifactId>
-  			<version>3.19.0</version>
+			<groupId>com.braintreepayments.gateway</groupId>
+			<artifactId>braintree-java</artifactId>
+			<version>3.19.0</version>
+		</dependency>
+
+		<dependency>
+			<groupId>net.datafaker</groupId>
+			<artifactId>datafaker</artifactId>
+			<version>1.7.0</version>
 		</dependency>
 
 	</dependencies>

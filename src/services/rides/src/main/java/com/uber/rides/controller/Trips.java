@@ -70,8 +70,11 @@ public class Trips extends Controller {
             return badRequest("You are currenly not looking for a ride. Please start by choosing a route.");
         }
 
+        var invitedPassegers = riderData.getInvitedPassengerIds();
         var newPassengers = new ArrayList<>(passengerIds);
-        newPassengers.removeAll(riderData.getInvitedPassengerIds());
+        if (invitedPassegers != null) {
+            newPassengers.removeAll(invitedPassegers);
+        }
         riderData.setInvitedPassengerIds(passengerIds);
 
         var inviter = mapper.map(riderData.user, UserDTO.class);
@@ -99,10 +102,12 @@ public class Trips extends Controller {
         if (trip == null) {
             return badRequest("You are currenly not looking for a ride. Please start by choosing a route.");
         } 
+        
+        var tripCarChosen = trip.getCar() != null;
+        trip.setTotalPrice(riderData.getCarPricesInUsd().get(rideType));
+        trip.setCar(Car.builder().type(Car.getByType(rideType)).build());
 
-        if (trip.getCar() != null) {
-            trip.setTotalPrice(riderData.getCarPricesInUsd().get(rideType));
-            trip.setCar(Car.builder().type(Car.getByType(rideType)).build());
+        if (tripCarChosen) {
             return ok();
         }
 
@@ -117,7 +122,7 @@ public class Trips extends Controller {
 
         var distance = Stream
             .of(directionsRoute.legs)
-            .mapToLong(leg -> leg.distance.inMeters / 1000)
+            .mapToLong(leg -> leg.distance.inMeters)
             .sum();
 
         var leg = directionsRoute.legs[0];

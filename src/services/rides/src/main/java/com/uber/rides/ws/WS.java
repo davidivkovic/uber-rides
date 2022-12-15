@@ -13,6 +13,9 @@ import org.slf4j.LoggerFactory;
 
 import io.jsonwebtoken.Claims;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+
+import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.server.ServerHttpRequest;
@@ -30,8 +33,6 @@ import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 import org.springframework.web.socket.server.HandshakeInterceptor;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.uber.rides.database.DbContext;
 import com.uber.rides.model.Trip;
 import com.uber.rides.model.User;
 import com.uber.rides.model.User.Roles;
@@ -64,6 +65,7 @@ class WSConfig implements WebSocketConfigurer {
 
                     attributes.put(USER_ID, Long.parseLong(jwt.getSubject()));
                     attributes.put(USER_ROLE, jwt.get(JWT.ROLE_CLAIM, String.class));
+                    
                     return true;
                 }
                 return false;
@@ -84,7 +86,7 @@ public class WS extends TextWebSocketHandler {
 
     @Autowired MessageHandler messageHandler;
     @Autowired EntityManagerFactory dbFactory;
-    @Autowired public Store store;
+    @Autowired Store store;
 
     Logger logger = LoggerFactory.getLogger(WS.class);
 
@@ -93,25 +95,24 @@ public class WS extends TextWebSocketHandler {
     public void afterConnectionEstablished(WebSocketSession session) {
 
         var userId = (Long) session.getAttributes().get(USER_ID);
-        User user = null;
         try {
             var db = dbFactory.createEntityManager();
-            user = db.find(User.class, userId);
+            var user = db.find(User.class, userId);
             db.close();
-        }
-        catch (Exception e) { user = null; }
 
-        if (user != null) {
-            try {
+            if (user == null) {
+                session.close(CloseStatus.NOT_ACCEPTABLE);
+                return;
+            }
+            if (store.get(user.getId()) == null) {
                 store.put(user, session);
-                super.afterConnectionEstablished(session);
-            } 
-            catch (Exception e) { store.remove(userId); }
+                var userData = store.get(user.getId());
+                if (userData != null) userData.onConnected();
+            }
+            super.afterConnectionEstablished(session);
         }
-        
-        else {
-            try { session.close(CloseStatus.NOT_ACCEPTABLE); } 
-            catch (IOException e) { /* Ignore */}
+        catch (Exception e) {
+            store.remove(userId);
         }
     }
 
@@ -135,7 +136,11 @@ public class WS extends TextWebSocketHandler {
 
     @Override
     public void afterConnectionClosed(WebSocketSession session, CloseStatus status) {
-        store.remove((Long) session.getAttributes().get(USER_ID));
+        var userData = store.get((Long) session.getAttributes().get(USER_ID));
+        if (userData != null) {
+            userData.onDisconnected();
+            store.remove(userData.getUser().getId());
+        }
         try { session.close(); } 
         catch (IOException e) { /* Ignore */}
         try { super.afterConnectionClosed(session, status); }
@@ -166,6 +171,13 @@ public class WS extends TextWebSocketHandler {
         var data = store.get(userId);
         if (data != null) {
             sendMessage(data.session, message);
+        }
+    }
+
+    public void broadcast(String role, OutboundMessage message) {
+        try { broadcast(role, message.serialize()); } 
+        catch (JsonProcessingException e) {
+            logger.error("Could not serialize message of type {}", message.getClass()); 
         }
     }
 

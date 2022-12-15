@@ -10,6 +10,13 @@ let geocoder: google.maps.Geocoder
 let places: google.maps.places.PlacesService
 let directions: google.maps.DirectionsService
 let elementId: string
+let polyline: google.maps.Polyline
+let markers: google.maps.Marker[] = []
+let carMarkers: google.maps.Marker[] = []
+let infoWindows: google.maps.InfoWindow[] = []
+let subscribers = []
+
+jailbreak()
 
 const initMap = () => {
   mapHtmlElement = document.getElementById(elementId)
@@ -24,10 +31,27 @@ const initMap = () => {
   autocomplete = new google.maps.places.AutocompleteService()
   geocoder = new google.maps.Geocoder()
   directions = new google.maps.DirectionsService()
+
+  directions.route({
+    //Coordinates for new york
+    origin: { lat: 40.7459, lng: -73.99999 },
+    // Coordinates for Los Angeles
+    destination: { lat: 34.0522, lng: -118.2437 },
+    travelMode: google.maps.TravelMode.DRIVING,
+    waypoints: [
+      // Coordinates for Chicago
+      { location: { lat: 41.8781, lng: -87.6298 } },
+      // Coordinates for Houston
+      { location: { lat: 29.7604, lng: -95.3698 } },
+    ]
+  })
+
+  subscribers.forEach((fn: any) => fn())
+  subscribers = []
 }
 
 const createMarker = (latitude: number, longitude: number, isTerminal: boolean) => {
-  return new google.maps.Marker({
+  const marker = new google.maps.Marker({
     position: {
       lat: latitude,
       lng: longitude
@@ -44,16 +68,19 @@ const createMarker = (latitude: number, longitude: number, isTerminal: boolean) 
     },
     map
   })
+  markers.push(marker)
 }
 
-const createPolyline = (encodedPath: string) => new google.maps.Polyline({
-  path: google.maps.geometry.encoding.decodePath(encodedPath),
-  map,
-  strokeColor: '#000',
-  strokeOpacity: 0.7,
-  strokeWeight: 4,
-  clickable: false,
-})
+const createPolyline = (encodedPath: string) => {
+  polyline = new google.maps.Polyline({
+    path: google.maps.geometry.encoding.decodePath(encodedPath),
+    map,
+    strokeColor: '#000',
+    strokeOpacity: 0.7,
+    strokeWeight: 4,
+    clickable: false,
+  })
+}
 
 const createInfoWindow = (
   latitude: number,
@@ -62,10 +89,7 @@ const createInfoWindow = (
   index: number,
   arrayLength: number
 ) => {
-  const verb = {
-    0: 'From',
-    [arrayLength - 1]: 'To'
-  }[index] ?? 'Stop'
+  const verb = { 0: 'From', [arrayLength - 1]: 'To' }[index] ?? 'Stop'
   const infoWindow = new google.maps.InfoWindow({
     position: {
       lat: latitude,
@@ -86,10 +110,27 @@ const createInfoWindow = (
     infoWindow.setOptions({ pixelOffset: new google.maps.Size(windowWidth / 2 + 8, 0) })
   })
   infoWindow.open(map)
-  return infoWindow
+  infoWindows.push(infoWindow)
 }
 
-jailbreak()
+const removeAllElements = () => {
+  polyline?.setMap(null)
+  markers?.forEach(m => m.setMap(null))
+  infoWindows?.forEach(w => w.close())
+}
+
+const init = (htmlElementId: string) => {
+  if (!document.getElementById(scriptName)) {
+    elementId = htmlElementId
+    document.head.appendChild(script)
+  }
+  else {
+    initMap()
+  }
+}
+
+const subscribe = (fn: any) => subscribers.push(fn)
+
 const script = Object.assign(
   document.createElement('script'),
   {
@@ -101,26 +142,18 @@ const script = Object.assign(
   }
 )
 
-const init = (htmlElementId: string) => {
-  console.log(document.getElementById(scriptName))
-  if (!document.getElementById(scriptName)) {
-    elementId = htmlElementId
-    document.head.appendChild(script)
-  }
-  else {
-    initMap()
-  }
-}
-
 export {
   init,
+  subscribe,
   map,
   mapHtmlElement,
   autocomplete,
   geocoder,
   directions,
   icons,
+  carMarkers,
   createMarker,
   createPolyline,
-  createInfoWindow
+  createInfoWindow,
+  removeAllElements
 }

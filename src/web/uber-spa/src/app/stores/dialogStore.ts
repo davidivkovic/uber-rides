@@ -18,7 +18,9 @@ class DialogStore {
   @action
   openDialog(
     component: typeof Dialog,
-    props: {},
+    props: {
+      noCloseButton: boolean
+    } | {},
     onclose: (param: any) => void = () => { }
   ) {
     const id = `dialog-${this.dialogs.length}`

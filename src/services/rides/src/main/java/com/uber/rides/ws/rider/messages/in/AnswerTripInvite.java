@@ -6,12 +6,16 @@ import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.uber.rides.dto.user.UserDTO;
 import com.uber.rides.ws.InboundMessage;
 import com.uber.rides.ws.Store;
 import com.uber.rides.ws.WS;
 import com.uber.rides.ws.rider.RiderData;
 import com.uber.rides.ws.rider.messages.out.TripInviteUpdate;
 import com.uber.rides.ws.rider.messages.out.TripInviteUpdate.Status;
+
+import static com.uber.rides.util.Utils.*;
+
 
 @Service
 public class AnswerTripInvite implements InboundMessage<RiderData> {
@@ -38,8 +42,14 @@ public class AnswerTripInvite implements InboundMessage<RiderData> {
 
         if (accepted) {
             trip.getRiders().add(sender.user);
+            sender.setCurrentTrip(trip);
+        }
+        else {
+            inviterData.getInvitedPassengerIds().remove(sender.getUser().getId());
+            sender.setCurrentTrip(null);
         }
 
+        var senderDTO = mapper.map(sender.user, UserDTO.class);
         var carPrices = inviterData
             .getCarPricesInUsd()
             .entrySet()
@@ -55,7 +65,7 @@ public class AnswerTripInvite implements InboundMessage<RiderData> {
             ws.sendMessageToUser(
                 passenger.getId(),
                 new TripInviteUpdate(
-                    sender.user.getId(), 
+                    senderDTO, 
                     accepted ? Status.ACCEPTED : Status.DECLINED,
                     carPrices
                 )
