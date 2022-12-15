@@ -80,9 +80,9 @@ public class User implements UserDetails {
     OTP confirmationCode;
     
     @OneToOne(fetch = FetchType.LAZY) UserUpdateRequest updateRequest;
-    @OneToOne(fetch = FetchType.LAZY) Car car;
+    @OneToOne Car car;
     
-    @OneToMany(cascade = CascadeType.ALL) List<Card> cards = new ArrayList<>();
+    @OneToMany(cascade = CascadeType.ALL) @Builder.Default List<Card> cards = new ArrayList<>();
     @OneToOne Paypal paypal;
     
     @ManyToMany @Builder.Default List<Route> favoriteRoutes = new ArrayList<>();

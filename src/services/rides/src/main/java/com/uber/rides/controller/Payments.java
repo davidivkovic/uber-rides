@@ -1,11 +1,31 @@
 package com.uber.rides.controller;
 
-import org.springframework.web.bind.annotation.RestController;
+import java.nio.charset.StandardCharsets;
+import java.time.LocalDate;
+import java.util.Base64;
+import java.util.Objects;
+import java.util.stream.Stream;
+
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+import javax.transaction.Transactional;
 
 import com.braintreegateway.BraintreeGateway;
 import com.braintreegateway.ClientTokenRequest;
 import com.braintreegateway.CustomerRequest;
 import com.braintreegateway.Environment;
+
+import static com.speedment.jpastreamer.streamconfiguration.StreamConfiguration.*;
+
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.annotation.Secured;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import com.braintreegateway.Customer;
 import com.braintreegateway.Result;
@@ -15,29 +35,6 @@ import com.uber.rides.model.Card;
 import com.uber.rides.model.Paypal;
 import com.uber.rides.model.User;
 import com.uber.rides.model.User.Roles;
-
-import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
-import javax.transaction.Transactional;
-import javax.validation.constraints.NotBlank;
-
-import static com.speedment.jpastreamer.streamconfiguration.StreamConfiguration.*;
-
-import java.nio.charset.StandardCharsets;
-import java.time.LocalDate;
-import java.util.Base64;
-import java.util.Collection;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.access.annotation.Secured;
-import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-
 import com.uber.rides.model.User$;
 
 import static com.uber.rides.util.Utils.*;
@@ -68,13 +65,11 @@ public class Payments extends Controller {
             ClientTokenRequest clientTokenRequest = new ClientTokenRequest().customerId(user.getPaypal().getId());
             return gateway.clientToken().generate(clientTokenRequest);
         }
-        else {
-            return gateway.clientToken().generate();
-        }
+        return gateway.clientToken().generate();
     }
 
     @Transactional
-    @PostMapping("/paypal")
+    @PostMapping("methods/paypal")
     @Secured({ Roles.RIDER })
     public Object savePaypal(@RequestParam String nonce, @RequestParam String email) {
         var user = db.find(User.class, authenticatedUserId());
@@ -107,12 +102,13 @@ public class Payments extends Controller {
     }
 
     @Transactional
-    @GetMapping("/paypal")
+    @GetMapping("/methods")
     @Secured({ Roles.RIDER })
-    public Object getPaypal() {
+    public Object getPaymentMethods() {
         var user = context.readonlyQuery().stream(
                 of(User.class)
                 .joining(User$.paypal)
+                .joining(User$.cards)
             )
             .filter(User$.id.equal(authenticatedUserId()))
             .findFirst()
@@ -120,28 +116,54 @@ public class Payments extends Controller {
 
         if (user == null) return badRequest(USER_NOT_EXIST);
 
-        return user.getPaypal();
+        return Stream.concat(
+            Stream.of(user.getPaypal()),
+            user.getCards().stream()
+        )
+        .filter(Objects::nonNull)
+        .toList();
     }
     
     @Transactional
-    @PostMapping("/paypal/remove")
+    @PostMapping("methods/{id}/remove")
     @Secured({ Roles.RIDER })
     public Object deletePaypal() {
-        var user = db.find(User.class, authenticatedUserId());
-        var paypal = user.getPaypal();
 
-        if(paypal == null) {
-            return badRequest("The user doesn't have paypal as a saved payment method");
+        var user = context.query().stream(
+            of(User.class)
+            .joining(User$.cards)
+            .joining(User$.paypal)
+        )
+        .filter(User$.id.equal(authenticatedUserId()))
+        .findFirst()
+        .orElse(null);
+        
+        if (user == null) {
+            return badRequest(USER_NOT_EXIST);
         }
 
-        user.setPaypal(null);
-        db.remove(paypal);
+        Stream.concat(
+            Stream.of(user.getPaypal()),
+            user.getCards().stream()
+        )
+        .filter(Objects::nonNull)
+        .forEach(m -> {
+            if (m instanceof Paypal) {
+                user.setPaypal(null);
+                db.remove(m);
+            }
+            else if (m instanceof Card c) {
+                user.removeCard(c.getId());
+                db.remove(m);
+            }
+        });
 
         return ok();
+
     }
 
     @Transactional
-    @PostMapping("/card")
+    @PostMapping("methods/card")
     @Secured({ Roles.RIDER })
     public Object saveCard(@Validated @RequestBody NewCardRequest request) {
 
@@ -176,38 +198,4 @@ public class Payments extends Controller {
         }
     }
 
-    @Transactional
-    @GetMapping("/cards")
-    @Secured({ Roles.RIDER })
-    public Object getCards() {
-        return context.readonlyQuery().stream(
-                of(User.class)
-                .joining(User$.cards)
-            )
-            .filter(User$.id.equal(authenticatedUserId()))
-            .map(User::getCards)
-            .flatMap(Collection::stream)
-            .toList();            
-    }
-
-    @Transactional
-    @PostMapping("/cards/{id}/remove")
-    @Secured({ Roles.RIDER })
-    public Object removeCard(@PathVariable("id") @NotBlank Long cardId) {
-        var user = context.query().stream(
-            of(User.class)
-            .joining(User$.cards)
-        )
-        .filter(User$.id.equal(authenticatedUserId()))
-        .findFirst()
-        .orElse(null);
-        
-        if (user == null) {
-            return badRequest(USER_NOT_EXIST);
-        }
-
-        user.removeCard(cardId);
-
-        return ok();
-    }
 }
