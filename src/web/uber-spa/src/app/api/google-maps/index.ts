@@ -32,20 +32,6 @@ const initMap = () => {
   geocoder = new google.maps.Geocoder()
   directions = new google.maps.DirectionsService()
 
-  directions.route({
-    //Coordinates for new york
-    origin: { lat: 40.7459, lng: -73.99999 },
-    // Coordinates for Los Angeles
-    destination: { lat: 34.0522, lng: -118.2437 },
-    travelMode: google.maps.TravelMode.DRIVING,
-    waypoints: [
-      // Coordinates for Chicago
-      { location: { lat: 41.8781, lng: -87.6298 } },
-      // Coordinates for Houston
-      { location: { lat: 29.7604, lng: -95.3698 } },
-    ]
-  })
-
   subscribers.forEach((fn: any) => fn())
   subscribers = []
 }
@@ -97,7 +83,7 @@ const createInfoWindow = (
     },
     content: /*html*/`
       <div id="gm-iw-c-${index}" class="flex items-center px-3 py-2 space-x-2 cursor-pointer">
-        <span class="text-[15px]">${verb}: ${address}</span>
+        <span class="text-[15px] select-none">${verb}: ${address}</span>
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
           <path d="M16.9 12l-4.6 6H8.5l4.6-6-4.6-6h3.8l4.6 6z" fill="currentColor">
           </path>

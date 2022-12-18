@@ -13,11 +13,22 @@ import lombok.Setter;
 @Entity
 @AllArgsConstructor
 @NoArgsConstructor
-public class Paypal {
+public class Paypal implements Payment.Method {
 
     public static final String TYPE = "PAYPAL";
 
     @Id String id;
     String email;
+
+    public boolean authorize(double amount, String currency) {
+        return true;
+    }
+
+    public boolean capture(String token) {
+        return true;
+    }
     
+    public boolean cancel(String token) {
+        return true;
+    }
 }

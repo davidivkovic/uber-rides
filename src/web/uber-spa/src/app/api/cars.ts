@@ -1,6 +1,8 @@
 import { fetch } from '.'
 
 const basePath = '/cars'
+let isPolling = false
+let delays = {}
 
 const getAllCarTypes = async () => {
   const response = await fetch(basePath + '/types', {
@@ -26,7 +28,27 @@ const registerCar = async (data: {
   if (!response.ok) throw new Error(await response.text())
 }
 
+const pollLiveLocations = async () => {
+  if (isPolling) return
+
+  const handler = await import('./ws-messages/carLocation')
+  isPolling = true
+
+  setInterval(async () => {
+    const response = await fetch(basePath + '/live-locations', {
+      method: 'GET'
+    })
+    for (const carLocation of await response.json()) {
+      if (!delays[carLocation.registration]) {
+        delays[carLocation.registration] = Math.random() * 5000
+      }
+      setTimeout(() => handler.default(carLocation), delays[carLocation.registration])
+    }
+  }, 5000)
+}
+
 export default {
   getAllCarTypes,
-  registerCar
+  registerCar,
+  pollLiveLocations
 }

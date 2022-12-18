@@ -18,7 +18,7 @@ import lombok.Setter;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class Card {
+public class Card implements Payment.Method {
     
     public static final String TYPE = "CARD";
     
@@ -28,5 +28,17 @@ public class Card {
     LocalDate expirationDate;
     String nickname; 
     String country;
+
+    public boolean authorize(double amount, String currency) {
+        return true;
+    }
+
+    public boolean capture(String token) {
+        return true;
+    }
+
+    public boolean cancel(String token) {
+        return true;
+    }
     
 }

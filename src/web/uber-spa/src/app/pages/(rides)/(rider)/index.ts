@@ -2,6 +2,7 @@ import { Component } from '@angular/core'
 import { NgClass, NgFor, NgIf } from '@angular/common'
 import { RouterOutlet } from '@angular/router'
 import { init } from '@app/api/google-maps'
+import cars from '@app/api/cars'
 
 @Component({
   standalone: true,
@@ -21,6 +22,11 @@ import { init } from '@app/api/google-maps'
   `
 })
 export default class Index {
+
+  constructor() {
+    cars.pollLiveLocations()
+  }
+
   ngAfterViewInit() {
     init('google-map')
   }

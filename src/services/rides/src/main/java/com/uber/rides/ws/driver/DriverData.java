@@ -18,6 +18,9 @@ public class DriverData extends UserData {
     public Trip currentTrip;
     public double latitude;
     public double longitude;
+    public double heading;
+    public boolean isAvailable = true;
+    public boolean isOnline = true;
 
     public DriverData(User user, WebSocketSession session) {
         super(user, session);

@@ -6,11 +6,9 @@ import lombok.Setter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import com.uber.rides.model.User.Roles;
 import com.uber.rides.ws.WS;
 import com.uber.rides.ws.InboundMessage;
 import com.uber.rides.ws.driver.DriverData;
-import com.uber.rides.ws.rider.messages.out.CarLocation;
 
 @Service
 @Getter
@@ -25,7 +23,6 @@ public class UpdateLocation implements InboundMessage<DriverData> {
     @Autowired WS ws;
 
     @Override
-    // @Transactional
     public void handle(DriverData sender) {
         
         var car = sender.getUser().getCar();
@@ -38,17 +35,8 @@ public class UpdateLocation implements InboundMessage<DriverData> {
 
         sender.setLongitude(longitude);
         sender.setLatitude(latitude);
+        sender.setHeading(heading);
 
-        ws.broadcast(
-            Roles.RIDER,
-            new CarLocation(
-                car.getRegistration(),
-                car.getType().getCarType(),
-                latitude,
-                longitude,
-                heading
-            )
-        );
     }
 
 }

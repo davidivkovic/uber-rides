@@ -15,6 +15,9 @@ import com.uber.rides.model.Car;
 import com.uber.rides.model.User;
 import com.uber.rides.model.User.Roles;
 import com.uber.rides.service.UserService;
+import com.uber.rides.ws.Store;
+import com.uber.rides.ws.driver.DriverData;
+import com.uber.rides.ws.rider.messages.out.CarLocation;
 
 import static com.uber.rides.util.Utils.*;
 
@@ -27,7 +30,7 @@ public class Cars extends Controller {
     
     @PersistenceContext EntityManager db;
     @Autowired UserService userService;
-
+    @Autowired Store store;
 
     @Transactional
     @PostMapping("")
@@ -51,5 +54,22 @@ public class Cars extends Controller {
 
     @GetMapping("/types")
     public Object getTypes() { return Car.getAvailableTypes(); }
+
+    @GetMapping("/live-locations")
+    @Secured({ Roles.ANONYMOUS, Roles.RIDER })
+    public Object getLooking() {
+        return store
+        .drivers
+        .values()
+        .stream()
+        .map(driver -> new CarLocation(
+            driver.user.getCar().getRegistration(),
+            driver.user.getCar().getType().getCarType(),
+            driver.getLatitude(),
+            driver.getLongitude(),
+            driver.getHeading()
+        ))
+        .toArray();
+    }
 
 }

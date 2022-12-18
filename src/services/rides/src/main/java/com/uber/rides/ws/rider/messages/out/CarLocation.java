@@ -23,6 +23,8 @@ public class CarLocation implements OutboundMessage  {
 
     public CarLocation(String registration) {
         this.registration = registration;
+        this.latitude = 0;
+        this.longitude = 0;
     }
 
 }

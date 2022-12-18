@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledFuture;
+import java.util.function.Function;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import java.awt.image.BufferedImage;
@@ -117,24 +118,20 @@ public class DriverSimulator {
         var directions = getDirections(coordinates);
         if (directions != null) {
             var points = Stream
-            .of(directions.legs)
-            .flatMap(leg -> Stream.of(leg.steps).map(s -> s.polyline.decodePath()))
-            .flatMap(List::stream)
-            .toList();
-
-            var duration = Stream
-            .of(directions.legs)
-            .mapToLong(leg -> leg.duration.inSeconds)
-            .sum();
-
-            var step = (int) (points.size() / (duration / 5.0));
-            var filteredPoints = IntStream
-                .range(0, points.size())
-                .filter(index -> index % step == 0)
-                .mapToObj(points::get)
+                .of(directions.legs)
+                .flatMap(leg -> Stream.of(leg.steps))
+                .map(s -> {
+                    var polyline = s.polyline.decodePath();
+                    var step = Math.ceilDiv(polyline.size(), Math.ceilDiv(s.duration.inSeconds, 5));
+                    return IntStream
+                        .range(0, polyline.size())
+                        .filter(index -> index % step == 0)
+                        .mapToObj(polyline::get);
+                })
+                .flatMap(Function.identity())
                 .toList();
-            var pointsIterator = filteredPoints.listIterator();    
-
+                
+            var pointsIterator = points.listIterator();    
             var task = scheduler.scheduleAtFixedRate(
                 () -> updateLocation(pointsIterator, driver, session),
                 java.time.Duration.ofSeconds(5)
