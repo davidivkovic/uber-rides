@@ -78,6 +78,7 @@ public class User implements UserDetails {
     boolean completedRegistration;
     double rating;
     OTP confirmationCode;
+    String customerId;
     
     @OneToOne(fetch = FetchType.LAZY) UserUpdateRequest updateRequest;
     @OneToOne Car car;

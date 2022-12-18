@@ -1,8 +1,7 @@
-import { Component, EventEmitter, Output, ViewChild } from '@angular/core'
+import { Component, EventEmitter, Output } from '@angular/core'
 import { watchEffect } from '@app/utils'
 import payments from '@app/api/payments'
 import { notificationStore } from '@app/stores'
-import { NgIf } from '@angular/common'
 
 declare const braintree
 declare const paypal
@@ -10,37 +9,26 @@ declare const paypal
 @Component({
   selector: 'Paypal',
   standalone: true,
-  imports: [NgIf],
   template: `
     <div class="h-full flex flex-col justify-between">
       <div>
         {{ scriptsLoaded() }}
-        {{ buttonRendered() }}
         <h1 class="text-2xl ">Add PayPal</h1>
         <p class="mt-5">You will be re-directed to PayPal to verify your account.</p>
       </div>
       <div class="flex flex-col justify-end mt-20 space-y-2">
         <p class="text-red-600 text-center text-sm">{{ error }}</p>
-        <div #pp id="paypal-button"></div>
-        <button *ngIf="loadingButton" disabled class="secondary">PayPal button loading</button>
-        <button (click)="oncancel.emit()" class="secondary w-full">Cancel</button>
+        <div id="paypal-button"></div>
       </div>
     </div>
   `
 })
-export default class Paypal {
-  @ViewChild('pp') paypalButton
-
+export default class Pay {
   braintreeLoaded = false
   paypalLoaded = false
 
-  loadingButton = true
-
   error = ''
   token = ''
-
-  @Output() oncancel = new EventEmitter()
-  @Output() onsuccess = new EventEmitter()
 
   async ngAfterViewInit() {
     this.generateToken()
@@ -79,17 +67,11 @@ export default class Paypal {
     }
   )
 
-  buttonRendered = watchEffect(
-    () => this.paypalButton?.nativeElement.innerHTML,
-    () => {
-      if (this.paypalButton?.nativeElement.innerHTML) this.loadingButton = false
-    }
-  )
-
   initPaypal = () => {
     braintree.client.create(
       {
-        authorization: this.token
+        authorization: this.token,
+        vault: true
       },
       (clientErr, clientInstance) => {
         if (clientErr) {
@@ -98,12 +80,14 @@ export default class Paypal {
         }
         braintree.paypalCheckout.create(
           {
+            autoSetDataUserIdToken: true,
             client: clientInstance
           },
           (paypalCheckoutErr, paypalCheckoutInstance) => {
             paypalCheckoutInstance.loadPayPalSDK(
               {
-                vault: true
+                currency: 'USD',
+                intent: 'capture'
               },
               () => {
                 paypal
@@ -114,21 +98,19 @@ export default class Paypal {
                     },
                     fundingSource: paypal.FUNDING.PAYPAL,
 
-                    createBillingAgreement() {
+                    createOrder() {
                       return paypalCheckoutInstance.createPayment({
-                        flow: 'vault' // Required
+                        flow: 'checkout',
+                        amount: 20,
+                        currency: 'USD',
+                        intent: 'capture',
+                        requestBillingAgreement: true
                       })
                     },
 
                     onApprove: (data, actions) => {
                       return paypalCheckoutInstance.tokenizePayment(data, async (err, payload) => {
-                        try {
-                          await payments.addPaypal(payload.nonce, payload.details.email)
-                          notificationStore.show('Paypall successfully added.')
-                          this.onsuccess.emit()
-                        } catch (error) {
-                          this.error = error
-                        }
+                        await payments.pay({nonce: payload.nonce, amount: 10, email: payload.details.email})
                       })
                     },
 
@@ -136,10 +118,11 @@ export default class Paypal {
                       console.log('PayPal payment canceled.')
                     },
 
-                    onError: function (err) {}
+                    onError: function (err) {
+                      console.error('PayPal error', err)
+                    }
                   })
                   .render('#paypal-button')
-                  .catch(err => {})
               }
             )
           }

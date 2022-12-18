@@ -39,8 +39,12 @@ export default class ProfileSidebar {
       link: 'password/change'
     },
     {
-      name: 'Payment options',
+      name: 'Payment methods',
       link: 'payment'
+    },
+    {
+      name: 'Payment test',
+      link: 'pay'
     }
   ]
 

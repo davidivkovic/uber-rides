@@ -6,9 +6,15 @@ const generatePaypalToken = async () => {
   return repsonse.text()
 }
 
+const getMethods = async () => {
+  const response = await fetch(basePath + '/methods', { method: 'GET' })
+  if (!response.ok) throw new Error(await response.text())
+  return await response.json()
+}
+
 const addPaypal = async (nonce: string, email: string) => {
   const response = await fetch(
-    decodeURIComponent(basePath + '/paypal?' + new URLSearchParams({ nonce, email }).toString()),
+    decodeURIComponent(basePath + '/methods/paypal?' + new URLSearchParams({ nonce, email }).toString()),
     {
       method: 'POST'
     }
@@ -16,45 +22,47 @@ const addPaypal = async (nonce: string, email: string) => {
   if (!response.ok) throw new Error(await response.text())
 }
 
-const getPaypal = async () => {
-  const repsonse = await fetch(basePath + '/paypal', { method: 'GET' })
-  return repsonse.json()
-}
-
-const getCards = async () => {
-  const repsonse = await fetch(basePath + '/cards', { method: 'GET' })
-  return repsonse.json()
-}
-
-const removePaypal = async () => {
-  const response = await fetch(basePath + '/paypal/remove', { method: 'POST' })
-  if (!response.ok) throw new Error(await response.text())
-}
-
 const addCard = async (data: {
   nickname: string
+  month: number
+  year: number
   cardNumber: string
   cvv: string
-  expirationDate: string
   country: string
+  nonce: string
 }) => {
-  const response = await fetch(basePath + '/card', { method: 'POST', body: JSON.stringify(data) })
+  const response = await fetch(basePath + '/methods/card', { method: 'POST', body: JSON.stringify(data) })
   if (!response.ok) throw new Error(await response.text())
 
   return await response.json()
 }
+ 
+const pay = async (data: {nonce: string, amount: number, email: string}) => {
+  const response = await fetch(
+    basePath + '/pay',
+    {
+      method: 'POST',
+      body: JSON.stringify(data)
+    }
+  )
+  if (!response.ok) throw new Error(await response.text())
+}
 
-const removeCard = async (cardId: number) => {
-  const response = await fetch(basePath + `/cards/${cardId}/remove`, { method: 'POST' })
+const removePaymentMethod = async (id: string) => {
+  const response = await fetch(
+    basePath + `/methods/${id}/remove`,
+    {
+      method: 'POST',
+    }
+  )
   if (!response.ok) throw new Error(await response.text())
 }
 
 export default {
-  addPaypal,
   generatePaypalToken,
-  getPaypal,
+  getMethods,
+  addPaypal,
   addCard,
-  getCards,
-  removePaypal,
-  removeCard
+  removePaymentMethod,
+  pay
 }

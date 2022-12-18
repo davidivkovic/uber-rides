@@ -1,6 +1,8 @@
 package com.uber.rides.model;
 
+
 import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 
 import lombok.AllArgsConstructor;
@@ -13,22 +15,11 @@ import lombok.Setter;
 @Entity
 @AllArgsConstructor
 @NoArgsConstructor
-public class Paypal implements Payment.Method {
+public class Paypal extends Payment.Method {
 
     public static final String TYPE = "PAYPAL";
 
-    @Id String id;
+    @Id @GeneratedValue Long id;
+
     String email;
-
-    public boolean authorize(double amount, String currency) {
-        return true;
-    }
-
-    public boolean capture(String token) {
-        return true;
-    }
-    
-    public boolean cancel(String token) {
-        return true;
-    }
 }

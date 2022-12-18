@@ -1,6 +1,7 @@
 package com.uber.rides.dto.user;
 
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -11,6 +12,8 @@ public class NewCardRequest {
     @NotBlank String nickname;
     @NotBlank String cardNumber;
     @NotBlank String cvv;
-    @NotBlank String expirationDate;
+    @NotNull short year;
+    @NotNull short month;
     @NotBlank String country;
+    @NotBlank String nonce;
 }
