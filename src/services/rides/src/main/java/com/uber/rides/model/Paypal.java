@@ -1,6 +1,5 @@
 package com.uber.rides.model;
 
-
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
@@ -22,4 +21,7 @@ public class Paypal extends Payment.Method {
     @Id @GeneratedValue Long id;
 
     String email;
+
+    @Override
+    public String getType() { return "Paypal"; }
 }

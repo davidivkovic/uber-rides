@@ -1,8 +1,6 @@
 package com.uber.rides.controller;
 
-import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
-import java.util.Base64;
 import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -12,9 +10,7 @@ import javax.persistence.PersistenceContext;
 import javax.transaction.Transactional;
 import javax.validation.constraints.NotBlank;
 
-import com.braintreegateway.BraintreeGateway;
 import com.braintreegateway.ClientTokenRequest;
-import com.braintreegateway.Environment;
 
 import static com.speedment.jpastreamer.streamconfiguration.StreamConfiguration.*;
 
@@ -30,15 +26,12 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import com.uber.rides.database.DbContext;
-import com.uber.rides.dto.NewPaymentRequest;
 import com.uber.rides.dto.user.NewCardRequest;
 import com.uber.rides.model.Card;
 import com.uber.rides.model.Paypal;
 import com.uber.rides.model.User;
 import com.uber.rides.model.User.Roles;
-
-import net.bytebuddy.asm.Advice.Local;
-
+import com.uber.rides.util.Utils;
 import com.uber.rides.model.User$;
 
 import static com.uber.rides.util.Utils.*;
@@ -50,19 +43,6 @@ public class Payments extends Controller {
     @PersistenceContext EntityManager db;
 
     @Autowired DbContext context;
-
-    public static final String STATIC_PR_KEY = new String(Base64.getDecoder().decode(BT_PR_KEY_STATIC),
-            StandardCharsets.UTF_8);
-    public static final String STATIC_PU_KEY = new String(Base64.getDecoder().decode(BT_PU_KEY_STATIC),
-            StandardCharsets.UTF_8);
-    public static final String STATIC_TOKEN = new String(Base64.getDecoder().decode(BT_TOKEN_STATIC),
-            StandardCharsets.UTF_8);
-
-    public static final BraintreeGateway gateway = new BraintreeGateway(
-            Environment.SANDBOX,
-            STATIC_TOKEN,
-            STATIC_PU_KEY,
-            STATIC_PR_KEY);
 
     @Secured({ Roles.RIDER })
     @GetMapping("/token")
@@ -80,7 +60,7 @@ public class Payments extends Controller {
 
         if (user.getCustomerId() != null && user.getPaypal() != null) {
             ClientTokenRequest clientTokenRequest = new ClientTokenRequest().customerId(user.getCustomerId());
-            return gateway.clientToken().generate(clientTokenRequest);
+            return Utils.gateway.clientToken().generate(clientTokenRequest);
         }
         return gateway.clientToken().generate();
     }
@@ -162,14 +142,14 @@ public class Payments extends Controller {
             .filter(Objects::nonNull)
             .collect(Collectors.toList())
             .forEach(m -> {
-                if (m instanceof Paypal p && p.getId().equals(methodId)) {
+                if (m.getType().equals("Paypal") && ((Paypal)m).getId().equals(methodId)) {
                     user.setPaypal(null);
-                    m.remove();
+                    m.remove(user);
                     db.remove(m);
 
-                } else if (m instanceof Card c && c.getId().equals(methodId)) {
-                    user.removeCard(c.getId());
-                    m.remove();
+                } else if (m.getType().equals("Card") && ((Card)m).getId().equals(methodId)) {
+                    user.removeCard(((Card)m).getId());
+                    m.remove(user);
                     db.remove(m);
                 }
             });
@@ -213,73 +193,36 @@ public class Payments extends Controller {
         return ok(card);
     }
 
-    @Transactional
-    @GetMapping("methods/default")
-    @Secured({ Roles.RIDER })
-    public Object getDefaultPaymentMethod() {
-        var user = context.query().stream(
-            of(User.class)
-            .joining(User$.cards)
-            .joining(User$.paypal)
-        )
-        .filter(User$.id.equal(authenticatedUserId()))
-        .findFirst()
-        .orElse(null);
+    // @Transactional
+    // @PostMapping("/pay")
+    // @Secured({ Roles.RIDER })
+    // public Object payWithPaypal(@Validated @RequestBody NewPaymentRequest paymentRequest) {
+    //     TransactionRequest request = new TransactionRequest()
+    //     .amount(new BigDecimal(paymentRequest.getAmount()))
+    //     .paymentMethodNonce(paymentRequest.getNonce())
+    //     .options()
+    //     .storeInVaultOnSuccess(true)
+    //     .submitForSettlement(true)
+    //     .done();
 
-        if (user == null) {
-            return badRequest(USER_NOT_EXIST);
-        }
-        
-        if(user.getCustomerId() == null) {
-            return badRequest("The user has no saved payment methods");
-        }
-        
-        var customer = gateway.customer().find(user.getCustomerId());
-        if(customer.getDefaultPaymentMethod() == null) {
-            return badRequest("The user has no saved payment methods");
-        }
+    //     Result<Transaction> result = gateway.transaction().sale(request);
+    //     if (!result.isSuccess()) {
+    //     return badRequest("Payment was unsucessfull");
 
-        String token = customer.getDefaultPaymentMethod().getToken();
-        
-        return Stream.concat(
-                Stream.of(user.getPaypal()),
-                user.getCards().stream())
-                .filter(Objects::nonNull)
-                .filter(m -> m.getToken().equals(token))
-                .findFirst()
-                .orElse(null);
-    }
+    //     }
 
-    @Transactional
-    @PostMapping("/pay")
-    @Secured({ Roles.RIDER })
-    public Object payWithPaypal(@Validated @RequestBody NewPaymentRequest paymentRequest) {
-        // TransactionRequest request = new TransactionRequest()
-        // .amount(new BigDecimal(paymentRequest.getAmount()))
-        // .paymentMethodNonce(paymentRequest.getNonce())
-        // .options()
-        // .storeInVaultOnSuccess(true)
-        // .submitForSettlement(true)
-        // .done();
+    //     var user = db.find(User.class, authenticatedUserId());
 
-        // Result<Transaction> result = gateway.transaction().sale(request);
-        // if (!result.isSuccess()) {
-        // return badRequest("Payment was unsucessfull");
+    //     var paypal = new Paypal();
+    //     paypal.setCustomerId(result.getTarget().getCustomer().getId());
+    //     paypal.setEmail(paymentRequest.getEmail());
 
-        // }
+    //     user.setPaypal(paypal);
+    //     db.persist(paypal);
 
-        // var user = db.find(User.class, authenticatedUserId());
+    //     save payment to db
 
-        // var paypal = new Paypal();
-        // paypal.setCustomerId(result.getTarget().getCustomer().getId());
-        // paypal.setEmail(paymentRequest.getEmail());
-
-        // user.setPaypal(paypal);
-        // db.persist(paypal);
-
-        // save payment to db
-
-        return ok();
-    }
+    //     return ok();
+    // }
 
 }

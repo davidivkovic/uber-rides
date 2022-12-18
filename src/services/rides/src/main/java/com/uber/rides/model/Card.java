@@ -36,4 +36,7 @@ public class Card extends Payment.Method{
     public short getMonth() {
         return (short) expirationDate.getMonthValue();
     }
+
+    @Override
+    public String getType() { return "Card"; }
 }

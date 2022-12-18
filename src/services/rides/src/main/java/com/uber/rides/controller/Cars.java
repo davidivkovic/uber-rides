@@ -16,7 +16,6 @@ import com.uber.rides.model.User;
 import com.uber.rides.model.User.Roles;
 import com.uber.rides.service.UserService;
 import com.uber.rides.ws.Store;
-import com.uber.rides.ws.driver.DriverData;
 import com.uber.rides.ws.rider.messages.out.CarLocation;
 
 import static com.uber.rides.util.Utils.*;

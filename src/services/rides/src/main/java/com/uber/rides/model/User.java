@@ -79,6 +79,7 @@ public class User implements UserDetails {
     double rating;
     OTP confirmationCode;
     String customerId;
+    String defaultPaymentMethod;
     
     @OneToOne(fetch = FetchType.LAZY) UserUpdateRequest updateRequest;
     @OneToOne Car car;

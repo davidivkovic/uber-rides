@@ -16,7 +16,7 @@ import com.braintreegateway.CustomerRequest;
 import com.braintreegateway.PaymentMethod;
 import com.braintreegateway.PaymentMethodRequest;
 import com.braintreegateway.Result;
-import com.uber.rides.controller.Payments;
+import com.uber.rides.util.Utils;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -32,18 +32,23 @@ public class Payment {
     public abstract static class Method {
 
         public static final String TYPE = "GENERIC_PAYMENT_METHOD";
+
         String token;
+
+        public abstract String getType();
 
         public boolean setAsDefault(User user) {
             if (user.getCustomerId() == null)
                 return false;
 
-            PaymentMethodRequest updateRequest = new PaymentMethodRequest()
+            var updateRequest = new PaymentMethodRequest()
                     .options()
                     .makeDefault(true)
                     .done();
 
-            Result<? extends PaymentMethod> result = Payments.gateway.paymentMethod().update(token, updateRequest);
+            Result<? extends PaymentMethod> result = Utils.gateway
+                    .paymentMethod()
+                    .update(token, updateRequest);
             return result.isSuccess();
         }
 
@@ -54,7 +59,8 @@ public class Payment {
                         .lastName(user.getLastName())
                         .paymentMethodNonce(nonce);
 
-                Result<Customer> result = Payments.gateway.customer().create(braintreeRequest);
+                Result<Customer> result = Utils.gateway.customer()
+                        .create(braintreeRequest);
 
                 if (!result.isSuccess()) {
                     return false;
@@ -64,21 +70,34 @@ public class Payment {
 
             } else {
                 var customerId = user.getCustomerId();
-                PaymentMethodRequest braintreeRequest = new PaymentMethodRequest()
+                var braintreeRequest = new PaymentMethodRequest()
                         .customerId(customerId)
                         .paymentMethodNonce(nonce);
 
-                Result<? extends PaymentMethod> result = Payments.gateway.paymentMethod().create(braintreeRequest);
+                Result<? extends PaymentMethod> result = Utils.gateway
+                    .paymentMethod()
+                    .create(braintreeRequest);
+
                 if (!result.isSuccess()) {
                     return false;
                 }
                 token = result.getTarget().getToken();
             }
+            var customer = Utils.gateway.customer().find(user.getCustomerId());
+            var defaultToken = customer.getDefaultPaymentMethod().getToken();
+            user.setDefaultPaymentMethod(defaultToken);
             return true;
         }
         
-        public void remove() {
-            Payments.gateway.paymentMethod().delete(token);
+        public void remove(User user) {
+            Utils.gateway.paymentMethod().delete(token);
+            var customer = Utils.gateway.customer().find(user.getCustomerId());
+            if(customer.getDefaultPaymentMethod() == null) {
+                user.setDefaultPaymentMethod(null);
+                return;
+            }
+            var defaultToken = customer.getDefaultPaymentMethod().getToken();
+            user.setDefaultPaymentMethod(defaultToken);
         }
 
         boolean authorize(double amount, String currency) {
