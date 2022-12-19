@@ -71,7 +71,9 @@ public class Payments extends Controller {
     public Object savePaypal(@RequestParam String nonce, @RequestParam String email) {
         var user = context.query().stream(
                 of(User.class)
-                        .joining(User$.paypal))
+                        .joining(User$.paypal)
+                        .joining(User$.defaultPaymentMethod)
+                        .joining(User$.cards))
                 .filter(User$.id.equal(authenticatedUserId()))
                 .findFirst()
                 .orElse(null);
@@ -89,10 +91,30 @@ public class Payments extends Controller {
         if (!success)
             return badRequest("Something went wrong, please try again later");
 
-        paypal.setEmail(email);
+        if(user.getDefaultPaymentMethod() == null) {
+            var customer = Utils.gateway.customer().find(user.getCustomerId());
+            var defaultToken = customer.getDefaultPaymentMethod().getToken();
+            var defaultMethod = Stream.concat(
+                Stream.of(user.getPaypal()),
+                user.getCards().stream())
+                .filter(Objects::nonNull)
+                .filter(m -> m.getToken().equals(defaultToken))
+                .findFirst()
+                .orElse(null);
 
+            if(defaultMethod.getType().equals("Card")) {
+                user.setDefaultPaymentMethod((Card)defaultMethod);
+            }
+            else {
+                user.setDefaultPaymentMethod((Paypal)defaultMethod);
+            }
+            }
+        
+        paypal.setEmail(email);
         user.setPaypal(paypal);
         db.persist(paypal);
+
+        // db.persist(user);
 
         return ok();
     }
@@ -127,6 +149,7 @@ public class Payments extends Controller {
         var user = context.query().stream(
                 of(User.class)
                         .joining(User$.cards)
+                        .joining(User$.defaultPaymentMethod)
                         .joining(User$.paypal))
                 .filter(User$.id.equal(authenticatedUserId()))
                 .findFirst()
@@ -154,6 +177,20 @@ public class Payments extends Controller {
                 }
             });
 
+        var customer = Utils.gateway.customer().find(user.getCustomerId());
+        var defaultToken = customer.getDefaultPaymentMethod().getToken();
+        if(user.getDefaultPaymentMethod().getToken().equals(defaultToken)) {
+            var defaultMethod = Stream.concat(
+                Stream.of(user.getPaypal()),
+                user.getCards().stream())
+                .filter(Objects::nonNull)
+                .filter(m -> m.getToken().equals(defaultToken))
+                .findFirst()
+                .orElse(null);
+    
+            user.setDefaultPaymentMethod(defaultMethod);
+        }
+
         db.persist(user);
         return ok();
 
@@ -173,13 +210,37 @@ public class Payments extends Controller {
             return badRequest("Invalid date format");
         }
 
-        var user = db.find(User.class, authenticatedUserId());
+        var user = context.query().stream(
+            of(User.class)
+                    .joining(User$.cards)
+                    .joining(User$.defaultPaymentMethod)
+                    .joining(User$.paypal))
+            .filter(User$.id.equal(authenticatedUserId()))
+            .findFirst()
+            .orElse(null);
+
+        if (user == null)
+            return badRequest(USER_NOT_EXIST);
 
         var card = new Card();
         var success = card.vault(user, request.getNonce());
         if (!success)
             return badRequest("Make sure card data is valid.");
-       
+
+        if(user.getDefaultPaymentMethod() == null) {
+            var customer = Utils.gateway.customer().find(user.getCustomerId());
+            var defaultToken = customer.getDefaultPaymentMethod().getToken();
+            var defaultMethod = Stream.concat(
+                Stream.of(user.getPaypal()),
+                user.getCards().stream())
+                .filter(Objects::nonNull)
+                .filter(m -> m.getToken().equals(defaultToken))
+                .findFirst()
+                .orElse(null);
+    
+            user.setDefaultPaymentMethod(defaultMethod);
+        }
+    
         card.setCardNumber(request.getCardNumber());
         card.setNickname(request.getNickname());
         card.setCvv(request.getCvv());
