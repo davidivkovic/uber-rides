@@ -22,6 +22,7 @@ import com.google.maps.DirectionsApi;
 import com.google.maps.GeoApiContext;
 import com.google.maps.model.DirectionsResult;
 import com.google.maps.model.DirectionsRoute;
+import com.google.maps.model.LatLng;
 import com.google.maps.model.TravelMode;
 import com.uber.rides.model.Location;
 import com.uber.rides.model.Route;
@@ -37,6 +38,22 @@ public class GoogleMaps {
     public static final GeoApiContext CONTEXT = new GeoApiContext.Builder()
         .apiKey(new String(Base64.getDecoder().decode(GM_KEY), StandardCharsets.UTF_8))
         .build();
+
+    public DirectionsResult getDirections(
+        double originLatitude,
+        double originLongitude,
+        String destinationPlaceId
+    ) {
+        var directionsRequest = DirectionsApi
+            .newRequest(GoogleMaps.CONTEXT)
+            .origin(new LatLng(originLatitude, originLongitude))
+            .destinationPlaceId(destinationPlaceId)
+            .mode(TravelMode.DRIVING);
+        try {
+            return directionsRequest.await();
+        } 
+        catch (Exception e) { return null; }
+    }
         
     public DirectionsResult getDirections(
         String originPlaceId,

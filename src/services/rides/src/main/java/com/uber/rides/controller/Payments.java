@@ -1,12 +1,6 @@
 package com.uber.rides.controller;
 
 import java.time.LocalDate;
-import java.util.Objects;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
-import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
 import javax.transaction.Transactional;
 import javax.validation.constraints.NotBlank;
 
@@ -25,14 +19,10 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import com.uber.rides.model.*;
+import com.uber.rides.model.User.Roles;
 import com.uber.rides.database.DbContext;
 import com.uber.rides.dto.user.NewCardRequest;
-import com.uber.rides.model.Card;
-import com.uber.rides.model.Paypal;
-import com.uber.rides.model.User;
-import com.uber.rides.model.User.Roles;
-import com.uber.rides.util.Utils;
-import com.uber.rides.model.User$;
 
 import static com.uber.rides.util.Utils.*;
 
@@ -40,28 +30,32 @@ import static com.uber.rides.util.Utils.*;
 @RequestMapping("/payments")
 public class Payments extends Controller {
 
-    @PersistenceContext EntityManager db;
-
     @Autowired DbContext context;
 
     @Secured({ Roles.RIDER })
     @GetMapping("/token")
     public String generatePaypalToken() {
-        var user = context.readonlyQuery().stream(
+        var user = context.readonlyQuery()
+            .stream(
                 of(User.class)
-                        .joining(User$.paypal))
-                .filter(User$.id.equal(authenticatedUserId()))
-                .findFirst()
-                .orElse(null);
+                .joining(User$.paymentMethods)
+            )
+            .filter(User$.id.equal(authenticatedUserId()))
+            .findFirst()
+            .orElse(null);
 
         if (user == null) {
             return "";
         }
 
-        if (user.getCustomerId() != null && user.getPaypal() != null) {
-            ClientTokenRequest clientTokenRequest = new ClientTokenRequest().customerId(user.getCustomerId());
-            return Utils.gateway.clientToken().generate(clientTokenRequest);
+        if (
+            user.getCustomerId() != null && 
+            user.getPaymentMethods().stream().anyMatch(m -> m.getType().equals(PaymentMethod.Type.PAYPAL))
+        ) {
+            var clientTokenRequest = new ClientTokenRequest().customerId(user.getCustomerId());
+            return gateway.clientToken().generate(clientTokenRequest);
         }
+
         return gateway.clientToken().generate();
     }
 
@@ -69,53 +63,39 @@ public class Payments extends Controller {
     @PostMapping("methods/paypal")
     @Secured({ Roles.RIDER })
     public Object savePaypal(@RequestParam String nonce, @RequestParam String email) {
-        var user = context.query().stream(
+        var user = context.query()
+            .stream(
                 of(User.class)
-                        .joining(User$.paypal)
-                        .joining(User$.defaultPaymentMethod)
-                        .joining(User$.cards))
-                .filter(User$.id.equal(authenticatedUserId()))
-                .findFirst()
-                .orElse(null);
+                .joining(User$.paymentMethods)
+                .joining(User$.defaultPaymentMethod)
+            )
+            .filter(User$.id.equal(authenticatedUserId()))
+            .findFirst()
+            .orElse(null);
 
         if (user == null) {
             return badRequest(USER_NOT_EXIST);
         }
 
-        if (user.getPaypal() != null) {
-            return badRequest("You have already saved paypal as a payment method");
+        if (user.getPaymentMethods().stream().anyMatch(m -> m.getType().equals(PaymentMethod.Type.PAYPAL))) {
+            return badRequest("You have already saved paypal as a payment method.");
         }
 
-        var paypal = new Paypal();
-        var success = paypal.vault(user, nonce);
-        if (!success)
-            return badRequest("Something went wrong, please try again later");
+        var paypal = PaymentMethod.builder()
+            .type(PaymentMethod.Type.PAYPAL)
+            .user(user)
+            .email(email)
+            .build();
 
+        var success = paypal.vault(nonce);
+        if (!success) return badRequest("Something went wrong, please try again later.");
+
+        user.getPaymentMethods().add(paypal);
         if(user.getDefaultPaymentMethod() == null) {
-            var customer = Utils.gateway.customer().find(user.getCustomerId());
-            var defaultToken = customer.getDefaultPaymentMethod().getToken();
-            var defaultMethod = Stream.concat(
-                Stream.of(user.getPaypal()),
-                user.getCards().stream())
-                .filter(Objects::nonNull)
-                .filter(m -> m.getToken().equals(defaultToken))
-                .findFirst()
-                .orElse(null);
-
-            if(defaultMethod.getType().equals("Card")) {
-                user.setDefaultPaymentMethod((Card)defaultMethod);
-            }
-            else {
-                user.setDefaultPaymentMethod((Paypal)defaultMethod);
-            }
-            }
+            user.setDefaultPaymentMethod(paypal);
+        }
         
-        paypal.setEmail(email);
-        user.setPaypal(paypal);
-        db.persist(paypal);
-
-        // db.persist(user);
-
+        context.db().merge(user);
         return ok();
     }
 
@@ -123,77 +103,44 @@ public class Payments extends Controller {
     @GetMapping("/methods")
     @Secured({ Roles.RIDER })
     public Object getPaymentMethods() {
-        var user = context.readonlyQuery().stream(
-                of(User.class)
-                        .joining(User$.paypal)
-                        .joining(User$.cards))
-                .filter(User$.id.equal(authenticatedUserId()))
-                .findFirst()
-                .orElse(null);
-
-        if (user == null)
-            return badRequest(USER_NOT_EXIST);
-
-        return Stream.concat(
-                Stream.of(user.getPaypal()),
-                user.getCards().stream())
-                .filter(Objects::nonNull)
-                .toList();
+        return context
+            .readonlyQuery()
+            .stream(PaymentMethod.class)
+            .filter(PaymentMethod$.userId.equal(authenticatedUserId()))
+            .toList();
     }
 
     @Transactional
     @PostMapping("methods/{id}/remove")
     @Secured({ Roles.RIDER })
-    public Object deletePaypal(@PathVariable("id") @NotBlank Long methodId) {
+    public Object removePaymentMethod(@PathVariable("id") @NotBlank Long methodId) {
 
-        var user = context.query().stream(
+        var user = context.query()
+            .stream(
                 of(User.class)
-                        .joining(User$.cards)
-                        .joining(User$.defaultPaymentMethod)
-                        .joining(User$.paypal))
-                .filter(User$.id.equal(authenticatedUserId()))
-                .findFirst()
-                .orElse(null);
+                .joining(User$.paymentMethods)
+                .joining(User$.defaultPaymentMethod)
+            )
+            .filter(User$.id.equal(authenticatedUserId()))
+            .findFirst()
+            .orElse(null);
 
         if (user == null) {
             return badRequest(USER_NOT_EXIST);
         }
 
-        Stream.concat(
-            Stream.of(user.getPaypal()),
-            user.getCards().stream())
-            .filter(Objects::nonNull)
-            .collect(Collectors.toList())
-            .forEach(m -> {
-                if (m.getType().equals("Paypal") && ((Paypal)m).getId().equals(methodId)) {
-                    user.setPaypal(null);
-                    m.remove(user);
-                    db.remove(m);
-
-                } else if (m.getType().equals("Card") && ((Card)m).getId().equals(methodId)) {
-                    user.removeCard(((Card)m).getId());
-                    m.remove(user);
-                    db.remove(m);
-                }
-            });
-
-        var customer = Utils.gateway.customer().find(user.getCustomerId());
-        var defaultToken = customer.getDefaultPaymentMethod().getToken();
-        if(user.getDefaultPaymentMethod().getToken().equals(defaultToken)) {
-            var defaultMethod = Stream.concat(
-                Stream.of(user.getPaypal()),
-                user.getCards().stream())
-                .filter(Objects::nonNull)
-                .filter(m -> m.getToken().equals(defaultToken))
-                .findFirst()
-                .orElse(null);
-    
-            user.setDefaultPaymentMethod(defaultMethod);
+        user.removePaymentMethod(methodId);
+        if (user.getDefaultPaymentMethod() != null && user.getDefaultPaymentMethod().getId().equals(methodId)) {
+            if (user.getPaymentMethods().isEmpty()) {
+                user.setDefaultPaymentMethod(null);
+            }
+            else {
+                user.setDefaultPaymentMethod(user.getPaymentMethods().get(0));
+            }
         }
 
-        db.persist(user);
+        context.db().merge(user);
         return ok();
-
     }
 
     @Transactional
@@ -204,86 +151,45 @@ public class Payments extends Controller {
         try {
             expirationDate = LocalDate.of(request.getYear(), request.getMonth(), 1);
             if (expirationDate.isBefore(LocalDate.now())) {
-                return badRequest("The card has expired");
+                return badRequest("The card has expired.");
             }
         } catch (Exception e) {
-            return badRequest("Invalid date format");
+            return badRequest("Invalid date format.");
         }
 
-        var user = context.query().stream(
-            of(User.class)
-                    .joining(User$.cards)
-                    .joining(User$.defaultPaymentMethod)
-                    .joining(User$.paypal))
+        var user = context.query()
+            .stream(
+                of(User.class)
+                .joining(User$.paymentMethods)
+                .joining(User$.defaultPaymentMethod)
+            )
             .filter(User$.id.equal(authenticatedUserId()))
             .findFirst()
             .orElse(null);
 
-        if (user == null)
-            return badRequest(USER_NOT_EXIST);
+        if (user == null) return badRequest(USER_NOT_EXIST);
 
-        var card = new Card();
-        var success = card.vault(user, request.getNonce());
-        if (!success)
-            return badRequest("Make sure card data is valid.");
+        var card = PaymentMethod
+            .builder()
+            .type(PaymentMethod.Type.CARD)
+            .user(user)
+            .cardNumber(request.getCardNumber())
+            .nickname(request.getNickname())
+            .cvv(request.getCvv())
+            .country(request.getCountry())
+            .expirationDate(expirationDate)
+            .build();
 
+        var success = card.vault(request.getNonce());
+        if (!success) return badRequest("Make sure card data is valid.");
+    
+        user.getPaymentMethods().add(card);
         if(user.getDefaultPaymentMethod() == null) {
-            var customer = Utils.gateway.customer().find(user.getCustomerId());
-            var defaultToken = customer.getDefaultPaymentMethod().getToken();
-            var defaultMethod = Stream.concat(
-                Stream.of(user.getPaypal()),
-                user.getCards().stream())
-                .filter(Objects::nonNull)
-                .filter(m -> m.getToken().equals(defaultToken))
-                .findFirst()
-                .orElse(null);
-    
-            user.setDefaultPaymentMethod(defaultMethod);
+            user.setDefaultPaymentMethod(card);
         }
-    
-        card.setCardNumber(request.getCardNumber());
-        card.setNickname(request.getNickname());
-        card.setCvv(request.getCvv());
-        card.setCountry(request.getCountry());
-        card.setExpirationDate(expirationDate);
 
-        user.addCard(card);
-        db.persist(card);
-        db.persist(user);
-
+        context.db().merge(user);
         return ok(card);
     }
-
-    // @Transactional
-    // @PostMapping("/pay")
-    // @Secured({ Roles.RIDER })
-    // public Object payWithPaypal(@Validated @RequestBody NewPaymentRequest paymentRequest) {
-    //     TransactionRequest request = new TransactionRequest()
-    //     .amount(new BigDecimal(paymentRequest.getAmount()))
-    //     .paymentMethodNonce(paymentRequest.getNonce())
-    //     .options()
-    //     .storeInVaultOnSuccess(true)
-    //     .submitForSettlement(true)
-    //     .done();
-
-    //     Result<Transaction> result = gateway.transaction().sale(request);
-    //     if (!result.isSuccess()) {
-    //     return badRequest("Payment was unsucessfull");
-
-    //     }
-
-    //     var user = db.find(User.class, authenticatedUserId());
-
-    //     var paypal = new Paypal();
-    //     paypal.setCustomerId(result.getTarget().getCustomer().getId());
-    //     paypal.setEmail(paymentRequest.getEmail());
-
-    //     user.setPaypal(paypal);
-    //     db.persist(paypal);
-
-    //     save payment to db
-
-    //     return ok();
-    // }
 
 }

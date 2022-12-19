@@ -15,6 +15,7 @@ import java.util.stream.Stream;
 import java.awt.image.BufferedImage;
 
 import javax.imageio.ImageIO;
+import javax.persistence.EntityManagerFactory;
 
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.utils.URIBuilder;
@@ -36,10 +37,12 @@ import com.google.maps.model.DirectionsRoute;
 import com.google.maps.model.EncodedPolyline;
 import com.google.maps.model.LatLng;
 
+import com.speedment.jpastreamer.application.JPAStreamer;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketHttpHeaders;
@@ -47,7 +50,6 @@ import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.client.standard.StandardWebSocketClient;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 
-import com.uber.rides.database.DbContext;
 import com.uber.rides.model.*;
 import com.uber.rides.model.User.Roles;
 import com.uber.rides.security.JWT;
@@ -56,10 +58,11 @@ import com.uber.rides.service.ImageStore;
 
 import static com.uber.rides.util.Utils.*;
 
-@Service
+@Component
 public class DriverSimulator {
 
-    @Autowired DbContext context;
+    @Autowired EntityManagerFactory dbFactory;
+    @Autowired JPAStreamer query;
     @Autowired ImageStore images;
     @Autowired PasswordEncoder passwordEncoder;
     @Autowired ThreadPoolTaskScheduler scheduler;
@@ -109,14 +112,22 @@ public class DriverSimulator {
         for (int i = 0; i < numberOfDrivers; i++) {
             var driver = drivers.get(i);
             var session = connectToWs(driver);
-            if (session != null) runTask(driver, session);
+            if (session != null) runTask(session, driver);
         }
     }
 
-    void runTask(User driver, WebSocketSession session) {
+    void runTask(WebSocketSession session, User driver) {
         var coordinates = getRandomCoordinates(this.areaOfInterest, 6);
-        var directions = getDirections(coordinates);
+        runTask(session, driver, getDirections(coordinates));
+    }
+
+    void runTask(User driver, DirectionsRoute directions) {
+        runTask(null, driver, directions);
+    }
+
+    public void runTask(WebSocketSession session, User driver, DirectionsRoute directions) {
         if (directions != null) {
+            cancelTask(driver);
             var points = Stream
                 .of(directions.legs)
                 .flatMap(leg -> Stream.of(leg.steps))
@@ -130,7 +141,7 @@ public class DriverSimulator {
                 })
                 .flatMap(Function.identity())
                 .toList();
-                
+
             var pointsIterator = points.listIterator();    
             var task = scheduler.scheduleAtFixedRate(
                 () -> updateLocation(pointsIterator, driver, session),
@@ -140,7 +151,7 @@ public class DriverSimulator {
         }
     }
 
-    void cancelTask(User driver) {
+    public void cancelTask(User driver) {
         var task = tasks.get(driver.getId());
         if (task != null) {
             task.cancel(true);
@@ -151,7 +162,7 @@ public class DriverSimulator {
     void updateLocation(ListIterator<LatLng> pointsIterator, User driver, WebSocketSession session) {
         if (!pointsIterator.hasNext()) {
             cancelTask(driver);
-            runTask(driver, session);
+            runTask(session, driver);
             return;
         }
         
@@ -168,7 +179,7 @@ public class DriverSimulator {
         } 
         catch (Exception e) { 
             cancelTask(driver);
-            runTask(driver, session);
+            runTask(session, driver);
         }
     }
 
@@ -190,7 +201,7 @@ public class DriverSimulator {
 
     @Transactional
     public List<User> getPresetDrivers(int numberOfDrivers) {
-        var drivers = context.query().stream(User.class)
+        var drivers = query.stream(User.class)
             .filter(
                 User$.role.equal(Roles.DRIVER).and(
                 User$.email.startsWith("driver-x"))
@@ -199,6 +210,7 @@ public class DriverSimulator {
             .toList();
             
         var allDrivers = new ArrayList<>(drivers);
+        var db = dbFactory.createEntityManager();
 
         for (int i = 0; i < numberOfDrivers - drivers.size(); i++) {
             var faker = new Faker();
@@ -215,7 +227,8 @@ public class DriverSimulator {
                 .registration(vehicle.licensePlate().toUpperCase())
                 .build();
 
-            context.db().persist(car);
+
+            db.merge(car);
             
             var driver = User
                 .builder()
@@ -236,9 +249,11 @@ public class DriverSimulator {
                 )
                 .build();
 
-            context.db().persist(driver);
+            db.merge(driver);
             allDrivers.add(driver);
         }
+
+        db.close();
 
         return allDrivers;
     }

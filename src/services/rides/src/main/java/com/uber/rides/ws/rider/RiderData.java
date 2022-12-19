@@ -6,12 +6,11 @@ import java.util.Map;
 import lombok.Getter;
 import lombok.Setter;
 
+import com.google.maps.model.DirectionsResult;
+
 import org.springframework.web.socket.WebSocketSession;
 
-import com.google.maps.model.DirectionsResult;
 import com.uber.rides.model.Car;
-import com.uber.rides.model.Route;
-import com.uber.rides.model.Trip;
 import com.uber.rides.model.User;
 import com.uber.rides.model.User.Roles;
 import com.uber.rides.ws.UserData;
@@ -20,11 +19,9 @@ import com.uber.rides.ws.UserData;
 @Setter
 public class RiderData extends UserData {
 
-    Trip currentTrip;
     DirectionsResult directions;
     Map<Car.Types, Double> carPricesInUsd;
     List<Long> invitedPassengerIds;
-    Route route;
 
     public RiderData(User user, WebSocketSession session) {
         super(user, session);

@@ -21,8 +21,10 @@ declare const paypal
       </div>
       <div class="flex flex-col justify-end mt-20 space-y-2">
         <p class="text-red-600 text-center text-sm">{{ error }}</p>
-        <div #pp id="paypal-button"></div>
-        <button *ngIf="loadingButton" disabled class="secondary">PayPal button loading</button>
+        <div class="rounded-md overflow-clip">
+          <div #pp id="paypal-button" class="-mb-2"></div>
+        </div>
+        <button *ngIf="loadingButton" disabled class="secondary">PayPal loading...</button>
         <button (click)="oncancel.emit()" class="secondary w-full">Cancel</button>
       </div>
     </div>
@@ -109,8 +111,11 @@ export default class Paypal {
                 paypal
                   .Buttons({
                     style: {
-                      color: 'black',
-                      label: 'paypal'
+                      color: 'gold',
+                      label: 'paypal',
+                      shape: 'rect',
+                      height: 48,
+
                     },
                     fundingSource: paypal.FUNDING.PAYPAL,
 
@@ -124,7 +129,7 @@ export default class Paypal {
                       return paypalCheckoutInstance.tokenizePayment(data, async (err, payload) => {
                         try {
                           await payments.addPaypal(payload.nonce, payload.details.email)
-                          notificationStore.show('Paypall successfully added.')
+                          notificationStore.show('Paypal successfully added.')
                           this.onsuccess.emit()
                         } catch (error) {
                           this.error = error
@@ -136,10 +141,10 @@ export default class Paypal {
                       console.log('PayPal payment canceled.')
                     },
 
-                    onError: function (err) {}
+                    onError: function (err) { }
                   })
                   .render('#paypal-button')
-                  .catch(err => {})
+                  .catch(err => { })
               }
             )
           }

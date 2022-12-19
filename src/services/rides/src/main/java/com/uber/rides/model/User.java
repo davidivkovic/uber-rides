@@ -80,14 +80,12 @@ public class User implements UserDetails {
     OTP confirmationCode;
     String customerId;
 
-    @Embedded Payment.Method defaultPaymentMethod;
-    
     @OneToOne(fetch = FetchType.LAZY) UserUpdateRequest updateRequest;
     @OneToOne Car car;
     
-    @OneToMany @Builder.Default List<Card> cards = new ArrayList<>();
-    @OneToOne(fetch = FetchType.LAZY) Paypal paypal;
-    
+    @OneToOne(fetch = FetchType.LAZY) PaymentMethod defaultPaymentMethod;
+    @OneToMany @Builder.Default List<PaymentMethod> paymentMethods = new ArrayList<>();
+
     @ManyToMany @Builder.Default List<Route> favoriteRoutes = new ArrayList<>();
     
     @OneToMany(mappedBy = "driver") List<Trip> tripsAsDriver;
@@ -103,12 +101,8 @@ public class User implements UserDetails {
         favoriteRoutes.removeIf(route -> route.id.equals(routeId));
     }
 
-    public void addCard(Card card) {
-        cards.add(card);
-    }
-
-    public void removeCard(Long cardId) {
-        cards.removeIf(card -> card.id.equals(cardId));
+    public void removePaymentMethod(Long methodId) {
+        paymentMethods.removeIf(method -> method.id.equals(methodId));
     }
 
     @Override

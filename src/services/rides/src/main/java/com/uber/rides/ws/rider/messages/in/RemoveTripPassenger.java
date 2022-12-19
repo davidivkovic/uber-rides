@@ -29,7 +29,7 @@ public class RemoveTripPassenger implements InboundMessage<RiderData> {
     @Override
     public void handle(RiderData sender) {
 
-        var trip = sender.getCurrentTrip();
+        var trip = sender.getUser().getCurrentTrip();
         if (trip == null) return; // add some message handling
     
         var passengers = Stream.concat(

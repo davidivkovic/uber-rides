@@ -2,6 +2,8 @@ package com.uber.rides.util;
 
 public class GeoUtils {
 
+    private GeoUtils() { }
+
     public static double distance(double latA, double lonA, double latB, double lonB) {
         double theta = lonA - lonB;
         double dist = 

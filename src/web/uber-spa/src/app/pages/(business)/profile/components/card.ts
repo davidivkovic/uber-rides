@@ -16,88 +16,92 @@ declare const braintree
   selector: 'NewCard',
   imports: [CloseButton, CardNumber, FormsModule, Date, NgFor, NgIf],
   template: `
-    <div class="space-y-2 max-w-sm">
-      <div class="space-y-6">
-        <h2 class="text-3xl font-normal">Add credit or debit card</h2>
-        <form (ngSubmit)="addCard()" ngNativeValidate class="text-gray-800 space-y-4">
-          <div class="relative">
-            <label for="card-number">Card number</label>
-            <input
-              required
-              [ngModel]="cardData.cardNumber | cardNumber"
-              (ngModelChange)="cardData.cardNumber = $event"
-              name="cardNumber"
-              type="tel"
-              minlength="19"
-              maxlength="19"
-              id="card-number"
-              (keydown)="checkCardValue($event)"
-            />
-            <div
-              *ngIf="currentCardImage"
-              class="absolute top-8 right-3 w-10 bg-white rounded-md p-1 h-7 flex justify-center"
-            >
-              <img [src]="currentCardImage" class="object-contain" />
+    <div class="h-[534px] space-y-2 max-w-sm flex flex-col">
+      <div class="space-y-6 flex flex-col flex-1">
+        <h2 class="text-2xl font-normal">Add credit or debit card</h2>
+        <form (ngSubmit)="addCard()" ngNativeValidate class="text-gray-800 flex flex-1 flex-col">
+          <div class="space-y-4">
+            <div class="relative">
+              <label for="card-number">Card number</label>
+              <input
+                required
+                [ngModel]="cardData.cardNumber | cardNumber"
+                (ngModelChange)="cardData.cardNumber = $event"
+                name="cardNumber"
+                type="tel"
+                minlength="19"
+                maxlength="19"
+                id="card-number"
+                (keydown)="checkCardValue($event)"
+              />
+              <div
+                *ngIf="currentCardImage"
+                class="absolute top-8 right-3 w-10 bg-white rounded-md p-1 h-7 flex justify-center"
+              >
+                <img [src]="currentCardImage" class="object-contain" />
+              </div>
             </div>
-          </div>
-          <div class="flex justify-between gap-4">
+            <div class="flex justify-between gap-4">
+              <div>
+                <label for="date">Exp. date</label>
+                <input
+                  required
+                  type="text"
+                  [ngModel]="cardData.expirationDate | expDate"
+                  name="date"
+                  (ngModelChange)="cardData.expirationDate = $event"
+                  type="text"
+                  oninput="this.value =
+                        this.value.replace(/[^0-9.]/g, '');"
+                  maxlength="5"
+                  minlength="5"
+                  id="date"
+                  placeholder="MM/YY"
+                />
+              </div>
+              <div>
+                <label for="code">CVV</label>
+                <input
+                  name="cvv"
+                  required
+                  id="cvv"
+                  type="text"
+                  maxlength="3"
+                  minlength="3"
+                  [(ngModel)]="cardData.cvv"
+                  (keydown)="checkValue($event)"
+                />
+              </div>
+            </div>
             <div>
-              <label for="date">Exp. date</label>
+              <label for="country">Country</label>
+              <select required id="country" [(ngModel)]="cardData.country" name="country">
+                <option value="" selected disabled hidden>Select country</option>
+                <option *ngFor="let country of countries" [value]="country.name">
+                  {{ country.name }}
+                </option>
+              </select>
+            </div>
+            <div>
+              <label for="nickname">Nickname</label>
               <input
                 required
                 type="text"
-                [ngModel]="cardData.expirationDate | expDate"
-                name="date"
-                (ngModelChange)="cardData.expirationDate = $event"
-                type="text"
-                oninput="this.value =
-                      this.value.replace(/[^0-9.]/g, '');"
-                maxlength="5"
-                minlength="5"
-                id="date"
-                placeholder="MM/YY"
-              />
-            </div>
-            <div>
-              <label for="code">CVV</label>
-              <input
-                name="cvv"
-                required
-                id="cvv"
-                type="text"
-                maxlength="3"
-                minlength="3"
-                [(ngModel)]="cardData.cvv"
-                (keydown)="checkValue($event)"
+                maxlength="20"
+                id="nickname"
+                name="nickname"
+                [(ngModel)]="cardData.nickname"
+                placeholder="e.g. joint account or work card"
               />
             </div>
           </div>
-          <div>
-            <label for="country">Country</label>
-            <select required id="country" [(ngModel)]="cardData.country" name="country">
-              <option value="" selected disabled hidden>Select country</option>
-              <option *ngFor="let country of countries" [value]="country.name">
-                {{ country.name }}
-              </option>
-            </select>
+          <div class="mt-auto space-y-1">
+            <p class="text-red-600 text-center text-sm">{{ error }}</p>
+            <button type="submit" class="primary w-full">Add card</button>
+            <button type="button" (click)="oncancel.emit()" class="secondary w-full">Cancel</button>
           </div>
-          <div>
-            <label for="nickname">Nickname</label>
-            <input
-              required
-              type="text"
-              maxlength="20"
-              id="nickname"
-              name="nickname"
-              [(ngModel)]="cardData.nickname"
-              placeholder="e.g. joint account or work card"
-            />
-          </div>
-          <p class="text-red-600 text-center text-sm">{{ error }}</p>
-          <button type="submit" class="primary w-full">Add card</button>
         </form>
       </div>
-      <button type="button" (click)="oncancel.emit()" class="secondary w-full">Cancel</button>
     </div>
   `
 })

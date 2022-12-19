@@ -1,5 +1,6 @@
 package com.uber.rides.controller;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
@@ -14,6 +15,7 @@ import javax.validation.constraints.Size;
 
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.security.access.annotation.Secured;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
@@ -37,12 +39,18 @@ import com.uber.rides.model.Trip;
 import com.uber.rides.model.Trip$;
 import com.uber.rides.model.User;
 import com.uber.rides.model.User$;
+import com.uber.rides.model.Trip.Status;
 import com.uber.rides.model.User.Roles;
 import com.uber.rides.service.GoogleMaps;
 import com.uber.rides.service.ImageStore;
+import com.uber.rides.simulator.DriverSimulator;
 import com.uber.rides.ws.Store;
 import com.uber.rides.ws.WS;
+import com.uber.rides.ws.driver.DriverData;
+import com.uber.rides.ws.driver.messages.out.TripAssigned;
 import com.uber.rides.ws.rider.messages.out.TripInvite;
+
+import static com.uber.rides.util.GeoUtils.*;
 
 @RestController
 @RequestMapping("/trips")
@@ -55,6 +63,119 @@ public class Trips extends Controller {
     @Autowired ImageStore images;
     @Autowired GoogleMaps maps;
     @Autowired WS ws;
+    @Autowired ThreadPoolTaskScheduler scheduler;
+    @Autowired DriverSimulator simulator;
+
+    @PostMapping("/start")
+    @Secured({ Roles.DRIVER })
+    public Object startTrip() {
+
+        var driverData = store.drivers.get(authenticatedUserId());
+        if (driverData == null) {
+            return badRequest(CONNECTION_ENDED);
+        }
+
+        var trip = driverData.getUser().getCurrentTrip();
+        if (trip == null) {
+            return badRequest("You are currently not on a trip. Please start by choosing a route.");
+        }
+
+        var start = trip.getRoute().getStart();
+        var distance = distance(
+            driverData.getLatitude(),
+            driverData.getLongitude(),
+            start.getLatitude(),
+            start.getLongitude()
+        );
+
+        if (distance > 100) {
+            return badRequest("You are not in the right location to start the trip. Please move closer to the start of the trip.");
+        }
+        
+        simulator.runTask(driverData.session, driverData.getUser(), driverData.directions.routes[0]);
+        trip.setStatus(Trip.Status.IN_PROGRESS);
+        trip.setStartedAt(LocalDateTime.now());
+
+        return ok();
+    }
+
+    @PostMapping("/order-ride")
+    @Secured({ Roles.RIDER })
+    public Object orderRide() {
+        var riderData = store.riders.get(authenticatedUserId());
+        if (riderData == null) {
+            return badRequest(CONNECTION_ENDED);
+        }
+
+        var trip = riderData.getUser().getCurrentTrip();
+        if (trip == null) {
+            return badRequest("You are currenly not looking for a ride. Please start by choosing a route.");
+        }
+        
+        var start = trip.getRoute().getStart();
+        var driver = store
+            .drivers
+            .values()
+            .stream()
+            .filter(DriverData::isAvailable)
+            .filter(d -> d.getUser().getCurrentTrip() == null)
+            .filter(d -> d.getUser().getCar().getType().equals(trip.getCar().getType()))
+            // also check if driver is scheduled in the future
+            .min(Comparator.comparing(
+                d -> distance(
+                    d.getLatitude(), d.getLongitude(),
+                    start.getLatitude(), start.getLongitude()
+                )
+            ))
+            .orElse(null);
+
+        if (driver == null) {
+            return badRequest("No drivers available currently. Please try again later.");
+        }
+
+        driver.setAvailable(false);
+        trip.setStatus(Trip.Status.CREATED);
+
+        var directions = maps.getDirections(
+            driver.latitude, 
+            driver.longitude, 
+            start.getPlaceId()
+        );
+
+        if (directions == null) {
+            driver.setAvailable(true);
+            return badRequest("Could not find a route to the start of the trip.");
+        }
+
+        //send a websoket message to the riders that a driver has been found
+        // Do the actual payment here   
+
+        // var riderIds = trip.getRiders().stream().map(User::getId).toList();
+        // var riders = context.readonlyQuery()
+        //     .stream(of(User.class).joining(User$.))
+        //     .filter(User$.id.in(riderIds))
+        //     .collect(Collectors.toMap(User::getId, User::getDefaultPaymentType));
+        // gateway.transaction().sale(null);
+        // gateway.transaction().submitForSettlement(txId);
+
+        driver.getUser().setCurrentTrip(trip);
+        driver.setDirections(directions);
+        trip.setStatus(Trip.Status.PAID);
+        trip.setCar(driver.getUser().getCar());
+
+        ws.sendMessageToUser(
+            driver.getUser().getId(),
+            new TripAssigned(
+                mapper.map(trip, TripDTO.class),
+                directions
+            )
+        );
+
+        simulator.runTask(driver.session, driver.getUser(), directions.routes[0]);
+        trip.setStatus(Status.AWAITING_PICKUP);
+
+        return ok();
+    }
 
     @PostMapping("/invite-passengers")
     @Secured({ Roles.RIDER })
@@ -65,7 +186,7 @@ public class Trips extends Controller {
             return badRequest(CONNECTION_ENDED);
         }
 
-        var trip = riderData.getCurrentTrip();
+        var trip = riderData.getUser().getCurrentTrip();
         if (trip == null) {
             return badRequest("You are currenly not looking for a ride. Please start by choosing a route.");
         }
@@ -98,7 +219,7 @@ public class Trips extends Controller {
             return badRequest(CONNECTION_ENDED);
         }
 
-        var trip = riderData.getCurrentTrip();
+        var trip = riderData.getUser().getCurrentTrip();
         if (trip == null) {
             return badRequest("You are currenly not looking for a ride. Please start by choosing a route.");
         } 

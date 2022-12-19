@@ -33,7 +33,7 @@ public class AnswerTripInvite implements InboundMessage<RiderData> {
         var inviterData = store.riders.get(inviterId);
         if (inviterData == null) return; // add some message handling
         
-        var trip = inviterData.getCurrentTrip();
+        var trip = inviterData.getUser().getCurrentTrip();
         if (trip == null) return; // add some message handling
 
         if (!inviterData.getInvitedPassengerIds().contains(sender.getUser().getId())) {
@@ -42,11 +42,11 @@ public class AnswerTripInvite implements InboundMessage<RiderData> {
 
         if (accepted) {
             trip.getRiders().add(sender.user);
-            sender.setCurrentTrip(trip);
+            sender.getUser().setCurrentTrip(trip);
         }
         else {
             inviterData.getInvitedPassengerIds().remove(sender.getUser().getId());
-            sender.setCurrentTrip(null);
+            sender.getUser().setCurrentTrip(null);
         }
 
         var senderDTO = mapper.map(sender.user, UserDTO.class);

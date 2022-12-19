@@ -128,9 +128,9 @@ public class Routes extends Controller {
                 trip.setScheduled(true);
                 trip.setScheduledAt(request.getScheduledAt());
             }
-            riderData.setCurrentTrip(trip);
             riderData.setDirections(directions);
             riderData.setCarPricesInUsd(pricesInUsd);
+            riderData.getUser().setCurrentTrip(trip);
         }
         
         return new PreviewRouteResponse(

@@ -15,7 +15,6 @@ import io.jsonwebtoken.Claims;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 
-import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.server.ServerHttpRequest;
@@ -37,8 +36,6 @@ import com.uber.rides.model.Trip;
 import com.uber.rides.model.User;
 import com.uber.rides.model.User.Roles;
 import com.uber.rides.security.JWT;
-import com.uber.rides.ws.driver.DriverData;
-import com.uber.rides.ws.rider.RiderData;
 
 @Configuration
 @EnableWebSocket
@@ -195,12 +192,12 @@ public class WS extends TextWebSocketHandler {
 
         if (user.getRole().equals(Roles.DRIVER)) return Optional
             .ofNullable(store.drivers.get(user.getId()))
-            .map(DriverData::getCurrentTrip)
+            .map(d -> d.getUser().getCurrentTrip())
             .orElse(null);
 
         else return Optional
             .ofNullable(store.riders.get(user.getId()))
-            .map(RiderData::getCurrentTrip)
+            .map(r -> r.getUser().getCurrentTrip())
             .orElse(null);
         
     }
