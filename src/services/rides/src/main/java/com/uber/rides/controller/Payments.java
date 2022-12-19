@@ -95,6 +95,7 @@ public class Payments extends Controller {
             user.setDefaultPaymentMethod(paypal);
         }
         
+        context.db().persist(paypal);
         context.db().merge(user);
         return ok();
     }
@@ -188,6 +189,7 @@ public class Payments extends Controller {
             user.setDefaultPaymentMethod(card);
         }
 
+        context.db().persist(card);
         context.db().merge(user);
         return ok(card);
     }

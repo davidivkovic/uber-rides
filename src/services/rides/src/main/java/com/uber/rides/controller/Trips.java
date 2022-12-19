@@ -91,6 +91,8 @@ public class Trips extends Controller {
         if (distance > 100) {
             return badRequest("You are not in the right location to start the trip. Please move closer to the start of the trip.");
         }
+
+        // Send message to riders that the driver has started the trip
         
         simulator.runTask(driverData.session, driverData.getUser(), driverData.directions.routes[0]);
         trip.setStatus(Trip.Status.IN_PROGRESS);
@@ -170,6 +172,8 @@ public class Trips extends Controller {
                 directions
             )
         );
+
+        // Send message to all riders that the driver is on his way
 
         simulator.runTask(driver.session, driver.getUser(), directions.routes[0]);
         trip.setStatus(Status.AWAITING_PICKUP);
