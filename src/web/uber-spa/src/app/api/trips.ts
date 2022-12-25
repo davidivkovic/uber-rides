@@ -14,7 +14,7 @@ const chooseRide = async (rideType: string) => {
 
 const invitePassengers = async (passengerIds: number[]) => {
   const response = await fetch(
-    basePath + '/invite-passengers?',
+    basePath + '/invite-passengers',
     {
       method: 'POST',
       body: JSON.stringify(passengerIds)
@@ -23,4 +23,18 @@ const invitePassengers = async (passengerIds: number[]) => {
   if (!response.ok) throw new Error(await response.text())
 }
 
-export default { chooseRide, invitePassengers }
+const orderRide = async () => {
+  const response = await fetch(
+    basePath + '/order-ride',
+    {
+      method: 'POST'
+    }
+  )
+  if (!response.ok) throw new Error(await response.text())
+}
+
+export default {
+  chooseRide,
+  invitePassengers,
+  orderRide
+}

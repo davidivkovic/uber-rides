@@ -8,7 +8,7 @@ import { CloseButton } from '../ui/base/closeButton'
   imports: [NgIf, NgFor, CloseButton, NgClass],
   template: `
     <div *ngIf="passengers?.length">
-      <h3 class="mb-1 tracking-wide">Passengers</h3>
+      <h3 class="mb-0.5 tracking-wide">Passengers</h3>
       <div
         *ngFor="let passenger of passengers"
         class="flex items-center space-x-3 py-1"

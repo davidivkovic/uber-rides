@@ -11,11 +11,11 @@ import { createInfoWindow, createMarker, createPolyline, map, removeAllElements,
   template: `
     <div class="w-[400px] h-[700px] p-4 bg-white rounded-xl pointer-events-auto">
       <div *ngIf="!ridesStore.state?.trip" class="flex flex-col">
-        <h1 class="text-3xl pb-1">Trip overview</h1>
+        <h1 class="text-3xl pb-1">Ride overview</h1>
         <p class="text-zinc-700">You are currently not a passenger on any rides</p>
       </div>
       <div *ngIf="ridesStore.state?.trip" class="flex flex-col h-full">
-        <h1 class="text-3xl pb-3">Trip overview</h1>
+        <h1 class="text-3xl pb-3">Ride overview</h1>
         <div class="relative px-1 pb-2.5 rounded-md bg-[#f6f6f6] pl-3 pt-2">
           <div *ngFor="let stop of stops(); index as index;">
             <div class="pl-7 w-full">

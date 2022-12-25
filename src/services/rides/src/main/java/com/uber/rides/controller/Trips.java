@@ -94,7 +94,7 @@ public class Trips extends Controller {
 
         // Send message to riders that the driver has started the trip
         
-        simulator.runTask(driverData.session, driverData.getUser(), driverData.directions.routes[0]);
+        simulator.runTask(driverData.getUser(), driverData.directions.routes[0], true);
         trip.setStatus(Trip.Status.IN_PROGRESS);
         trip.setStartedAt(LocalDateTime.now());
 
@@ -121,7 +121,7 @@ public class Trips extends Controller {
             .stream()
             .filter(DriverData::isAvailable)
             .filter(d -> d.getUser().getCurrentTrip() == null)
-            .filter(d -> d.getUser().getCar().getType().equals(trip.getCar().getType()))
+            .filter(d -> d.getUser().getCar().getType().getCarType().equals(trip.getCar().getType().getCarType()))
             // also check if driver is scheduled in the future
             .min(Comparator.comparing(
                 d -> distance(
@@ -140,8 +140,9 @@ public class Trips extends Controller {
 
         var directions = maps.getDirections(
             driver.latitude, 
-            driver.longitude, 
-            start.getPlaceId()
+            driver.longitude,  
+            start.getLatitude(),
+            start.getLongitude()
         );
 
         if (directions == null) {
@@ -175,7 +176,7 @@ public class Trips extends Controller {
 
         // Send message to all riders that the driver is on his way
 
-        simulator.runTask(driver.session, driver.getUser(), directions.routes[0]);
+        simulator.runTask(driver.getUser(), directions.routes[0], false);
         trip.setStatus(Status.AWAITING_PICKUP);
 
         return ok();

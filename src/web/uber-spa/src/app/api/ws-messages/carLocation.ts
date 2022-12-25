@@ -1,3 +1,5 @@
+import { ridesStore } from '@app/stores/ridesStore';
+import { userStore } from '@app/stores';
 import { carMarkers, map } from '@app/api/google-maps'
 
 const blackCarThumbnail = 'https://i.imgur.com/CZ8ufVo.png'
@@ -23,8 +25,9 @@ export default (message: {
 }) => {
   if ((window as any)?.google?.maps === undefined) return
 
-  const position = { lat: message.latitude, lng: message.longitude }
-  const carRemoved = position.lat === 0 && position.lng === 0
+  const position = new google.maps.LatLng(message.latitude, message.longitude)
+  const carRemoved = position.lat() === 0 && position.lng() === 0
+  const isSelf = userStore.user?.car?.registration === message.registration
   let marker = findMarker(message.registration)
 
   if (carRemoved) {
@@ -53,7 +56,42 @@ export default (message: {
     carMarkers.push(marker)
   }
   else {
+    if (marker.getMap() !== map) marker.setMap(map)
     marker.setPosition(position)
     rotateMarker(message.registration, message.heading)
+  }
+
+  if (isSelf) {
+    if (ridesStore.state?.pickupPolyline) {
+      let shortestDistance = { value: Infinity, previousIndex: 0, nextIndex: 0 }
+      let path = ridesStore.state.pickupPolyline.getPath().getArray() as google.maps.LatLng[]
+      for (let i = path.length - 1; i > 0; i--) {
+        const distance = {
+          previous: google.maps.geometry.spherical.computeDistanceBetween(position, path[i - 1]),
+          next: google.maps.geometry.spherical.computeDistanceBetween(position, path[i])
+        }
+        const carHeading = google.maps.geometry.spherical.computeHeading(path[i - 1], position)
+        const heading = google.maps.geometry.spherical.computeHeading(path[i - 1], path[i])
+        const distanceBetween = distance.previous + distance.next
+        if (distanceBetween > 0 && distanceBetween <= shortestDistance.value && Math.abs(carHeading - heading) < 5) {
+          shortestDistance.value = distanceBetween
+          shortestDistance.previousIndex = i - 1
+          shortestDistance.nextIndex = i
+        }
+      }
+      path = shortestDistance.previousIndex === 0 ? path.slice(1) : path.slice(shortestDistance.nextIndex)
+      path.unshift(position)
+      ridesStore.state.pickupPolyline.setPath(path)
+      if (google.maps.geometry.spherical.computeDistanceBetween(
+        ridesStore.state.pickupMarker.getPosition(),
+        position
+      ) < 100) {
+        ridesStore.setState(store => store.state.pickup.canStart = true)
+      }
+    }
+    // getMarkerDom(message.registration)?.classList?.add
+    ridesStore.setState(store => store.state.currentLocation = position)
+    map.panTo(position)
+    map.panBy(-180, 0)
   }
 }

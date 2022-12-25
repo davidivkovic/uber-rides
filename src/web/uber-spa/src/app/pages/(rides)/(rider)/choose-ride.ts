@@ -86,7 +86,7 @@ import PassengersStatus from '@app/components/rides/passengersStatus'
       </button>
       <button 
         [disabled]="!passengersReady"
-        (click)="location.back()"
+        (click)="orderRide()"
         class="primary mx-4 !text-base mt-1"
       >
         {{ passengersReady ? 'Request an ' + this.selectedCarType?.name : 'Watiting for passengers...' }}
@@ -113,6 +113,20 @@ export default class ChooseRide {
       () => this.checkPassengersReady()
     )
     this.selectFirstCarType()
+  }
+
+  async orderRide() {
+    try {
+      if (!ridesStore.state.rideChosen) {
+        await trips.chooseRide(this.selectedCarType.carType)
+        ridesStore.setState(store => store.state.rideChosen = true)
+      }
+      await trips.orderRide()
+    }
+    catch (e) {
+      console.error(e.message)
+      ridesStore.setState(store => store.state.rideChosen = false)
+    }
   }
 
   checkPassengersReady() {

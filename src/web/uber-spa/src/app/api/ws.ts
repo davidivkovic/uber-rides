@@ -8,6 +8,9 @@ const handlers = {
   [InboundMessages.TRIP_INVITE]: () => import('./ws-messages/tripInvite'),
   [InboundMessages.TRIP_INVITE_UPDATE]: () => import('./ws-messages/tripInviteUpdate'),
   [InboundMessages.CAR_LOCATION]: () => import('./ws-messages/carLocation'),
+  [InboundMessages.TRIP_ASSIGNED]: () => import('./ws-messages/tripAssigned'),
+  [InboundMessages.INSTRUCTIONS]: () => import('./ws-messages/instructions'),
+
 }
 
 const isConnected = () => ws?.OPEN

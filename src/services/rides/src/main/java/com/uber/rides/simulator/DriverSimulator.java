@@ -31,6 +31,7 @@ import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.databind.json.JsonMapper;
+import com.fasterxml.jackson.core.io.JsonStringEncoder;
 
 import com.google.maps.model.DirectionsResult;
 import com.google.maps.model.DirectionsRoute;
@@ -43,7 +44,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketHttpHeaders;
 import org.springframework.web.socket.WebSocketSession;
@@ -55,19 +55,25 @@ import com.uber.rides.model.User.Roles;
 import com.uber.rides.security.JWT;
 import com.uber.rides.service.GoogleMaps;
 import com.uber.rides.service.ImageStore;
+import com.uber.rides.ws.Store;
+import com.uber.rides.ws.WS;
 
 import static com.uber.rides.util.Utils.*;
 
 @Component
 public class DriverSimulator {
 
+    record LocationAndInstructions(LatLng location, String instructions) { }
+
     @Autowired EntityManagerFactory dbFactory;
     @Autowired JPAStreamer query;
     @Autowired ImageStore images;
     @Autowired PasswordEncoder passwordEncoder;
     @Autowired ThreadPoolTaskScheduler scheduler;
+    @Autowired WS ws;
 
     Map<Long, ScheduledFuture<?>> tasks = new ConcurrentHashMap<>();
+    Map<Long, WebSocketSession> sims = new ConcurrentHashMap<>();
 
     static final int BLACK = 0xFF000000;
     static final int WHITE = 0xFFFFFFFF;
@@ -88,6 +94,7 @@ public class DriverSimulator {
     static final LatLng CENTER = NEW_YORK;
 
     static final Random random = new Random();
+    static final JsonStringEncoder stringEncoder = JsonStringEncoder.getInstance();
     static final ObjectMapper jsonMapper = JsonMapper.builder()
         .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
         .configure(DeserializationFeature.READ_ENUMS_USING_TO_STRING, true)
@@ -99,33 +106,39 @@ public class DriverSimulator {
         .addMixIn(com.google.maps.model.Distance.class, Distance.class)
         .build();
 
+
     long signatureHash;
     LocalDateTime gotHashAt;
 
     BufferedImage areaOfInterest;
 
-    @Transactional
-    public void start(int numberOfDrivers) {
-        var drivers = getPresetDrivers(numberOfDrivers);
-        this.areaOfInterest = getAreaOfInterest();
-
-        for (int i = 0; i < numberOfDrivers; i++) {
-            var driver = drivers.get(i);
-            var session = connectToWs(driver);
-            if (session != null) runTask(session, driver);
+    public boolean start(int numberOfDrivers) {
+        try {
+            var drivers = getPresetDrivers(numberOfDrivers);
+            this.areaOfInterest = getAreaOfInterest();
+            
+            for (int i = 0; i < numberOfDrivers; i++) {
+                var driver = drivers.get(i);
+                var session = connectToWs(driver);
+                if (session != null) runTask(driver);
+            }
+            return true;
+        }
+        catch (Exception e) {
+            return false; 
         }
     }
 
-    void runTask(WebSocketSession session, User driver) {
+    void runTask(User driver) {
         var coordinates = getRandomCoordinates(this.areaOfInterest, 6);
-        runTask(session, driver, getDirections(coordinates));
+        runTask(driver, getDirections(coordinates), true);
     }
 
     void runTask(User driver, DirectionsRoute directions) {
-        runTask(null, driver, directions);
+        runTask(driver, directions, false);
     }
 
-    public void runTask(WebSocketSession session, User driver, DirectionsRoute directions) {
+    public void runTask(User driver, DirectionsRoute directions, boolean rerunOnEnd) {
         if (directions != null) {
             cancelTask(driver);
             var points = Stream
@@ -133,18 +146,23 @@ public class DriverSimulator {
                 .flatMap(leg -> Stream.of(leg.steps))
                 .map(s -> {
                     var polyline = s.polyline.decodePath();
-                    var step = Math.ceilDiv(polyline.size(), Math.ceilDiv(s.duration.inSeconds, 5));
+                    var step = Math.ceilDiv(polyline.size(), Math.max(1, Math.ceilDiv(s.duration.inSeconds, 5)));
                     return IntStream
                         .range(0, polyline.size())
                         .filter(index -> index % step == 0)
-                        .mapToObj(polyline::get);
+                        .mapToObj(polyline::get)
+                        .map(location -> new LocationAndInstructions(
+                            location,
+                            new String(stringEncoder.quoteAsString(s.htmlInstructions))
+                        ));
                 })
                 .flatMap(Function.identity())
                 .toList();
 
             var pointsIterator = points.listIterator();    
+            var session = sims.get(driver.getId());
             var task = scheduler.scheduleAtFixedRate(
-                () -> updateLocation(pointsIterator, driver, session),
+                () -> updateLocation(pointsIterator, driver, session, rerunOnEnd),
                 java.time.Duration.ofSeconds(5)
             );
             tasks.put(driver.getId(), task);
@@ -159,34 +177,44 @@ public class DriverSimulator {
         }
     }
 
-    void updateLocation(ListIterator<LatLng> pointsIterator, User driver, WebSocketSession session) {
-        if (!pointsIterator.hasNext()) {
+    void updateLocation(
+        ListIterator<LocationAndInstructions> locations, 
+        User driver, 
+        WebSocketSession session, 
+        boolean rerunOnEnd
+    ) {
+        if (!locations.hasNext()) {
             cancelTask(driver);
-            runTask(session, driver);
+            if (rerunOnEnd) runTask(driver);
             return;
         }
         
-        var currentPoint = pointsIterator.next();
+        var location = locations.next();
         try {
-            var message = new TextMessage(
+            ws.sendMessageToUser(
+                driver.getId(),
+                "INSTRUCTIONS\n[\"" + location.instructions + "\"]"
+            );
+            var updateLocation = new TextMessage(
                 "UPDATE_LOCATION\n{\"latitude\":" 
-                + currentPoint.lat 
+                + location.location.lat 
                 + ",\"longitude\":" 
-                + currentPoint.lng 
+                + location.location.lng 
                 + "}"
             );
-            session.sendMessage(message);
+            session.sendMessage(updateLocation);
         } 
         catch (Exception e) { 
             cancelTask(driver);
-            runTask(session, driver);
+            connectToWs(driver);
+            runTask(driver);
         }
     }
 
     public WebSocketSession connectToWs(User driver) {
         try {
-            var ws = new StandardWebSocketClient();        
-            return ws.doHandshake(
+            var wsClient = new StandardWebSocketClient();        
+            var session = wsClient.doHandshake(
                 new TextWebSocketHandler(),
                 new WebSocketHttpHeaders(),
                 new URIBuilder("ws://localhost:8000/ws")
@@ -194,66 +222,77 @@ public class DriverSimulator {
                 .build()
             )
             .get();
+            if (session != null) {
+                sims.put(driver.getId(), session);
+            }
+            return session;
         } catch (Exception e) { 
             return null; 
         }
     }
 
-    @Transactional
     public List<User> getPresetDrivers(int numberOfDrivers) {
         var drivers = query.stream(User.class)
             .filter(
                 User$.role.equal(Roles.DRIVER).and(
-                User$.email.startsWith("driver-x"))
+                User$.email.startsWith("driver-x-gene.keeling"))
             )
             .limit(numberOfDrivers)
             .toList();
             
         var allDrivers = new ArrayList<>(drivers);
         var db = dbFactory.createEntityManager();
+        
+        try {
+            db.getTransaction().begin();
+            for (int i = 0; i < numberOfDrivers - drivers.size(); i++) {
+                var faker = new Faker();
+                var name = faker.name();
+                var isMale = name.prefix().equals("Mr.") || name.prefix().equals("Dr.");
+                var vehicle = faker.vehicle();
 
-        for (int i = 0; i < numberOfDrivers - drivers.size(); i++) {
-            var faker = new Faker();
-            var name = faker.name();
-            var isMale = name.prefix().equals("Mr.") || name.prefix().equals("Dr.");
-            var vehicle = faker.vehicle();
+                var car = Car
+                    .builder()
+                    .type(Car.getAvailableTypes().get(random.nextInt(0, Car.getAvailableTypes().size())))
+                    .year(faker.random().nextInt(2012, 2022).shortValue())
+                    .make(vehicle.manufacturer())
+                    .model(vehicle.model())
+                    .registration(vehicle.licensePlate().toUpperCase())
+                    .build();
 
-            var car = Car
-                .builder()
-                .type(Car.getAvailableTypes().get(random.nextInt(0, Car.getAvailableTypes().size())))
-                .year(faker.random().nextInt(2012, 2022).shortValue())
-                .make(vehicle.manufacturer())
-                .model(vehicle.model())
-                .registration(vehicle.licensePlate().toUpperCase())
-                .build();
+                db.merge(car);
+                
+                var driver = User
+                    .builder()
+                    .role(Roles.DRIVER)
+                    .firstName(name.firstName())
+                    .lastName(name.lastName())
+                    .email("driver-x-" + name.username() + "@uber.com")
+                    .password(passwordEncoder.encode("driver-x-password"))
+                    .city("New York")
+                    .phoneNumber(faker.phoneNumber().phoneNumber())
+                    .emailConfirmed(true)
+                    .completedRegistration(true)
+                    .car(car)
+                    .profilePicture(
+                        "https://xsgames.co/randomusers/assets/avatars/" +
+                        (isMale ? "male" : "female") + "/" +
+                        faker.random().nextInt(10, 75) + ".jpg"
+                    )
+                    .build();
 
-
-            db.merge(car);
+                db.merge(driver);
+                allDrivers.add(driver);
+            }
             
-            var driver = User
-                .builder()
-                .role(Roles.DRIVER)
-                .firstName(name.firstName())
-                .lastName(name.lastName())
-                .email("driver-x" + name.username() + "@uber.com")
-                .password(passwordEncoder.encode("driver-x-password"))
-                .city("New York")
-                .phoneNumber(faker.phoneNumber().phoneNumber())
-                .emailConfirmed(true)
-                .completedRegistration(true)
-                .car(car)
-                .profilePicture(
-                    "https://xsgames.co/randomusers/assets/avatars/" +
-                    (isMale ? "male" : "female") + "/" +
-                    faker.random().nextInt(10, 75) + ".jpg"
-                )
-                .build();
-
-            db.merge(driver);
-            allDrivers.add(driver);
+            db.flush();
+            db.getTransaction().commit();
+            db.close();
         }
-
-        db.close();
+        catch(Exception e) {
+            db.getTransaction().rollback();
+            db.close();
+        }
 
         return allDrivers;
     }
@@ -324,7 +363,11 @@ public class DriverSimulator {
     public String buildProtobuf(List<LatLng> coordinates) {
         var builder = new StringBuilder();
         for (var coordinate : coordinates) {
-            builder.append("5m4&1m3&1m2&1d" + coordinate.lat + "&2d" + coordinate.lng + "&");
+            builder.append("5m4&1m3&1m2&1d")
+                   .append(coordinate.lat)
+                   .append("&2d")
+                   .append(coordinate.lng)
+                   .append("&");
         }
         return builder.toString();
     }
@@ -351,12 +394,21 @@ public class DriverSimulator {
         if (gotHashAt != null && gotHashAt.isAfter(LocalDateTime.now().minusMinutes(30))) return;
 
         try (var httpClient = HttpClients.createDefault()) {
-            var body = EntityUtils.toString(httpClient.execute(new HttpGet(
-                "https://maps.googleapis.com/maps/api/js?libraries=directions&language=en&key=" + GoogleMaps.STATIC_KEY
-            )).getEntity());
-            body = body.substring(body.indexOf("apiLoad(") + 8, body.indexOf(", loadScriptTime)"));
+            var body = EntityUtils.toString(
+                httpClient
+                .execute(new HttpGet("https://maps.googleapis.com/maps/api/js?libraries=directions&language=en"))
+                .getEntity()
+            );
+            body = body.substring(
+                body.indexOf("apiLoad(") + 8,
+                body.indexOf(", loadScriptTime)")
+            );
             var data = jsonMapper.readValue(body, Object[].class);
-            this.signatureHash = ((ArrayList<Long>) data[4]).get(0); // This is where google keeps the current directions hash
+            this.signatureHash = Long.parseLong(
+                ((ArrayList<Object>) data[4])
+                .get(0)
+                .toString()
+            ); // This is where google keeps the current directions hash -> [4][0]
             gotHashAt = LocalDateTime.now();
         }
         catch (Exception e) {

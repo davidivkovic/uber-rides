@@ -52,11 +52,11 @@ public class Riders extends Controller {
             .map(driver -> mapper.map(driver, UserDTO.class))
             .toList();
     }
-
-	@Transactional
+    
     @PostMapping("/test")
 	public Object makeTrip() {
-		simulator.start(20);
+		var success = simulator.start(1);
+        if (!success) return badRequest("Error starting simulator");
 		return ok();
 	}
 

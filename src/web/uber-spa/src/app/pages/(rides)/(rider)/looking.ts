@@ -2,7 +2,7 @@ import { Component } from '@angular/core'
 import { NgClass, NgFor, NgIf } from '@angular/common'
 import { ActivatedRoute, Router } from '@angular/router'
 import { FormsModule } from '@angular/forms'
-import { autocomplete, geocoder, icons, map, createMarker, createPolyline, createInfoWindow, removeAllElements } from '@app/api/google-maps'
+import { autocomplete, geocoder, icons, map, createMarker, createPolyline, createInfoWindow, removeAllElements, directions } from '@app/api/google-maps'
 import { computed, formatDistance, formatDuration, InnerHtml, swap } from '@app/utils'
 import { ridesStore } from '@app/stores/ridesStore'
 import dayjs from 'dayjs'
@@ -311,8 +311,8 @@ export default class Looking {
     removeAllElements()
 
     map.fitBounds(new google.maps.LatLngBounds(route.bounds.southwest, route.bounds.northeast))
-    map.panBy(-180, 0)
     // map.setZoom(map.getZoom() - 1)
+    map.panBy(-180, 0)
 
     createPolyline(route.overviewPolyline.encodedPath)
     this.stopoverInputs.map((stopover, index) => {

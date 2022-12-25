@@ -42,12 +42,13 @@ public class GoogleMaps {
     public DirectionsResult getDirections(
         double originLatitude,
         double originLongitude,
-        String destinationPlaceId
+        double destinationLatitude,
+        double destinationLongitude
     ) {
         var directionsRequest = DirectionsApi
             .newRequest(GoogleMaps.CONTEXT)
             .origin(new LatLng(originLatitude, originLongitude))
-            .destinationPlaceId(destinationPlaceId)
+            .destination(new LatLng(destinationLatitude, destinationLongitude))
             .mode(TravelMode.DRIVING);
         try {
             return directionsRequest.await();

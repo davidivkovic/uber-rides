@@ -19,7 +19,7 @@ declare const paypal
         <h1 class="text-2xl ">Add PayPal</h1>
         <p class="mt-5">You will be re-directed to PayPal to verify your account.</p>
       </div>
-      <div class="flex flex-col justify-end mt-20 space-y-2">
+      <div class="flex flex-col justify-end mt-20 space-y-1">
         <p class="text-red-600 text-center text-sm">{{ error }}</p>
         <div class="rounded-md overflow-clip">
           <div #pp id="paypal-button" class="-mb-2"></div>
@@ -111,7 +111,7 @@ export default class Paypal {
                 paypal
                   .Buttons({
                     style: {
-                      color: 'gold',
+                      color: 'blue',
                       label: 'paypal',
                       shape: 'rect',
                       height: 48,

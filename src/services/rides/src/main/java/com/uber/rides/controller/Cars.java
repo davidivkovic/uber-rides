@@ -55,8 +55,7 @@ public class Cars extends Controller {
     public Object getTypes() { return Car.getAvailableTypes(); }
 
     @GetMapping("/live-locations")
-    @Secured({ Roles.ANONYMOUS, Roles.RIDER })
-    public Object getLooking() {
+    public Object getLiveLocations() {
         return store
         .drivers
         .values()

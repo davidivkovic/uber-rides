@@ -10,7 +10,7 @@ let geocoder: google.maps.Geocoder
 let places: google.maps.places.PlacesService
 let directions: google.maps.DirectionsService
 let elementId: string
-let polyline: google.maps.Polyline
+let polylines: google.maps.Polyline[] = []
 let markers: google.maps.Marker[] = []
 let carMarkers: google.maps.Marker[] = []
 let infoWindows: google.maps.InfoWindow[] = []
@@ -55,17 +55,20 @@ const createMarker = (latitude: number, longitude: number, isTerminal: boolean) 
     map
   })
   markers.push(marker)
+  return marker
 }
 
-const createPolyline = (encodedPath: string) => {
-  polyline = new google.maps.Polyline({
-    path: google.maps.geometry.encoding.decodePath(encodedPath),
+const createPolyline = (path: string | google.maps.LatLng[]) => {
+  const polyline = new google.maps.Polyline({
+    path: typeof path === 'string' ? google.maps.geometry.encoding.decodePath(path) : path,
     map,
     strokeColor: '#000',
     strokeOpacity: 0.7,
     strokeWeight: 4,
     clickable: false,
   })
+  polylines.push(polyline)
+  return polyline
 }
 
 const createInfoWindow = (
@@ -100,7 +103,7 @@ const createInfoWindow = (
 }
 
 const removeAllElements = () => {
-  polyline?.setMap(null)
+  polylines?.forEach(l => l.setMap(null))
   markers?.forEach(m => m.setMap(null))
   infoWindows?.forEach(w => w.close())
 }
@@ -138,6 +141,7 @@ export {
   directions,
   icons,
   carMarkers,
+  polylines,
   createMarker,
   createPolyline,
   createInfoWindow,
