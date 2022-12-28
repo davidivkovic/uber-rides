@@ -38,7 +38,7 @@ export default ({ poiClickHandler } = { poiClickHandler: null }) => {
           window[object][method] = shim
         }
       }
-      if (!src.includes('QuotaService')) {
+      if (!src.includes('QuotaService') && !src.includes('ApplicationService')) {
         this.setAttribute('src', value)
       }
     }

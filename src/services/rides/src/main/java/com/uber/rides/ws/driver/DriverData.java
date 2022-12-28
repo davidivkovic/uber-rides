@@ -18,6 +18,8 @@ public class DriverData extends UserData {
 
     public double latitude;
     public double longitude;
+    public double duration;
+    public double distance;
     public double heading;
     public boolean isAvailable = true;
     public boolean isOnline = true;

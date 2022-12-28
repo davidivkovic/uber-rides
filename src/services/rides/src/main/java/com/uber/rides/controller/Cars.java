@@ -65,6 +65,8 @@ public class Cars extends Controller {
             driver.user.getCar().getType().getCarType(),
             driver.getLatitude(),
             driver.getLongitude(),
+            driver.getDuration(),
+            driver.getDistance(),
             driver.getHeading()
         ))
         .toArray();

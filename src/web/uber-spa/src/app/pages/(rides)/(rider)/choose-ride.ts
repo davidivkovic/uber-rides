@@ -8,6 +8,7 @@ import trips from '@app/api/trips'
 import { createMessage, OutboundMessages } from '@app/api/ws-messages/messages'
 import { send } from '@app/api/ws'
 import PassengersStatus from '@app/components/rides/passengersStatus'
+import { computed } from '@app/utils'
 
 @Component({
   standalone: true,
@@ -79,17 +80,64 @@ import PassengersStatus from '@app/components/rides/passengersStatus'
       >
       </PassengersStatus>
       <button 
+        *ngIf="!lookingForRide"
         (click)="router.navigate(['looking/add-passengers'])" 
         class="secondary mx-4 !py-2.5 !text-base mt-auto"
       >
         Invite Passengers
       </button>
       <button 
+        *ngIf="!lookingForRide"
         [disabled]="!passengersReady"
-        (click)="orderRide()"
+        (click)="pollOrder()"
         class="primary mx-4 !text-base mt-1"
       >
         {{ passengersReady ? 'Request an ' + this.selectedCarType?.name : 'Watiting for passengers...' }}
+      </button>
+      <button 
+        *ngIf="lookingForRide"
+        [disabled]="!passengersReady"
+        [ngClass]="{ 
+          'pointer-events-none': ridesStore.state.uberFound, 
+          'cursor-wait': ridesStore.state.uberFound 
+        }"
+        (click)="cancelOrder()"
+        class="primary mx-4 !text-base mt-auto"
+      >
+        <div 
+          class="flex items-center"
+          [ngClass]="{ 
+            'justify-center': ridesStore.state.uberFound
+          }"
+        >
+          <svg 
+            *ngIf="!ridesStore.state.uberFound"
+            class="animate-spin -ml-2 mr-2.5 h-4 w-4 text-white" 
+            fill="none" 
+            viewBox="0 0 24 24"
+          >
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+          <span *ngIf="!ridesStore.state.uberFound">
+            Looking for an {{ this.selectedCarType?.name }}
+          </span>
+          <span *ngIf="ridesStore.state.uberFound">
+            {{ uberFoundText }}
+          </span>
+          <svg 
+            *ngIf="ridesStore.state.uberFound"
+            class="animate-spin ml-2 -mr-2 h-4 w-4 text-white" 
+            fill="none" 
+            viewBox="0 0 24 24"
+          >
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+          <span *ngIf="!ridesStore.state.uberFound" class="ml-auto -mr-1.5">
+            {{ lookingDuration }}s
+          </span>
+        </div>
       </button>
     </div>
   `
@@ -100,6 +148,11 @@ export default class ChooseRide {
   ridesStore = ridesStore
   passengersReady = true
   anyPassengerReady = false
+  lookingForRide = false
+  lookingDuration = 1
+  lookingInterval = null
+  lookingLoading = false
+  uberFoundText = 'Uber found. Please wait...'
 
   constructor(public location: Location, public router: Router, public detector: ChangeDetectorRef) {
     if (!ridesStore.state?.directions) {
@@ -109,23 +162,64 @@ export default class ChooseRide {
     subscribe(ridesStore, () => detector?.detectChanges())
     watch(
       ridesStore,
-      () => ridesStore.state?.passengers,
+      () => ridesStore.state.passengers,
       () => this.checkPassengersReady()
+    )
+    watch(
+      ridesStore,
+      () => ridesStore.state.uberFound,
+      (curr, old) => {
+        if (!curr) return
+        setTimeout(() => this.uberFoundText = 'Processing payment...', 1500)
+        setTimeout(() => this.router.navigate(['/passengers']), 3000)
+      }
     )
     this.selectFirstCarType()
   }
 
-  async orderRide() {
-    try {
-      if (!ridesStore.state.rideChosen) {
-        await trips.chooseRide(this.selectedCarType.carType)
-        ridesStore.setState(store => store.state.rideChosen = true)
+
+  cancelOrder() {
+    if (ridesStore.state.uberFound) return
+    this.lookingForRide = false
+    this.lookingInterval && clearInterval(this.lookingInterval)
+    if (!ridesStore.state?.passengers || ridesStore.state?.passengers?.length === 0) {
+      ridesStore.setState(store => store.state.rideChosen = false)
+    }
+  }
+
+  async pollOrder() {
+    this.lookingForRide = true
+    this.lookingDuration = 1
+    if (!ridesStore.state.rideChosen) {
+      ridesStore.setState(store => store.state.rideChosen = true)
+      try {
+        const trip = await trips.chooseRide(this.selectedCarType.carType)
+        trip && ridesStore.setState(store => store.state.trip = trip)
       }
+      catch (e) {
+        console.log(e.message)
+        this.cancelOrder()
+        return
+      }
+    }
+    this.lookingInterval = setInterval(async () => {
+      this.lookingDuration += 1
+      if (this.lookingDuration % 5 !== 0) return
+      if (this.lookingLoading) return
+      this.lookingLoading = true
+      await this.orderRide()
+      this.lookingLoading = false
+    }, 1000)
+  }
+
+  async orderRide() {
+    if (ridesStore.state.trip == null) return
+    try {
       await trips.orderRide()
+      this.lookingInterval && clearInterval(this.lookingInterval)
     }
     catch (e) {
-      console.error(e.message)
-      ridesStore.setState(store => store.state.rideChosen = false)
+      console.log(e.message)
     }
   }
 
@@ -150,7 +244,8 @@ export default class ChooseRide {
         }
         // ne valjda kad udjes da invite passengere, remove nekoga i ides acceept ne posalje remove passenger ws message
         if (ridesStore.state?.passengersChanged) {
-          await trips.invitePassengers(ridesStore.state.passengers.map((p: any) => p.id))
+          const trip = await trips.invitePassengers(ridesStore.state.passengers.map((p: any) => p.id))
+          trip && ridesStore.setState(store => store.state.trip = trip)
         }
       }
       catch (error) {

@@ -1,51 +1,30 @@
 import { Component } from '@angular/core'
 import { CurrencyPipe, NgClass, NgFor, NgIf } from '@angular/common'
+import { createInfoWindow, createMarker, createPolyline, map, removeAllElements, subscribe } from '@app/api/google-maps'
 import { ridesStore } from '@app/stores/ridesStore'
 import { computed, formatDistance, formatDuration } from '@app/utils'
 import PassengersStatus from '@app/components/rides/passengersStatus'
-import { createInfoWindow, createMarker, createPolyline, map, removeAllElements, subscribe } from '@app/api/google-maps'
+import RouteDetails from '@app/components/rides/routeDetails'
 
 @Component({
   standalone: true,
-  imports: [NgIf, NgFor, NgClass, PassengersStatus, CurrencyPipe],
+  imports: [NgIf, NgFor, NgClass, PassengersStatus, RouteDetails, CurrencyPipe],
   template: `
     <div class="w-[400px] h-[700px] p-4 bg-white rounded-xl pointer-events-auto">
-      <div *ngIf="!ridesStore.state?.trip" class="flex flex-col">
+      <div *ngIf="!ridesStore.state.trip" class="flex flex-col">
         <h1 class="text-3xl pb-1">Ride overview</h1>
         <p class="text-zinc-700">You are currently not a passenger on any rides</p>
       </div>
-      <div *ngIf="ridesStore.state?.trip" class="flex flex-col h-full">
+      <div *ngIf="ridesStore.state.trip" class="flex flex-col h-full">
         <h1 class="text-3xl pb-3">Ride overview</h1>
-        <div class="relative px-1 pb-2.5 rounded-md bg-[#f6f6f6] pl-3 pt-2">
-          <div *ngFor="let stop of stops(); index as index;">
-            <div class="pl-7 w-full">
-              <p class="text-zinc-500 text-[15px] -mb-1.5 -mt-0.5">
-                {{ index == 0 ? 'From' : index < stops().length - 1 ? 'Stop' : 'To' }}
-              </p>
-              <h3 class="text-lg tracking-wide">
-                {{ formatAddress(stop.address) }}
-              </h3>
-            </div>
-            <div class="absolute -mt-[18px] ml-1.5 z-10">
-              <div 
-                class="w-1.5 h-1.5 border-2 border-black"
-                [ngClass]="{ 'rounded-full' : index !== stops().length - 1 }"
-              >
-              </div>
-              <div 
-                *ngIf="index !== stops().length - 1" 
-                class="w-[2px] h-7 ml-[2px] my-[5px] bg-black"
-              >
-              </div>
-            </div>
-          </div>
-          <div class="absolute right-3 bottom-3.5 text-right z-10">
-            <h3 class="text-xl leading-5 mt-0.5">{{ formatDistance(ridesStore.state.trip.distanceInMeters) }}</h3>
-            <p class="text-sm text-zinc-700">approx. {{ formatDuration(ridesStore.state.trip.durationInSeconds) }}</p>
-          </div>
-        </div>
+        <RouteDetails 
+          [stops]="stops()" 
+          [distance]="ridesStore.state.trip.distanceInMeters"
+          [duration]="ridesStore.state.trip.durationInSeconds"
+        >
+        </RouteDetails>
         <!-- <h3 class="mt-3 tracking-wide">Ride Details</h3> -->
-        <div class="flex items-center bg-[#f6f6f6] rounded-md mt-3 mb-1 pr-3.5">
+        <div class="flex items-center bg-[#f6f6f6] rounded-md mt-3 py-1.5 mb-1 pr-3.5">
           <img [src]="ridesStore.state.trip.car.type.image" class="-ml-1 w-[100px] h-[100px]" />
           <div class="w-[120px] ml-1.5 mr-6">
             <div class="flex space-x-2 font-medium">
@@ -103,11 +82,14 @@ export default class Passengers {
     () => ridesStore.state.trip,
     () => {
       const stops = [ridesStore.state.trip.route.start, ...ridesStore.state.trip.route.stops]
-      if (map) {
-        this.drawPolyline(stops)
-      }
-      else {
-        subscribe(() => this.drawPolyline(stops))
+      const isMyTrip = ridesStore.state.directions != null
+      if (!isMyTrip) {
+        if (map) {
+          this.drawPolyline(stops)
+        }
+        else {
+          subscribe(() => this.drawPolyline(stops,))
+        }
       }
       return stops ?? []
     }
@@ -125,8 +107,8 @@ export default class Passengers {
     return address.split(',').splice(0, 2).join(', ')
   }
 
-  drawPolyline(stops: any[]) {
-    removeAllElements()
+  drawPolyline(stops: any[], removeElements = true) {
+    removeElements && removeAllElements()
     createPolyline(ridesStore.state.trip.route.encodedPolyline)
     stops.forEach((stop, index) => {
       createMarker(stop.latitude, stop.longitude, index == stops.length - 1)

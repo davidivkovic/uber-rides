@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.annotation.Secured;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -28,6 +29,14 @@ public class Drivers extends Controller {
     @Autowired DbContext context;
     @Autowired WS ws;
     @Autowired Store store;
+
+    @PostMapping("/free-all")
+    public void freeAll() {
+        store.drivers.values().forEach(d -> {
+            d.setAvailable(true);
+            d.getUser().setCurrentTrip(null);
+        });
+    }
 
     @Transactional
     @GetMapping("/")

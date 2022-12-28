@@ -1,6 +1,7 @@
 import jailbreak from './jailbreak'
 import mapStyles from './mapStyles.json'
 import icons from './icons'
+import { formatAddress } from '@app/utils'
 
 const scriptName = 'google-maps-script'
 let map: google.maps.Map
@@ -58,11 +59,11 @@ const createMarker = (latitude: number, longitude: number, isTerminal: boolean) 
   return marker
 }
 
-const createPolyline = (path: string | google.maps.LatLng[]) => {
+const createPolyline = (path: string | google.maps.LatLng[], color = '#000') => {
   const polyline = new google.maps.Polyline({
     path: typeof path === 'string' ? google.maps.geometry.encoding.decodePath(path) : path,
     map,
-    strokeColor: '#000',
+    strokeColor: color,
     strokeOpacity: 0.7,
     strokeWeight: 4,
     clickable: false,
@@ -86,7 +87,7 @@ const createInfoWindow = (
     },
     content: /*html*/`
       <div id="gm-iw-c-${index}" class="flex items-center px-3 py-2 space-x-2 cursor-pointer">
-        <span class="text-[15px] select-none">${verb}: ${address}</span>
+        <span class="text-[15px] select-none">${verb}: ${formatAddress(address)}</span>
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
           <path d="M16.9 12l-4.6 6H8.5l4.6-6-4.6-6h3.8l4.6 6z" fill="currentColor">
           </path>

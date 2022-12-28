@@ -1,8 +1,8 @@
 package com.uber.rides.ws;
 
-import static com.uber.rides.util.Utils.*;
-
 import com.fasterxml.jackson.core.JsonProcessingException;
+
+import static com.uber.rides.util.Utils.*;
 
 public interface OutboundMessage {
 

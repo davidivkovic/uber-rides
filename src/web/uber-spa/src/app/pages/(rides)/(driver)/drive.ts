@@ -16,57 +16,44 @@ import trips from '@app/api/trips'
     <div class="flex flex-col h-[700px] w-[400px] p-4 bg-white pointer-events-auto rounded-xl overflow-y-clip">
       <StatusBar></StatusBar>
       <h1 class="text-xl leading-10 transition mt-1">Ride overview</h1>
-      <div *ngIf="ridesStore.state.pickup" class="">
+      <div *ngIf="ridesStore.state.trip">
         <div class="mb-1.5">
           <RouteDetails 
             [stops]="stops()" 
-            [distance]="ridesStore.state.pickup.trip.distanceInMeters"
-            [duration]="ridesStore.state.pickup.trip.durationInSeconds"
+            [distance]="ridesStore.state.trip.distanceInMeters"
+            [duration]="ridesStore.state.trip.durationInSeconds"
           >
           </RouteDetails>
         </div>
         <PassengersStatus 
-          [passengers]="ridesStore.state.pickup.trip.riders"
+          [passengers]="ridesStore.state.trip.riders"
           [canRemove]="false"
         >
         </PassengersStatus>
       </div>
-      <div *ngIf="!ridesStore.state?.pickup?.canStart">
-        <h1 class="text-xl leading-5 transition mt-1.5">Head to the pickup location</h1>
-        <p class="text-zinc-500 text-[15px]">You will be able to start the ride once you arrive</p>
-      </div>
-      <div *ngIf="ridesStore.state?.pickup?.canStart">
-        <h1 class="text-xl leading-[44px] transition">You are at the pickup location</h1>
-        <p class="text-zinc-500 text-[15px] -mt-2.5">Please pick up a passenger and start the ride</p>
-      </div>
-      <div *ngIf="!ridesStore.state?.pickup?.canStart" class="mt-1 flex gap-x-1">
+      <div *ngIf="!ridesStore.state?.trip" class="mt-1">
+        <h1 class="text-xl leading-[44px] transition">Head to the next stop</h1>
+        <p class="text-zinc-500 text-[15px] -mt-2.5">You will be able to finish the ride once you arrive at the destination</p>
         <div>
           <h3 class="text-xl leading-5">{{ formatDistance(ridesStore.state?.pickup?.driverDistance) }}</h3>
           <p class="text-[15px] text-zinc-700">approx. {{ formatDuration(ridesStore.state?.pickup?.driverDuration) }}</p>
         </div>
-        <Navigation></Navigation>
+        <Navigation class="mt-2"></Navigation>
       </div>
       <div class="mt-auto flex flex-col gap-y-1">
-        <button 
-          *ngIf="ridesStore.state?.pickup?.canStart" 
-          (click)="startTrip()"
-          class="primary"
-        >
-          Start Ride
-        </button>
-        <button class="secondary">Cancel Ride</button>
+        <button class="primary">Finish Ride</button>
       </div>
     </div>
   `
 })
-export default class Pickup {
+export default class Drive {
   ridesStore = ridesStore
   formatDuration = formatDuration
   formatDistance = formatDistance
 
-  async startTrip() {
+  startTrip() {
     try {
-      await trips.startTrip()
+      trips.startTrip()
     }
     catch (e) {
       console.error(e.message)

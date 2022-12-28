@@ -9,6 +9,7 @@ import com.braintreegateway.Environment;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 
 import org.modelmapper.ModelMapper;
 
@@ -41,6 +42,7 @@ public class Utils {
 
     public static final ObjectMapper jsonMapper = new ObjectMapper()
         .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+        .configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false)
         .setSerializationInclusion(Include.NON_NULL);
 
     /* DTO Mapper */
@@ -61,9 +63,10 @@ public class Utils {
     .build();
 
     public static final BraintreeGateway gateway = new BraintreeGateway(
-            Environment.SANDBOX,
-            TOKEN,
-            PU_KEY,
-            PR_KEY);
+        Environment.SANDBOX,
+        TOKEN,
+        PU_KEY,
+        PR_KEY
+    );
 
 }

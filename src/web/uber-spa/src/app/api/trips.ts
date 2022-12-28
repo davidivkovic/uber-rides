@@ -10,6 +10,7 @@ const chooseRide = async (rideType: string) => {
     }
   )
   if (!response.ok) throw new Error(await response.text())
+  return await response.json()
 }
 
 const invitePassengers = async (passengerIds: number[]) => {
@@ -21,6 +22,7 @@ const invitePassengers = async (passengerIds: number[]) => {
     }
   )
   if (!response.ok) throw new Error(await response.text())
+  return await response.json()
 }
 
 const orderRide = async () => {
@@ -33,8 +35,20 @@ const orderRide = async () => {
   if (!response.ok) throw new Error(await response.text())
 }
 
+const startTrip = async () => {
+  const response = await fetch(
+    basePath + '/start',
+    {
+      method: 'POST'
+    }
+  )
+  if (!response.ok) throw new Error(await response.text())
+}
+
+
 export default {
   chooseRide,
   invitePassengers,
-  orderRide
+  orderRide,
+  startTrip
 }

@@ -101,11 +101,16 @@ public class WS extends TextWebSocketHandler {
                 session.close(CloseStatus.NOT_ACCEPTABLE);
                 return;
             }
-            if (store.get(user.getId()) == null) {
+            var userData = store.get(user.getId());
+            if (userData == null) {
                 store.put(user, session);
-                var userData = store.get(user.getId());
+                userData = store.get(user.getId());
                 if (userData != null) userData.onConnected();
             }
+            // else {
+            //     userData.setSession(session); // ne moze jer simulator koristi stari session
+            //     userData.onConnected();
+            // }
             super.afterConnectionEstablished(session);
         }
         catch (Exception e) {

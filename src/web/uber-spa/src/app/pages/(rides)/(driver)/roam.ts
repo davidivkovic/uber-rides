@@ -1,8 +1,6 @@
-import { ridesStore } from '@app/stores/ridesStore';
 import { Component } from '@angular/core'
 import { NgClass, NgFor, NgIf } from '@angular/common'
 import StatusBar from './components/statusBar'
-import { map } from '@app/api/google-maps';
 
 @Component({
   standalone: true,
@@ -26,6 +24,4 @@ import { map } from '@app/api/google-maps';
     </div>
   `
 })
-export default class Pickup {
-
-}
+export default class Pickup { }

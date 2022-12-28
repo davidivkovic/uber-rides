@@ -23,8 +23,11 @@ import cars from '@app/api/cars'
 })
 export default class Index {
 
+  polling = false
+
   constructor() {
     cars.pollLiveLocations()
+    this.polling = true
   }
 
   ngAfterViewInit() {

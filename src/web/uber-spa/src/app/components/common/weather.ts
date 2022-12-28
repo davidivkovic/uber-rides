@@ -25,9 +25,13 @@ import { subscribe } from '@app/api/google-maps'
 })
 export default class Weather {
   currentWeather: any
+
+  async getWeather() {
+    this.currentWeather = await getCurrentWeather(map.getCenter().lat(), map.getCenter().lng())
+  }
+
   constructor() {
-    subscribe(async () =>
-      this.currentWeather = await getCurrentWeather(map.getCenter().lat(), map.getCenter().lng())
-    )
+    if (map) this.getWeather()
+    else subscribe(() => this.getWeather())
   }
 }

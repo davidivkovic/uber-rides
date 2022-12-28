@@ -14,6 +14,10 @@ import javax.persistence.JoinColumn;
 import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
+import javax.persistence.Transient;
+
+import com.google.maps.model.DirectionsRoute;
+
 import javax.persistence.Column;
 
 import lombok.AllArgsConstructor;
@@ -73,6 +77,9 @@ public class Trip {
 
     double distanceInMeters;
     double durationInSeconds;
+
+    @Transient
+    DirectionsRoute directions;
 
     /* Navigation FK's */
 

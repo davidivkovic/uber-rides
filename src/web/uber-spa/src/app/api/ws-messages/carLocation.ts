@@ -21,13 +21,17 @@ export default (message: {
   type: string
   latitude: number
   longitude: number
+  driverDuration: number
+  driverDistance: number
   heading: number
 }) => {
   if ((window as any)?.google?.maps === undefined) return
 
   const position = new google.maps.LatLng(message.latitude, message.longitude)
   const carRemoved = position.lat() === 0 && position.lng() === 0
-  const isSelf = userStore.user?.car?.registration === message.registration
+  const isSelf =
+    userStore.user?.car?.registration === message.registration ||
+    ridesStore.state.trip?.riders?.find((r: any) => r.id === userStore.user.id)
   let marker = findMarker(message.registration)
 
   if (carRemoved) {
@@ -63,29 +67,26 @@ export default (message: {
 
   if (isSelf) {
     if (ridesStore.state?.pickupPolyline) {
-      let shortestDistance = { value: Infinity, previousIndex: 0, nextIndex: 0 }
+      let idx = 0
       let path = ridesStore.state.pickupPolyline.getPath().getArray() as google.maps.LatLng[]
-      for (let i = path.length - 1; i > 0; i--) {
-        const distance = {
-          previous: google.maps.geometry.spherical.computeDistanceBetween(position, path[i - 1]),
-          next: google.maps.geometry.spherical.computeDistanceBetween(position, path[i])
-        }
-        const carHeading = google.maps.geometry.spherical.computeHeading(path[i - 1], position)
-        const heading = google.maps.geometry.spherical.computeHeading(path[i - 1], path[i])
-        const distanceBetween = distance.previous + distance.next
-        if (distanceBetween > 0 && distanceBetween <= shortestDistance.value && Math.abs(carHeading - heading) < 5) {
-          shortestDistance.value = distanceBetween
-          shortestDistance.previousIndex = i - 1
-          shortestDistance.nextIndex = i
+      for (let i = 0; i < path.length - 1; i++) {
+        const edge = google.maps.geometry.poly.isLocationOnEdge(position, new google.maps.Polyline({ path: [path[i], path[i + 1]] }), 0.0001)
+        if (edge) {
+          idx = i
+          break
         }
       }
-      path = shortestDistance.previousIndex === 0 ? path.slice(1) : path.slice(shortestDistance.nextIndex)
+      path = idx === 0 ? path.slice(1) : path.slice(idx + 1)
       path.unshift(position)
       ridesStore.state.pickupPolyline.setPath(path)
+      ridesStore.setState(store => {
+        store.state.pickup.driverDuration = message.driverDuration
+        store.state.pickup.driverDistance = message.driverDistance
+      })
       if (google.maps.geometry.spherical.computeDistanceBetween(
         ridesStore.state.pickupMarker.getPosition(),
         position
-      ) < 100) {
+      ) <= 50) {
         ridesStore.setState(store => store.state.pickup.canStart = true)
       }
     }

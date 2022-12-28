@@ -30,9 +30,9 @@ const registerCar = async (data: {
 
 const pollLiveLocations = async () => {
   if (isPolling) return
+  isPolling = true
 
   const handler = await import('./ws-messages/carLocation')
-  isPolling = true
 
   setInterval(async () => {
     const response = await fetch(basePath + '/live-locations', {

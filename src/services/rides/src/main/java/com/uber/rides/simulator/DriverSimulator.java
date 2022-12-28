@@ -22,6 +22,8 @@ import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
 
+import lombok.AllArgsConstructor;
+
 import net.datafaker.Faker;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -55,15 +57,26 @@ import com.uber.rides.model.User.Roles;
 import com.uber.rides.security.JWT;
 import com.uber.rides.service.GoogleMaps;
 import com.uber.rides.service.ImageStore;
-import com.uber.rides.ws.Store;
 import com.uber.rides.ws.WS;
 
 import static com.uber.rides.util.Utils.*;
+import static com.uber.rides.util.GeoUtils.*;
+
+@AllArgsConstructor
+class Directions {
+    LatLng location; 
+    double distance; 
+    String instructions; 
+}
+
+@AllArgsConstructor
+class Sim {
+    WebSocketSession session;
+    double distance;
+}
 
 @Component
 public class DriverSimulator {
-
-    record LocationAndInstructions(LatLng location, String instructions) { }
 
     @Autowired EntityManagerFactory dbFactory;
     @Autowired JPAStreamer query;
@@ -73,7 +86,7 @@ public class DriverSimulator {
     @Autowired WS ws;
 
     Map<Long, ScheduledFuture<?>> tasks = new ConcurrentHashMap<>();
-    Map<Long, WebSocketSession> sims = new ConcurrentHashMap<>();
+    Map<Long, Sim> sims = new ConcurrentHashMap<>();
 
     static final int BLACK = 0xFF000000;
     static final int WHITE = 0xFFFFFFFF;
@@ -141,28 +154,40 @@ public class DriverSimulator {
     public void runTask(User driver, DirectionsRoute directions, boolean rerunOnEnd) {
         if (directions != null) {
             cancelTask(driver);
+            var duration = Stream
+                .of(directions.legs)
+                .mapToLong(leg -> leg.duration.inSeconds)
+                .sum();
+            var distance = Stream
+                .of(directions.legs)
+                .mapToLong(leg -> leg.distance.inMeters)
+                .sum();
+            sims.get(driver.getId()).distance = distance;
             var points = Stream
                 .of(directions.legs)
                 .flatMap(leg -> Stream.of(leg.steps))
                 .map(s -> {
                     var polyline = s.polyline.decodePath();
                     var step = Math.ceilDiv(polyline.size(), Math.max(1, Math.ceilDiv(s.duration.inSeconds, 5)));
-                    return IntStream
-                        .range(0, polyline.size())
-                        .filter(index -> index % step == 0)
-                        .mapToObj(polyline::get)
-                        .map(location -> new LocationAndInstructions(
-                            location,
-                            new String(stringEncoder.quoteAsString(s.htmlInstructions))
-                        ));
+                    var locations = new ArrayList<Directions>();
+                    for (int i = 0; i < polyline.size(); i+=step) {
+                        locations.add(
+                            new Directions(
+                                polyline.get(i),
+                                s.distance.inMeters / polyline.size() * step,
+                                new String(stringEncoder.quoteAsString(s.htmlInstructions))
+                            )
+                        );
+                    }
+                    return locations.stream();
                 })
                 .flatMap(Function.identity())
                 .toList();
-
+            
+            var durationStep = duration / points.size();
             var pointsIterator = points.listIterator();    
-            var session = sims.get(driver.getId());
             var task = scheduler.scheduleAtFixedRate(
-                () -> updateLocation(pointsIterator, driver, session, rerunOnEnd),
+                () -> updateLocation(pointsIterator, duration, durationStep, driver, rerunOnEnd),
                 java.time.Duration.ofSeconds(5)
             );
             tasks.put(driver.getId(), task);
@@ -178,9 +203,10 @@ public class DriverSimulator {
     }
 
     void updateLocation(
-        ListIterator<LocationAndInstructions> locations, 
+        ListIterator<Directions> locations, 
+        double duration,
+        double durationStep,
         User driver, 
-        WebSocketSession session, 
         boolean rerunOnEnd
     ) {
         if (!locations.hasNext()) {
@@ -189,20 +215,24 @@ public class DriverSimulator {
             return;
         }
         
+        var index = locations.nextIndex() + 1;
         var location = locations.next();
+        var sim = sims.get(driver.getId());
+        sim.distance -= location.distance;
         try {
-            ws.sendMessageToUser(
-                driver.getId(),
-                "INSTRUCTIONS\n[\"" + location.instructions + "\"]"
-            );
             var updateLocation = new TextMessage(
                 "UPDATE_LOCATION\n{\"latitude\":" 
                 + location.location.lat 
                 + ",\"longitude\":" 
                 + location.location.lng 
+                + ",\"duration\":" 
+                + (duration - (index + 1) * durationStep)
+                + ",\"distance\":"
+                + sim.distance
                 + "}"
             );
-            session.sendMessage(updateLocation);
+            ws.sendMessageToUser(driver.getId(), "INSTRUCTIONS\n[\"" + location.instructions + "\"]");
+            sim.session.sendMessage(updateLocation);
         } 
         catch (Exception e) { 
             cancelTask(driver);
@@ -223,7 +253,7 @@ public class DriverSimulator {
             )
             .get();
             if (session != null) {
-                sims.put(driver.getId(), session);
+                sims.put(driver.getId(), new Sim(session, 0));
             }
             return session;
         } catch (Exception e) { 

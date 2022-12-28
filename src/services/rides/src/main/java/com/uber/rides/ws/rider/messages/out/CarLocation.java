@@ -16,6 +16,8 @@ public class CarLocation implements OutboundMessage  {
     public Car.Types type;
     public double latitude;
     public double longitude;
+    public double driverDuration;
+    public double driverDistance;
     public double heading;
 
     @Override

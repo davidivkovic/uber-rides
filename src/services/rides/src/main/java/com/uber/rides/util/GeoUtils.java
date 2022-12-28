@@ -1,8 +1,14 @@
 package com.uber.rides.util;
 
+import com.google.maps.model.LatLng;
+
 public class GeoUtils {
 
     private GeoUtils() { }
+
+    public static double distance(LatLng a, LatLng b) {
+        return distance(a.lat, a.lng, b.lat, b.lng);
+    }
 
     public static double distance(double latA, double lonA, double latB, double lonB) {
         double theta = lonA - lonB;

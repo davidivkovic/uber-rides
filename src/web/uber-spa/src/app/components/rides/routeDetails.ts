@@ -8,7 +8,11 @@ import { formatDistance, formatDuration } from '@app/utils'
   imports: [NgFor, NgIf, NgClass],
   template: `
     <div class="relative px-1 pb-2.5 rounded-md bg-[#f6f6f6] pl-3 pt-2">
-      <div *ngFor="let stop of stops; index as index;" class="flex w-[240px]">
+      <div 
+        *ngFor="let stop of stops; index as index;" 
+        [ngClass]="{'w-[240px]' : index === stops.length - 1}"
+        class="flex"
+      >
         <div class="mr-2 -mb-2.5 mt-6 z-10">
           <div 
             class="w-1.5 h-1.5 border-2 border-black"
@@ -32,8 +36,8 @@ import { formatDistance, formatDuration } from '@app/utils'
 
       </div>
       <div class="absolute right-3 bottom-3 text-right z-10">
-        <h3 class="text-lg leading-5 mt-0.5">{{ formatDistance(distance) }}</h3>
-        <p class="text-sm text-zinc-700">approx. {{ formatDuration(duration) }}</p>
+        <h3 class="text-xl leading-5 mt-0.5">{{ formatDistance(distance) }}</h3>
+        <p class="text-sm text-gray-500">approx. {{ formatDuration(duration) }}</p>
       </div>
     </div>
   `

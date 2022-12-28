@@ -10,7 +10,8 @@ const handlers = {
   [InboundMessages.CAR_LOCATION]: () => import('./ws-messages/carLocation'),
   [InboundMessages.TRIP_ASSIGNED]: () => import('./ws-messages/tripAssigned'),
   [InboundMessages.INSTRUCTIONS]: () => import('./ws-messages/instructions'),
-
+  [InboundMessages.TRIP_STARTED]: () => import('./ws-messages/tripStarted'),
+  [InboundMessages.UBER_UPDATE]: () => import('./ws-messages/uberUpdate'),
 }
 
 const isConnected = () => ws?.OPEN
@@ -45,6 +46,5 @@ const disconnect = () => {
 const send = (packet: string) => {
   ws?.send(packet)
 }
-
 
 export { connect, disconnect, send }

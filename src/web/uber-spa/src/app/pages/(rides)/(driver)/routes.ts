@@ -17,6 +17,10 @@ const routes: Routes = [
       {
         path: 'pickup',
         loadComponent: () => import('./pickup')
+      },
+      {
+        path: 'drive',
+        loadComponent: () => import('./drive')
       }
     ]
   }

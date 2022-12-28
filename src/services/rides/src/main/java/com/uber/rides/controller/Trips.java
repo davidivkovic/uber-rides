@@ -26,7 +26,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import static com.speedment.jpastreamer.streamconfiguration.StreamConfiguration.*;
-import static com.uber.rides.util.Utils.*;
 
 import com.uber.rides.database.DbContext;
 import com.uber.rides.dto.TripDTO;
@@ -48,8 +47,11 @@ import com.uber.rides.ws.Store;
 import com.uber.rides.ws.WS;
 import com.uber.rides.ws.driver.DriverData;
 import com.uber.rides.ws.driver.messages.out.TripAssigned;
+import com.uber.rides.ws.driver.messages.out.TripStarted;
 import com.uber.rides.ws.rider.messages.out.TripInvite;
+import com.uber.rides.ws.rider.messages.out.UberUpdate;
 
+import static com.uber.rides.util.Utils.*;
 import static com.uber.rides.util.GeoUtils.*;
 
 @RestController
@@ -88,13 +90,15 @@ public class Trips extends Controller {
             start.getLongitude()
         );
 
-        if (distance > 100) {
-            return badRequest("You are not in the right location to start the trip. Please move closer to the start of the trip.");
+        if (distance > 50) {
+            return badRequest("You are not in the right location to start the trip. Please move closer to the pickup location.");
         }
 
-        // Send message to riders that the driver has started the trip
+        var tripStarted = new TripStarted(mapper.map(trip, TripDTO.class));
+        ws.sendMessageToUser(driverData.getUser().getId(), tripStarted);
+        trip.getRiders().forEach(rider -> ws.sendMessageToUser(rider.getId(), tripStarted));
         
-        simulator.runTask(driverData.getUser(), driverData.directions.routes[0], true);
+        simulator.runTask(driverData.getUser(), trip.getDirections(), false);
         trip.setStatus(Trip.Status.IN_PROGRESS);
         trip.setStartedAt(LocalDateTime.now());
 
@@ -110,10 +114,12 @@ public class Trips extends Controller {
         }
 
         var trip = riderData.getUser().getCurrentTrip();
-        if (trip == null) {
+        if (trip == null || trip.getRoute() == null) {
             return badRequest("You are currenly not looking for a ride. Please start by choosing a route.");
         }
-        
+
+        trip.getRiders().forEach(r -> ws.sendMessageToUser(r.getId(), new UberUpdate(UberUpdate.Status.LOOKING)));
+
         var start = trip.getRoute().getStart();
         var driver = store
             .drivers
@@ -132,23 +138,28 @@ public class Trips extends Controller {
             .orElse(null);
 
         if (driver == null) {
+            trip.getRiders().forEach(r -> ws.sendMessageToUser(r.getId(), new UberUpdate(UberUpdate.Status.NO_DRIVERS)));
             return badRequest("No drivers available currently. Please try again later.");
         }
 
         driver.setAvailable(false);
         trip.setStatus(Trip.Status.CREATED);
 
-        var directions = maps.getDirections(
+        var pickupDirections = maps.getDirections(
             driver.latitude, 
             driver.longitude,  
             start.getLatitude(),
             start.getLongitude()
         );
 
-        if (directions == null) {
+        if (pickupDirections == null) {
             driver.setAvailable(true);
+            trip.getRiders().forEach(r -> ws.sendMessageToUser(r.getId(), new UberUpdate(UberUpdate.Status.NO_ROUTE)));
             return badRequest("Could not find a route to the start of the trip.");
         }
+
+
+        trip.getRiders().forEach(r -> ws.sendMessageToUser(r.getId(), new UberUpdate(UberUpdate.Status.FOUND)));
 
         //send a websoket message to the riders that a driver has been found
         // Do the actual payment here   
@@ -162,21 +173,17 @@ public class Trips extends Controller {
         // gateway.transaction().submitForSettlement(txId);
 
         driver.getUser().setCurrentTrip(trip);
-        driver.setDirections(directions);
+        driver.setDirections(pickupDirections);
         trip.setStatus(Trip.Status.PAID);
         trip.setCar(driver.getUser().getCar());
 
-        ws.sendMessageToUser(
-            driver.getUser().getId(),
-            new TripAssigned(
-                mapper.map(trip, TripDTO.class),
-                directions
-            )
-        );
+        var tripAssigned = new TripAssigned(trip, pickupDirections);
+        trip.getRiders().forEach(r -> ws.sendMessageToUser(r.getId(), tripAssigned));
+        ws.sendMessageToUser(driver.getUser().getId(), tripAssigned);
 
         // Send message to all riders that the driver is on his way
 
-        simulator.runTask(driver.getUser(), directions.routes[0], false);
+        simulator.runTask(driver.getUser(), pickupDirections.routes[0], false);
         trip.setStatus(Status.AWAITING_PICKUP);
 
         return ok();
@@ -211,7 +218,7 @@ public class Trips extends Controller {
             }
         }
 
-        return ok();
+        return ok(tripDTO);
 
     }
 
@@ -234,7 +241,7 @@ public class Trips extends Controller {
         trip.setCar(Car.builder().type(Car.getByType(rideType)).build());
 
         if (tripCarChosen) {
-            return ok();
+            return ok(mapper.map(trip, TripDTO.class));
         }
 
         var directionsRoute = riderData.getDirections().routes[0];
@@ -291,8 +298,10 @@ public class Trips extends Controller {
         }
 
         trip.setRoute(routeBuilder.build());
+        trip.setDirections(directionsRoute);
+        var tripDTO = mapper.map(trip, TripDTO.class);
 
-        return ok();
+        return ok(tripDTO);
     }
 
     @Transactional

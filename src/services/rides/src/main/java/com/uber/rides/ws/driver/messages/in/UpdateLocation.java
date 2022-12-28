@@ -19,6 +19,8 @@ public class UpdateLocation implements InboundMessage<DriverData> {
 
     public double latitude;
     public double longitude;
+    public double duration;
+    public double distance;
 
     @Autowired WS ws;
 
@@ -36,6 +38,8 @@ public class UpdateLocation implements InboundMessage<DriverData> {
         sender.setLongitude(longitude);
         sender.setLatitude(latitude);
         sender.setHeading(heading);
+        sender.setDuration(duration);
+        sender.setDistance(distance);
 
     }
 
