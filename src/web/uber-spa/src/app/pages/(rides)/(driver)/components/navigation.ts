@@ -1,8 +1,18 @@
-import { watch } from 'usm-mobx';
 import { Component } from '@angular/core'
 import { ridesStore } from '@app/stores'
 import { InnerHtml } from '@app/utils'
-import { NgIf } from '@angular/common';
+import { NgIf } from '@angular/common'
+import { watch } from 'usm-mobx'
+
+const voiceover = new window.SpeechSynthesisUtterance()
+let canSpeak = false
+
+window.speechSynthesis.onvoiceschanged = e => {
+  if (!voiceover.voice || voiceover.voice.lang !== 'en-US') {
+    voiceover.voice = window.speechSynthesis.getVoices().find(voice => voice.name === 'Google US English')
+    canSpeak = true
+  }
+}
 
 @Component({
   selector: 'Navigation',
@@ -41,7 +51,7 @@ export default class Navigation {
   timeout: any = null
   opacity = 0
   direction = ''
-  sound = new Audio('/assets/sounds/navigation.mp3')
+  sound = new Audio('/assets/sounds/navigation.wav')
   constructor() {
     watch(
       ridesStore,
@@ -52,8 +62,13 @@ export default class Navigation {
         else if (curr.includes('left') || curr.includes('west')) this.direction = 'left'
         else this.direction = 'straight'
         this.instructions = curr
-        this.sound.play()
         this.opacity = 1
+
+        if (canSpeak) {
+          voiceover.text = curr.replace(/<[^>]*>/g, '')
+          window.speechSynthesis.speak(voiceover)
+        }
+
         if (this.timeout) clearTimeout(this.timeout)
         this.timeout = setTimeout(() => {
           this.opacity = 0

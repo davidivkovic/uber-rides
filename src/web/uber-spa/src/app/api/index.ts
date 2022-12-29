@@ -1,7 +1,8 @@
 import { userStore } from '@app/stores'
 
 const scheme = 'http://'
-const baseUrl = 'localhost:8000'
+// const baseUrl = 'localhost:8000'
+const baseUrl = '192.168.0.12:8000'
 
 const fetch = (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
   if (typeof input === 'string' && !input.startsWith('http') && input.startsWith('/')) {

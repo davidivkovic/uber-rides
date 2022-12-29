@@ -10,7 +10,7 @@ import com.uber.rides.ws.OutboundMessage;
 public class UberUpdate implements OutboundMessage {
 
     public enum Status {
-        LOOKING, FOUND, NO_DRIVERS, NO_ROUTE, PAYMENT_FAILED
+        LOOKING, NOT_LOOKING, FOUND, NO_DRIVERS, NO_ROUTE, PAYMENT_FAILED
     }
 
     public Status status;

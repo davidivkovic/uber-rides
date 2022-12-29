@@ -185,6 +185,7 @@ export default class ChooseRide {
     if (!ridesStore.state?.passengers || ridesStore.state?.passengers?.length === 0) {
       ridesStore.setState(store => store.state.rideChosen = false)
     }
+    send(createMessage(OutboundMessages.NOT_LOOKING))
   }
 
   async pollOrder() {

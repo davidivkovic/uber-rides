@@ -1,4 +1,4 @@
-import { ridesStore } from "@app/stores/ridesStore"
+import { ridesStore } from '@app/stores/ridesStore'
 
 export default (message: string[0]) => {
   if (message[0] === ridesStore.state?.instructions) return

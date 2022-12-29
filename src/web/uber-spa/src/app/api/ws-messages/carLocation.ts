@@ -31,7 +31,7 @@ export default (message: {
   const carRemoved = position.lat() === 0 && position.lng() === 0
   const isSelf =
     userStore.user?.car?.registration === message.registration ||
-    ridesStore.state.trip?.riders?.find((r: any) => r.id === userStore.user.id)
+    ridesStore.state.trip?.car?.registration === message.registration
   let marker = findMarker(message.registration)
 
   if (carRemoved) {
@@ -84,7 +84,7 @@ export default (message: {
         store.state.pickup.driverDistance = message.driverDistance
       })
       if (google.maps.geometry.spherical.computeDistanceBetween(
-        ridesStore.state.pickupMarker.getPosition(),
+        new google.maps.LatLng(ridesStore.state.trip.route.start.latitude, ridesStore.state.trip.route.start.longitude),
         position
       ) <= 50) {
         ridesStore.setState(store => store.state.pickup.canStart = true)

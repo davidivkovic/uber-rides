@@ -1,9 +1,12 @@
 package com.uber.rides.controller;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.Date;
 import java.util.List;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -138,11 +141,16 @@ public class Trips extends Controller {
             .orElse(null);
 
         if (driver == null) {
-            trip.getRiders().forEach(r -> ws.sendMessageToUser(r.getId(), new UberUpdate(UberUpdate.Status.NO_DRIVERS)));
             return badRequest("No drivers available currently. Please try again later.");
         }
 
-        driver.setAvailable(false);
+        synchronized (driver) {
+            if (!driver.isAvailable()) {
+                return badRequest("No drivers available currently. Please try again later.");
+            }
+            driver.setAvailable(false);
+        }
+
         trip.setStatus(Trip.Status.CREATED);
 
         var pickupDirections = maps.getDirections(
@@ -154,7 +162,7 @@ public class Trips extends Controller {
 
         if (pickupDirections == null) {
             driver.setAvailable(true);
-            trip.getRiders().forEach(r -> ws.sendMessageToUser(r.getId(), new UberUpdate(UberUpdate.Status.NO_ROUTE)));
+            // trip.getRiders().forEach(r -> ws.sendMessageToUser(r.getId(), new UberUpdate(UberUpdate.Status.NO_ROUTE)));
             return badRequest("Could not find a route to the start of the trip.");
         }
 
@@ -175,10 +183,14 @@ public class Trips extends Controller {
         driver.getUser().setCurrentTrip(trip);
         driver.setDirections(pickupDirections);
         trip.setStatus(Trip.Status.PAID);
+        trip.setDriver(driver.getUser());
         trip.setCar(driver.getUser().getCar());
 
         var tripAssigned = new TripAssigned(trip, pickupDirections);
-        trip.getRiders().forEach(r -> ws.sendMessageToUser(r.getId(), tripAssigned));
+        scheduler.schedule(
+            () -> trip.getRiders().forEach(r -> ws.sendMessageToUser(r.getId(), tripAssigned)),
+            Instant.now().plusSeconds(3)
+        );
         ws.sendMessageToUser(driver.getUser().getId(), tripAssigned);
 
         // Send message to all riders that the driver is on his way

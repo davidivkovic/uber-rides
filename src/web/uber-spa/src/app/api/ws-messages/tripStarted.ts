@@ -20,9 +20,15 @@ export default async (message: { trip: any }) => {
       store.state.pickupInfoWindows = tripInfoWindows
     })
     map.fitBounds(new google.maps.LatLngBounds(
-      message.trip.route.bounds.southwest,
-      message.trip.route.bounds.northeast
-    ))
+      {
+        lat: message.trip.route.swBounds.latitude,
+        lng: message.trip.route.swBounds.longitude
+      },
+      {
+        lat: message.trip.route.neBounds.latitude,
+        lng: message.trip.route.neBounds.longitude
+      })
+    )
     await window.router.navigate(['/drive'])
     window.detector.detectChanges()
   }

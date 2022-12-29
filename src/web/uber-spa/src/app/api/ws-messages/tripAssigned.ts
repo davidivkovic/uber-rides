@@ -20,4 +20,5 @@ export default async (message: { trip: any, directions: any, driverDuration: num
     await window.router.navigate(['/pickup'])
     window.detector.detectChanges()
   }
+  new Audio('/assets/sounds/trip_assigned.m4r').play()
 }

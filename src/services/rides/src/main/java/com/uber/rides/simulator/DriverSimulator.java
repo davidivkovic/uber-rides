@@ -209,17 +209,19 @@ public class DriverSimulator {
         User driver, 
         boolean rerunOnEnd
     ) {
-        if (!locations.hasNext()) {
-            cancelTask(driver);
-            if (rerunOnEnd) runTask(driver);
-            return;
-        }
-        
-        var index = locations.nextIndex() + 1;
-        var location = locations.next();
-        var sim = sims.get(driver.getId());
-        sim.distance -= location.distance;
         try {
+            var sim = sims.get(driver.getId());
+            if (!locations.hasNext()) {
+                if (driver.getCurrentTrip() != null) {
+                    sim.session.sendMessage(new TextMessage("END_TRIP\n{}"));
+                }
+                cancelTask(driver);
+                if (rerunOnEnd) runTask(driver);
+                return;
+            }
+            var index = locations.nextIndex() + 1;
+            var location = locations.next();
+            sim.distance -= location.distance;
             var updateLocation = new TextMessage(
                 "UPDATE_LOCATION\n{\"latitude\":" 
                 + location.location.lat 

@@ -1,14 +1,17 @@
 import { Component } from '@angular/core'
+import { Router } from '@angular/router'
 import { CurrencyPipe, NgClass, NgFor, NgIf } from '@angular/common'
+import { watch } from 'usm-mobx'
 import { createInfoWindow, createMarker, createPolyline, map, removeAllElements, subscribe } from '@app/api/google-maps'
 import { ridesStore } from '@app/stores/ridesStore'
 import { computed, formatDistance, formatDuration } from '@app/utils'
 import PassengersStatus from '@app/components/rides/passengersStatus'
 import RouteDetails from '@app/components/rides/routeDetails'
+import DriverDetails from '@app/components/common/driverDetails'
 
 @Component({
   standalone: true,
-  imports: [NgIf, NgFor, NgClass, PassengersStatus, RouteDetails, CurrencyPipe],
+  imports: [NgIf, NgFor, NgClass, PassengersStatus, RouteDetails, DriverDetails, CurrencyPipe],
   template: `
     <div class="w-[400px] h-[700px] p-4 bg-white rounded-xl pointer-events-auto">
       <div *ngIf="!ridesStore.state.trip" class="flex flex-col">
@@ -61,7 +64,19 @@ import RouteDetails from '@app/components/rides/routeDetails'
           class="mt-3 pr-2"
         >
         </PassengersStatus>
-        <button class="secondary mt-auto pointer-events-none">
+      
+        <div *ngIf="pickupPending || ridesStore.state.tripInProgress">
+          <DriverDetails [driver]="ridesStore.state.trip.driver"></DriverDetails>
+          <div>
+            <h3 class="text-xl leading-5">{{ formatDistance(ridesStore.state?.pickup?.driverDistance) }}</h3>
+            <p class="text-[15px] text-zinc-700">approx. {{ formatDuration(ridesStore.state?.pickup?.driverDuration) }}</p>
+          </div>
+        </div>
+
+        <button 
+          *ngIf="(!ridesStore.state?.uberStatus || ridesStore.state?.uberStatus === 'NOT_LOOKING') && !pickupPending"
+          class="secondary mt-auto pointer-events-none"
+        >
           <div class="flex justify-center items-center">
             <svg *ngIf="true" class="animate-spin -ml-2 mr-2 h-4 w-4 text-black" fill="none" viewBox="0 0 24 24">
               <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -70,6 +85,46 @@ import RouteDetails from '@app/components/rides/routeDetails'
             <p class="text-base">Waiting for ride owner</p>
           </div>
         </button>
+
+        <button 
+          *ngIf="ridesStore.state?.uberStatus === 'LOOKING' && !pickupPending"
+          class="secondary !text-base mt-auto pointer-events-none"
+        >
+        <div 
+          class="flex items-center"
+          [ngClass]="{ 
+            'justify-center': ridesStore.state.uberFound
+          }"
+        >
+          <svg 
+            *ngIf="!ridesStore.state.uberFound"
+            class="animate-spin -ml-2 mr-2.5 h-4 w-4 text-white" 
+            fill="none" 
+            viewBox="0 0 24 24"
+          >
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+          <span *ngIf="!ridesStore.state.uberFound">
+            Looking for an {{ ridesStore.state.trip.car.type.name }}
+          </span>
+          <span *ngIf="ridesStore.state.uberFound">
+            {{ uberFoundText }}
+          </span>
+          <svg 
+            *ngIf="ridesStore.state.uberFound"
+            class="animate-spin ml-2 -mr-2 h-4 w-4 text-white" 
+            fill="none" 
+            viewBox="0 0 24 24"
+          >
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+          <span *ngIf="!ridesStore.state.uberFound" class="ml-auto -mr-1.5">
+            {{ lookingDuration }}s
+          </span>
+        </div>
+      </button>
       </div>
     </div>
   `
@@ -77,6 +132,45 @@ import RouteDetails from '@app/components/rides/routeDetails'
 export default class Passengers {
 
   ridesStore = ridesStore
+  lookingDuration = 1
+  lookingInterval = null
+  uberFoundText = 'Uber found. Please wait...'
+  pickupPending = false
+
+  constructor(public router: Router) {
+    const isMyTrip = ridesStore.state.directions != null
+    if (ridesStore.state.pickup) {
+      this.pickupPending = true
+      ridesStore.setState(store => store.state.trip.riders.forEach(r => r.accepted = true))
+    }
+    if (isMyTrip) {
+      return
+    }
+    watch(
+      ridesStore,
+      () => ridesStore.state.uberStatus,
+      (curr, old) => {
+        if (curr === 'LOOKING') {
+          this.lookingInterval = setInterval(() => {
+            this.lookingDuration++
+          }, 1000)
+        }
+        else {
+          clearInterval(this.lookingInterval)
+          this.lookingDuration = 1
+        }
+      }
+    )
+    watch(
+      ridesStore,
+      () => ridesStore.state.uberFound,
+      (curr, old) => {
+        if (!curr) return
+        setTimeout(() => this.uberFoundText = 'Processing payment...', 1500)
+        setTimeout(() => this.pickupPending = true, 3000)
+      }
+    )
+  }
 
   stops = computed(
     () => ridesStore.state.trip,
@@ -88,7 +182,7 @@ export default class Passengers {
           this.drawPolyline(stops)
         }
         else {
-          subscribe(() => this.drawPolyline(stops,))
+          subscribe(() => this.drawPolyline(stops))
         }
       }
       return stops ?? []

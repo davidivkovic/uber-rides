@@ -12,6 +12,7 @@ const handlers = {
   [InboundMessages.INSTRUCTIONS]: () => import('./ws-messages/instructions'),
   [InboundMessages.TRIP_STARTED]: () => import('./ws-messages/tripStarted'),
   [InboundMessages.UBER_UPDATE]: () => import('./ws-messages/uberUpdate'),
+  [InboundMessages.TRIP_ENDED]: () => import('./ws-messages/tripEnded')
 }
 
 const isConnected = () => ws?.OPEN
@@ -25,7 +26,7 @@ const connect = (accessToken: string) => {
     const header = InboundMessages[tokens[0]]
     const body = JSON.parse(tokens[1])
 
-    let handler: { default: (body: string) => void }
+    let handler: { default: (body: any) => void }
     if (handler = await handlers[header]?.()) {
       handler.default?.(body)
     }

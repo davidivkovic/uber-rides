@@ -8,6 +8,7 @@ import StatusBar from './components/statusBar'
 import Navigation from './components/navigation'
 import { map, subscribe } from '@app/api/google-maps'
 import trips from '@app/api/trips'
+import { Router } from '@angular/router'
 
 @Component({
   standalone: true,
@@ -64,9 +65,13 @@ export default class Pickup {
   formatDuration = formatDuration
   formatDistance = formatDistance
 
+  constructor(public router: Router) { }
+
   async startTrip() {
     try {
       await trips.startTrip()
+      this.router.navigate(['/drive'])
+
     }
     catch (e) {
       console.error(e.message)
