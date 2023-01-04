@@ -13,6 +13,7 @@ class NotificationStore {
 
   @action
   show(message: string) {
+    this.closeAll()
     if (message == this.notifications.slice(-1)[0]?.message) return
     const id = `notification-${this.notifications.length}`
     this.notifications.push({

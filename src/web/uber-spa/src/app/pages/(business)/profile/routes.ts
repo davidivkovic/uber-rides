@@ -17,9 +17,6 @@ const routes: Routes = [
       }, 
       {
         path: 'payment', loadComponent: () => import('./payment')
-      },
-      {
-        path: 'pay', loadComponent: () => import('./pay')
       }
     ]
   }

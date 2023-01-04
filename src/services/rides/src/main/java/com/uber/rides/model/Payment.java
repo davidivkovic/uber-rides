@@ -9,12 +9,19 @@ import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 
+import com.braintreegateway.Result;
+import com.braintreegateway.Transaction;
+
+import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
+
+import static com.uber.rides.util.Utils.gateway;
 
 @Getter
 @Setter
 @Entity
+@Builder
 public class Payment {
 
     @Id
@@ -26,6 +33,7 @@ public class Payment {
     double amount;
     String currency;
 
+    // nepotrebno
     @ManyToOne(fetch = FetchType.LAZY) PaymentMethod method;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -34,4 +42,17 @@ public class Payment {
     @Column(name = "user_id", insertable = false, updatable = false)
     Long userId;
 
+    String transactionId;
+
+    public boolean capture() {
+        Result<Transaction> result = gateway.transaction()
+            .submitForSettlement(this.transactionId);
+        return result.isSuccess();
+    }
+
+    public boolean refund() {
+        Result<Transaction> voidResult = gateway.transaction()
+            .voidTransaction(this.transactionId);
+        return voidResult.isSuccess();
+    }
 }

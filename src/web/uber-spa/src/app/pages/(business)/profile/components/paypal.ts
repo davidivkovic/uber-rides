@@ -1,8 +1,9 @@
-import { Component, EventEmitter, Output, ViewChild } from '@angular/core'
+import { Component, EventEmitter, Input, Output, ViewChild } from '@angular/core'
+import { NgIf } from '@angular/common'
 import { watchEffect } from '@app/utils'
 import payments from '@app/api/payments'
 import { notificationStore } from '@app/stores'
-import { NgIf } from '@angular/common'
+import { LoadingOverlay } from './loadingOverlay'
 
 declare const braintree
 declare const paypal
@@ -10,9 +11,9 @@ declare const paypal
 @Component({
   selector: 'Paypal',
   standalone: true,
-  imports: [NgIf],
+  imports: [NgIf, LoadingOverlay],
   template: `
-    <div class="h-full flex flex-col justify-between">
+    <div class="h-full relative flex flex-col justify-between">
       <div>
         {{ scriptsLoaded() }}
         {{ buttonRendered() }}
@@ -27,16 +28,21 @@ declare const paypal
         <button *ngIf="loadingButton" disabled class="secondary">PayPal loading...</button>
         <button (click)="oncancel.emit()" class="secondary w-full">Cancel</button>
       </div>
+      <LoadingOverlay *ngIf="saving" class="absolute h-full w-full z-[9999]"></LoadingOverlay>
     </div>
   `
 })
 export default class Paypal {
+  @Input() setDefault: boolean;
+  
   @ViewChild('pp') paypalButton
 
   braintreeLoaded = false
   paypalLoaded = false
 
   loadingButton = true
+
+  saving = false
 
   error = ''
   token = ''
@@ -114,8 +120,7 @@ export default class Paypal {
                       color: 'blue',
                       label: 'paypal',
                       shape: 'rect',
-                      height: 48,
-
+                      height: 48
                     },
                     fundingSource: paypal.FUNDING.PAYPAL,
 
@@ -126,13 +131,15 @@ export default class Paypal {
                     },
 
                     onApprove: (data, actions) => {
+                      this.saving = true
                       return paypalCheckoutInstance.tokenizePayment(data, async (err, payload) => {
                         try {
-                          await payments.addPaypal(payload.nonce, payload.details.email)
+                          await payments.addPaypal(payload.nonce, payload.details.email, this.setDefault)
                           notificationStore.show('Paypal successfully added.')
                           this.onsuccess.emit()
                         } catch (error) {
                           this.error = error
+                          this.saving = false
                         }
                       })
                     },
@@ -141,10 +148,10 @@ export default class Paypal {
                       console.log('PayPal payment canceled.')
                     },
 
-                    onError: function (err) { }
+                    onError: function (err) {}
                   })
                   .render('#paypal-button')
-                  .catch(err => { })
+                  .catch(err => {})
               }
             )
           }

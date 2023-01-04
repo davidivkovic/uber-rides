@@ -93,6 +93,10 @@ public class User implements UserDetails {
 
     @Transient Trip currentTrip;
 
+    public void addPaymentMethod(PaymentMethod method) {
+        paymentMethods.add(method);
+    }
+
     public void addFavoriteRoute(Route route) {
         favoriteRoutes.add(route);
     }

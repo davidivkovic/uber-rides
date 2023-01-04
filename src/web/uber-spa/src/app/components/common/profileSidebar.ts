@@ -41,10 +41,6 @@ export default class ProfileSidebar {
     {
       name: 'Payment methods',
       link: 'payment'
-    },
-    {
-      name: 'Payment test',
-      link: 'pay'
     }
   ]
 

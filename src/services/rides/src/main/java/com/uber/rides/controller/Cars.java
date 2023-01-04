@@ -36,7 +36,7 @@ public class Cars extends Controller {
     @Secured({ Roles.ADMIN })
     public Object registerCar(@Validated @RequestBody RegisterCarRequest request) {
 
-        var user = db.find(User.class, authenticatedUserId());
+        var user = db.find(User.class, request.getUserId());
         if (user == null) {
             return badRequest(USER_NOT_EXIST);
         }
@@ -46,6 +46,7 @@ public class Cars extends Controller {
         user.setCar(car);
 
         db.persist(car);
+        db.merge(user);
 
         return ok();
 

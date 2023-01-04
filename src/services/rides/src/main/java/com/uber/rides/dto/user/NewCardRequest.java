@@ -16,4 +16,5 @@ public class NewCardRequest {
     @NotNull short month;
     @NotBlank String country;
     @NotBlank String nonce;
+    boolean setDefault;
 }

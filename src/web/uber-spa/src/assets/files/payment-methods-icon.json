@@ -1,0 +1,8 @@
+{
+    "Visa": "https://d3i4yxtzktqr9n.cloudfront.net/web-payments-experience/c57afa92c9773650.svg",
+    "Mastercard": "https://d3i4yxtzktqr9n.cloudfront.net/web-payments-experience/2c03f0a00a6e70e3.svg",
+    "American Express": "https://1000logos.net/wp-content/uploads/2016/10/American-Express-logo.png",
+    "Maestro": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/80/Maestro_2016.svg/1200px-Maestro_2016.svg.png",
+    "Paypal": "https://d3i4yxtzktqr9n.cloudfront.net/web-payments-experience/29c3a6a2d4cd40fa.svg",
+    "default": "https://d3i4yxtzktqr9n.cloudfront.net/web-payments-experience/a90ee32180aec8e4.svg"
+  }

@@ -8,7 +8,7 @@ import { NewCard } from './card'
   standalone: true,
   imports: [NewCard, NgFor, NgIf, Paypal],
   template: `
-    <div class="w-[400px] h-[550px] p-2">
+    <div class="w-[450px] h-[550px] p-2">
       <div *ngIf="!optionChosen; else other_content">
         <h1 class="text-2xl mb-7">Add a payment method</h1>
         <div
@@ -30,11 +30,13 @@ import { NewCard } from './card'
           *ngIf="optionChosen.id === 'paypal'"
           (oncancel)="showOptions()"
           (onsuccess)="closeDialog()"
+          [setDefault]="props.setDefault"
         ></Paypal>
         <NewCard
           *ngIf="optionChosen.id === 'card'"
           (oncancel)="showOptions()"
           (onsuccess)="closeDialog()"
+          [setDefault]="props.setDefault"
         ></NewCard>
       </ng-template>
     </div>

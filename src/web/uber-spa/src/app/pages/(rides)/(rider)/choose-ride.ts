@@ -3,12 +3,14 @@ import { Location, NgFor, NgIf, NgClass, CurrencyPipe } from '@angular/common'
 import { Router } from '@angular/router'
 import { subscribe, watch } from 'usm-mobx'
 import { ridesStore } from '@app/stores/ridesStore'
-import { notificationStore } from '@app/stores'
+import { dialogStore, notificationStore } from '@app/stores'
 import trips from '@app/api/trips'
 import { createMessage, OutboundMessages } from '@app/api/ws-messages/messages'
 import { send } from '@app/api/ws'
 import PassengersStatus from '@app/components/rides/passengersStatus'
-import { computed } from '@app/utils'
+import payments from '@app/api/payments'
+import methodLogos from '@app/../assets/files/payment-methods-icon.json'
+import { PayDialog } from '@app/pages/(business)/profile/components/choosePaymentMethodDialog'
 
 @Component({
   standalone: true,
@@ -79,10 +81,30 @@ import { computed } from '@app/utils'
         class="mt-3 px-5"
       >
       </PassengersStatus>
+      <div class="h-10 w-full mt-auto" (click)="changePaymentMethod()">
+      <div
+      class=" w-full cursor-pointer flex items-center p-5"
+    >
+      <div class="w-[30px] h-full flex items-center justify-top">
+        <img
+          [src]="methodLogos[defaultPaymentMethod?.typeDetails ?? 'default']"
+          alt="Payment method icon"
+          class="h-[22px] w-[22px] object-contain"
+        />
+      </div>
+      <div class="flex justify-between items-center flex-1">
+        <div class="flex space-x-1 items-baseline">
+          <div class="text-sm">{{ defaultPaymentMethod?.name ?? "Add payment method" }}</div>
+          <div class="text-xs">{{ defaultPaymentMethod?.email }}</div>
+        </div>
+        <svg width="1em" height="1em" viewBox="0 0 24 24" fill="none"><title>Chevron right small</title><path d="M16.9 12l-4.6 6H8.5l4.6-6-4.6-6h3.8l4.6 6z" fill="currentColor"></path></svg>
+      </div>
+    </div>
+      </div>
       <button 
         *ngIf="!lookingForRide"
         (click)="router.navigate(['looking/add-passengers'])" 
-        class="secondary mx-4 !py-2.5 !text-base mt-auto"
+        class="secondary mx-4 !py-2.5 !text-base mt-4"
       >
         Invite Passengers
       </button>
@@ -153,6 +175,8 @@ export default class ChooseRide {
   lookingInterval = null
   lookingLoading = false
   uberFoundText = 'Uber found. Please wait...'
+  defaultPaymentMethod = null
+  methodLogos = methodLogos
 
   constructor(public location: Location, public router: Router, public detector: ChangeDetectorRef) {
     if (!ridesStore.state?.directions) {
@@ -177,6 +201,25 @@ export default class ChooseRide {
     this.selectFirstCarType()
   }
 
+  async ngOnInit() {
+    this.fetchDefaultMethod()
+  }
+
+  async fetchDefaultMethod() {
+    try {
+      const method = await payments.getDefault()
+      if (method.type == 'CARD') {
+        method.name = `${method.typeDetails} - ${method.cardNumber.slice(15)} (${method.nickname})`
+      }
+      this.defaultPaymentMethod = method
+    } catch(err) {
+      
+    }
+  }
+
+  changePaymentMethod() {
+    dialogStore.openDialog(PayDialog, { refetchDefaultMethod: () => this.fetchDefaultMethod() }, () => this.fetchDefaultMethod())
+  }
 
   cancelOrder() {
     if (ridesStore.state.uberFound) return

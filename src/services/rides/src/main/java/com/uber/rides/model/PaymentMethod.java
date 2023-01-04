@@ -1,6 +1,8 @@
 package com.uber.rides.model;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -18,6 +20,9 @@ import lombok.Setter;
 
 import com.braintreegateway.CustomerRequest;
 import com.braintreegateway.PaymentMethodRequest;
+import com.braintreegateway.Result;
+import com.braintreegateway.Transaction;
+import com.braintreegateway.TransactionRequest;
 
 import static com.uber.rides.util.Utils.gateway;
 
@@ -30,7 +35,21 @@ import static com.uber.rides.util.Utils.gateway;
 public class PaymentMethod {
 
     public enum Type {
-        CARD, PAYPAL
+        CARD, PAYPAL;
+
+        @Override
+        public String toString() {
+            switch(this) {
+                case CARD: return "Credit or debit card";
+                case PAYPAL: return "PayPal";
+                default: return "";
+              }
+        }
+
+    }
+
+    public String getTypeName() {
+        return this.type.toString();
     }
 
     @Id @GeneratedValue Long id;
@@ -93,7 +112,6 @@ public class PaymentMethod {
         if (!result.isSuccess()) {
             return false;
         }
-
         token = result.getTarget().getToken();
         return true;
     }
@@ -102,13 +120,20 @@ public class PaymentMethod {
         gateway.paymentMethod().delete(token);
     }
 
-    boolean authorize(double amount, String currency) {
-        return true;
-    }
-    boolean capture(String token) {
-        return true;
-    }
-    boolean cancel(String token) {
-        return true;
+    public Payment authorize(double amount, String currency) {
+        TransactionRequest request = new TransactionRequest()
+            .paymentMethodToken(this.token)
+            .currencyIsoCode(currency)
+            .amount(BigDecimal.valueOf(amount));
+      
+      Result<Transaction> result = gateway.transaction().sale(request);
+      if(!result.isSuccess()) return null;
+
+      return Payment.builder()
+        .amount(amount)
+        .currency(currency)
+        .capturedAt(LocalDateTime.now())
+        .transactionId(result.getTarget().getId())
+        .build();
     }
 }

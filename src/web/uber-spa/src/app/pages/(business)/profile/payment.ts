@@ -1,12 +1,11 @@
-import { Component, Input } from '@angular/core'
-import { dialogStore, notificationStore } from '@app/stores'
-import payments from '@app/api/payments'
+import { Component } from '@angular/core'
 import { NgIf, NgFor } from '@angular/common'
+import { dialogStore, notificationStore } from '@app/stores'
 import { PaymentMethodDialog } from './components/paymentMethodDialog'
 import { CardNumberHidden } from './components/pipes'
-import card from 'creditcards'
-import methodLogos from '@app/../assets/files/payment-methods.json'
 import dayjs from 'dayjs'
+import payments from '@app/api/payments'
+import methodLogos from '@app/../assets/files/payment-methods.json'
 
 @Component({
   standalone: true,
@@ -16,7 +15,7 @@ import dayjs from 'dayjs'
       <h3 class="text-3xl">Saved payment methods</h3>
       <div
         *ngFor="let method of methods"
-        class="relative group w-[400px] flex flex-col justify-between  bg-gray-100 rounded-lg h-[220px] mt-10 p-6"
+        class="relative group w-[400px] flex flex-col justify-between bg-gray-100 rounded-lg h-[220px] mt-10 p-6"
       >
         <div>
           <div
@@ -43,13 +42,13 @@ import dayjs from 'dayjs'
           </div>
           <div class="flex justify-between items-center">
             <div>{{ method.name }}</div>
-            <img class="w-16" [src]="method?.image" />
+            <img class="w-16" [src]="methodLogos[method.typeDetails]" />
           </div>
-          <div *ngIf="method.type === 'card'" class="mt-3 text-xl tracking-wider">
+          <div *ngIf="method.type === 'CARD'" class="mt-3 text-xl tracking-wider">
             {{ method.cardNumber | cardNumberHidden }}
           </div>
         </div>
-        <div *ngIf="method.type === 'card'; else paypal" class="flex justify-between">
+        <div *ngIf="method.type === 'CARD'; else paypal" class="flex justify-between">
           <div>
             <div class="text-sm text-gray-400">Name</div>
             <div>{{ method.nickname }}</div>
@@ -86,7 +85,7 @@ import dayjs from 'dayjs'
   `
 })
 export default class Payment {
-  card = card
+  methodLogos = methodLogos
 
   methods = []
   notificationStore = notificationStore
@@ -99,16 +98,8 @@ export default class Payment {
     try {
       this.methods = await payments.getMethods()
       this.methods.forEach(m => {
-        if (m.cardNumber) {
-          m.type = 'card'
-          m.name = 'Credit / debit card'
-          const type = this.card.card.type(m.cardNumber.split(' ').join(''))
-          m.image = methodLogos[type]
+        if (m.type === 'CARD') {
           m.expirationDate = dayjs(m.expirationDate).format('MM/YY')
-        } else {
-          m.type = 'paypal'
-          m.name = 'Paypal'
-          m.image = methodLogos['paypal']
         }
       })
     } catch (error) {}

@@ -1,12 +1,13 @@
 import { CardNumber, Date } from './pipes'
+import { NgFor, NgIf } from '@angular/common'
 import { CloseButton } from '@app/components/ui/base/closeButton'
 import { FormsModule } from '@angular/forms'
-import { Component, EventEmitter, Output } from '@angular/core'
+import { Component, EventEmitter, Input, Output } from '@angular/core'
 import countries from '@app/../assets/files/countries.json'
 import payments from '@app/api/payments'
-import { NgFor, NgIf } from '@angular/common'
+import { LoadingOverlay } from './loadingOverlay'
 import { notificationStore } from '@app/stores'
-import card from 'creditcards'
+import cards from "creditcards"
 import methodLogos from '@app/../assets/files/payment-methods.json'
 
 declare const braintree
@@ -14,9 +15,9 @@ declare const braintree
 @Component({
   standalone: true,
   selector: 'NewCard',
-  imports: [CloseButton, CardNumber, FormsModule, Date, NgFor, NgIf],
+  imports: [CloseButton, CardNumber, FormsModule, Date, NgFor, NgIf, LoadingOverlay],
   template: `
-    <div class="h-[534px] space-y-2 max-w-sm flex flex-col">
+    <div class="h-[534px] space-y-2 w-full flex flex-col relative">
       <div class="space-y-6 flex flex-col flex-1">
         <h2 class="text-2xl font-normal">Add credit or debit card</h2>
         <form (ngSubmit)="addCard()" ngNativeValidate class="text-gray-800 flex flex-1 flex-col">
@@ -102,17 +103,21 @@ declare const braintree
           </div>
         </form>
       </div>
+      <LoadingOverlay *ngIf="saving" class="absolute h-full w-full"></LoadingOverlay>
     </div>
   `
 })
 export class NewCard {
+  @Input() setDefault: boolean;
+
   @Output() oncancel = new EventEmitter()
   @Output() onsuccess = new EventEmitter()
 
+  cards = cards
   currentCardImage = ''
-  card = card
   token = ''
   braintreeLoaded = false
+  saving = false
 
   cardData = {
     cardNumber: '',
@@ -134,7 +139,7 @@ export class NewCard {
     this.checkValue(event)
     const joined = this.cardData.cardNumber.split(' ').join('')
     const filled = joined.padEnd(16, '0')
-    const type = this.card.card.type(filled)
+    const type = this.cards.card.type(filled)
     this.currentCardImage = methodLogos[type]
   }
 
@@ -164,8 +169,10 @@ export class NewCard {
         cvv,
         country,
         nickname,
-        nonce
+        nonce,
+        setDefault: this.setDefault
       })
+     
       notificationStore.show('New card successfully added.')
       this.onsuccess.emit()
     } catch (error) {
@@ -202,6 +209,7 @@ export class NewCard {
             options: { validate: false }
           }
         }
+        this.saving = true
         clientInstance.request(
           {
             endpoint: 'payment_methods/credit_cards',
