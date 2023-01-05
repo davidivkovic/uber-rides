@@ -44,9 +44,11 @@ public class MessageHandler {
     );
 
     static Map<String, Class<? extends InboundMessage<AdminData>>> adminMessages = Map.of(
+        // No admin messages currently
     );
 
     static Map<String, Class<? extends InboundMessage<UserData>>> sharedMessages = Map.of(
+        // EXAMPLE: InboundChatMessage.TYPE, InboundChatMessage.class
     );
 
     static EmptyMessage emptyMessage = new EmptyMessage();
@@ -61,17 +63,16 @@ public class MessageHandler {
         }; 
 
         if (messageType == null) messageType = sharedMessages.get(type);
-        if (messageType == null) messageType = EmptyMessage.class;
+        if (messageType == null) {
+            emptyMessage.handle(sender);
+            return;
+        }
 
         try { 
-            if (messageType == EmptyMessage.class) {
-                emptyMessage.handle(sender);
-            } else {
-                var message = (InboundMessage<UserData>) jsonMapper
-                    .readerForUpdating(container.getBean(messageType))
-                    .readValue(payload);
-                message.handle(sender);
-            }
+            var message = (InboundMessage<UserData>) jsonMapper
+                .readerForUpdating(container.getBean(messageType))
+                .readValue(payload);
+            message.handle(sender);
         } 
         catch (JsonProcessingException e) { 
             WS.sendMessage(sender.session, ErrorMessages.MALFORMED_BODY);
@@ -80,6 +81,6 @@ public class MessageHandler {
             WS.sendMessage(sender.session, ErrorMessages.INTERNAL_SERVER_ERROR);
             log.error("Failed to create service of type {}.", messageType.getName());
         }
-        
+
     }
 }
