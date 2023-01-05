@@ -1,5 +1,5 @@
 import { baseUrl } from '.'
-import { InboundMessages } from './ws-messages/messages'
+import { InboundMessages, OutboundMessages } from './ws-messages/messages'
 
 const url = 'ws://' + baseUrl + '/ws'
 let ws: WebSocket
@@ -18,7 +18,7 @@ const handlers = {
 const isConnected = () => ws?.OPEN
 
 const connect = (accessToken: string) => {
-  ws = new WebSocket(url + `?token=${accessToken}`)
+  ws = new WebSocket(`${url}?token=${accessToken}`)
   isConnected() && console.debug('[Connected to WS at ' + url + ']')
 
   ws.onmessage = async (message: MessageEvent<any>) => {
@@ -33,19 +33,16 @@ const connect = (accessToken: string) => {
   }
 }
 
+const send = (type: OutboundMessages, message: any = {}) => {
+  if (typeof message !== 'string') message = JSON.stringify(message)
+  const packet = type + '\n' + message
+  ws?.send(packet)
+}
+
 const disconnect = () => {
   ws?.close()
   ws = null
   console.debug('[Disconnected from WS]')
-}
-
-/**
-  NOTE:
-  Do not send plain strings.
-  Use ./ws-messages/messages/createMessage to create a packet 
-**/
-const send = (packet: string) => {
-  ws?.send(packet)
 }
 
 export { connect, disconnect, send }

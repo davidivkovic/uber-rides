@@ -2,7 +2,7 @@ import { Component } from '@angular/core'
 import { Router } from '@angular/router'
 import { CurrencyPipe, NgClass, NgFor, NgIf } from '@angular/common'
 import { watch } from 'usm-mobx'
-import { createInfoWindow, createMarker, createPolyline, map, removeAllElements, subscribe } from '@app/api/google-maps'
+import { createInfoWindow, createMarker, createPolyline, map, refreshAllElements, removeAllElements, subscribe } from '@app/api/google-maps'
 import { ridesStore } from '@app/stores/ridesStore'
 import { computed, formatDistance, formatDuration } from '@app/utils'
 import PassengersStatus from '@app/components/rides/passengersStatus'
@@ -14,24 +14,29 @@ import DriverDetails from '@app/components/common/driverDetails'
   imports: [NgIf, NgFor, NgClass, PassengersStatus, RouteDetails, DriverDetails, CurrencyPipe],
   template: `
     <div class="w-[400px] h-[700px] p-4 bg-white rounded-xl pointer-events-auto">
-      <div *ngIf="!ridesStore.state.trip" class="flex flex-col">
+      <div *ngIf="!ridesStore.data.trip" class="flex flex-col">
         <h1 class="text-3xl pb-1">Ride overview</h1>
         <p class="text-zinc-700">You are currently not a passenger on any rides</p>
       </div>
-      <div *ngIf="ridesStore.state.trip" class="flex flex-col h-full">
+      <div *ngIf="ridesStore.data.trip" class="flex flex-col h-full">
         <h1 class="text-3xl pb-3">Ride overview</h1>
         <RouteDetails 
           [stops]="stops()" 
-          [distance]="ridesStore.state.trip.distanceInMeters"
-          [duration]="ridesStore.state.trip.durationInSeconds"
+          [distance]="ridesStore.data.trip.distanceInMeters"
+          [duration]="ridesStore.data.trip.durationInSeconds"
         >
         </RouteDetails>
         <!-- <h3 class="mt-3 tracking-wide">Ride Details</h3> -->
-        <div class="flex items-center bg-[#f6f6f6] rounded-md mt-3 py-1.5 mb-1 pr-3.5">
-          <img [src]="ridesStore.state.trip.car.type.image" class="-ml-1 w-[100px] h-[100px]" />
+        <div class="flex items-center bg-[#f6f6f6] rounded-md mt-3 py-2.5 mb-1 pr-3.5">
+          <div class="relative -ml-1 ">
+            <img [src]="ridesStore.data.trip.car.type.image" class="w-[100px] h-[100px] -mt-7" />
+            <h3 class="absolute -bottom-2 left-3 text-[13px] tracking-wide px-1.5 py-[0.5px] rounded ring-[1.35px] ring-black">
+              {{ ridesStore.data.trip.car.registration.replace('-', ' • ') }}
+            </h3>
+          </div>
           <div class="w-[120px] ml-1.5 mr-6">
             <div class="flex space-x-2 font-medium">
-              <h3 class="text-xl w-min">{{ ridesStore.state.trip.car.type.name }}</h3>
+              <h3 class="text-xl w-min">{{ ridesStore.data.trip.car.type.name }}</h3>
               <div class="flex items-center font-medium">
                 <svg class="mb-0.5 mr-0.5" width="12" height="12" viewBox="0 0 24 24" fill="none">
                   <title>Person</title>
@@ -43,14 +48,14 @@ import DriverDetails from '@app/components/common/driverDetails'
                     >
                   </path>
                 </svg>
-                {{ ridesStore.state.trip.car.type.seats }}
+                {{ ridesStore.data.trip.car.type.seats }}
               </div>
             </div>
-            <p class="text-sm text-gray-500">{{ ridesStore.state.trip.car.type.description }}</p>
+            <p class="text-sm text-gray-500">{{ ridesStore.data.trip.car.type.description }}</p>
           </div>
           <div class="ml-auto text-right">
             <h3 class="text-[22px]">
-              {{ ridesStore.state.trip.totalPrice / (ridesStore.state.trip.riders.length + 1) | currency:'USD' }}
+              {{ ridesStore.data.trip.totalPrice / (ridesStore.data.trip.riders.length + 1) | currency:'USD' }}
             </h3>
             <p class="text-[13px] ml-0.5 -mt-1 mb-0.5 text-zinc-500">
               Per person
@@ -59,22 +64,22 @@ import DriverDetails from '@app/components/common/driverDetails'
           </div>
         </div>
         <PassengersStatus 
-          [passengers]="ridesStore.state.trip.riders"
+          [passengers]="ridesStore.data.trip.riders"
           [canRemove]="false"
           class="mt-3 pr-2"
         >
         </PassengersStatus>
       
-        <div *ngIf="pickupPending || ridesStore.state.tripInProgress">
-          <DriverDetails [driver]="ridesStore.state.trip.driver"></DriverDetails>
+        <div *ngIf="pickupPending || ridesStore.data.tripInProgress">
+          <DriverDetails [driver]="ridesStore.data.trip.driver"></DriverDetails>
           <div>
-            <h3 class="text-xl leading-5">{{ formatDistance(ridesStore.state?.pickup?.driverDistance) }}</h3>
-            <p class="text-[15px] text-zinc-700">approx. {{ formatDuration(ridesStore.state?.pickup?.driverDuration) }}</p>
+            <h3 class="text-xl leading-5">{{ formatDistance(ridesStore.data?.pickup?.driverDistance) }}</h3>
+            <p class="text-[15px] text-zinc-700">approx. {{ formatDuration(ridesStore.data?.pickup?.driverDuration) }}</p>
           </div>
         </div>
 
         <button 
-          *ngIf="(!ridesStore.state?.uberStatus || ridesStore.state?.uberStatus === 'NOT_LOOKING') && !pickupPending"
+          *ngIf="(!ridesStore.data?.uberStatus || ridesStore.data?.uberStatus === 'NOT_LOOKING') && !pickupPending"
           class="secondary mt-auto pointer-events-none"
         >
           <div class="flex justify-center items-center">
@@ -87,17 +92,17 @@ import DriverDetails from '@app/components/common/driverDetails'
         </button>
 
         <button 
-          *ngIf="ridesStore.state?.uberStatus === 'LOOKING' && !pickupPending"
+          *ngIf="ridesStore.data?.uberStatus === 'LOOKING' && !pickupPending"
           class="secondary !text-base mt-auto pointer-events-none"
         >
         <div 
           class="flex items-center"
           [ngClass]="{ 
-            'justify-center': ridesStore.state.uberFound
+            'justify-center': ridesStore.data.uberFound
           }"
         >
           <svg 
-            *ngIf="!ridesStore.state.uberFound"
+            *ngIf="!ridesStore.data.uberFound"
             class="animate-spin -ml-2 mr-2.5 h-4 w-4 text-white" 
             fill="none" 
             viewBox="0 0 24 24"
@@ -105,14 +110,14 @@ import DriverDetails from '@app/components/common/driverDetails'
             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
           </svg>
-          <span *ngIf="!ridesStore.state.uberFound">
-            Looking for an {{ ridesStore.state.trip.car.type.name }}
+          <span *ngIf="!ridesStore.data.uberFound">
+            Looking for an {{ ridesStore.data.trip.car.type.name }}
           </span>
-          <span *ngIf="ridesStore.state.uberFound">
+          <span *ngIf="ridesStore.data.uberFound">
             {{ uberFoundText }}
           </span>
           <svg 
-            *ngIf="ridesStore.state.uberFound"
+            *ngIf="ridesStore.data.uberFound"
             class="animate-spin ml-2 -mr-2 h-4 w-4 text-white" 
             fill="none" 
             viewBox="0 0 24 24"
@@ -120,7 +125,7 @@ import DriverDetails from '@app/components/common/driverDetails'
             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
           </svg>
-          <span *ngIf="!ridesStore.state.uberFound" class="ml-auto -mr-1.5">
+          <span *ngIf="!ridesStore.data.uberFound" class="ml-auto -mr-1.5">
             {{ lookingDuration }}s
           </span>
         </div>
@@ -137,18 +142,29 @@ export default class Passengers {
   uberFoundText = 'Uber found. Please wait...'
   pickupPending = false
 
+  ngAfterViewInit() {
+    refreshAllElements()
+  }
+
   constructor(public router: Router) {
-    const isMyTrip = ridesStore.state.directions != null
-    if (ridesStore.state.pickup) {
-      this.pickupPending = true
-      ridesStore.setState(store => store.state.trip.riders.forEach(r => r.accepted = true))
-    }
+    watch(
+      ridesStore,
+      () => ridesStore.data.pickup,
+      (curr, old) => {
+        if (curr) {
+          this.pickupPending = true
+          ridesStore.setState(store => store.data.trip.riders.forEach(r => r.accepted = true))
+        }
+      }
+    )
+    const isMyTrip = ridesStore.data.directions != null
     if (isMyTrip) {
+      this.pickupPending = true
       return
     }
     watch(
       ridesStore,
-      () => ridesStore.state.uberStatus,
+      () => ridesStore.data.uberStatus,
       (curr, old) => {
         if (curr === 'LOOKING') {
           this.lookingInterval = setInterval(() => {
@@ -163,7 +179,7 @@ export default class Passengers {
     )
     watch(
       ridesStore,
-      () => ridesStore.state.uberFound,
+      () => ridesStore.data.uberFound,
       (curr, old) => {
         if (!curr) return
         setTimeout(() => this.uberFoundText = 'Processing payment...', 1500)
@@ -173,10 +189,10 @@ export default class Passengers {
   }
 
   stops = computed(
-    () => ridesStore.state.trip,
+    () => ridesStore.data.trip,
     () => {
-      const stops = [ridesStore.state.trip.route.start, ...ridesStore.state.trip.route.stops]
-      const isMyTrip = ridesStore.state.directions != null
+      const stops = [ridesStore.data.trip.route.start, ...ridesStore.data.trip.route.stops]
+      const isMyTrip = ridesStore.data.directions != null
       if (!isMyTrip) {
         if (map) {
           this.drawPolyline(stops)
@@ -203,7 +219,7 @@ export default class Passengers {
 
   drawPolyline(stops: any[], removeElements = true) {
     removeElements && removeAllElements()
-    createPolyline(ridesStore.state.trip.route.encodedPolyline)
+    createPolyline(ridesStore.data.trip.route.encodedPolyline)
     stops.forEach((stop, index) => {
       createMarker(stop.latitude, stop.longitude, index == stops.length - 1)
       createInfoWindow(stop.latitude, stop.longitude, stop.address, index, stops.length)
@@ -211,12 +227,12 @@ export default class Passengers {
 
     map.fitBounds(new google.maps.LatLngBounds(
       {
-        lat: ridesStore.state.trip.route.swBounds.latitude,
-        lng: ridesStore.state.trip.route.swBounds.longitude
+        lat: ridesStore.data.trip.route.swBounds.latitude,
+        lng: ridesStore.data.trip.route.swBounds.longitude
       },
       {
-        lat: ridesStore.state.trip.route.neBounds.latitude,
-        lng: ridesStore.state.trip.route.neBounds.longitude
+        lat: ridesStore.data.trip.route.neBounds.latitude,
+        lng: ridesStore.data.trip.route.neBounds.longitude
       })
     )
     map.panBy(-180, 0)

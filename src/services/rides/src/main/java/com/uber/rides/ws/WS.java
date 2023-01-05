@@ -126,14 +126,16 @@ public class WS extends TextWebSocketHandler {
             Json String
         */
         var tokens = message.getPayload().split("\n");
-        if (tokens.length == 2) {
-            var userData = store.get((Long) session.getAttributes().get(USER_ID));
-            if (userData != null) {
-                messageHandler.handle(userData, tokens[0], tokens[1]);
-            } 
-            else { sendMessage(session, ErrorMessages.DISCONNECTED);  }
+        if (tokens.length != 2 || tokens[0] == null) {
+            sendMessage(session, ErrorMessages.MALFORMED);
+            return;
+        }
+        var userData = store.get((Long) session.getAttributes().get(USER_ID));
+        if (userData == null ) {
+            sendMessage(session, ErrorMessages.DISCONNECTED);
+            return;
         } 
-        else { sendMessage(session, ErrorMessages.MALFORMED); }
+        messageHandler.handle(userData, tokens[0], tokens[1]);
     }
 
     @Override

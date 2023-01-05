@@ -50,6 +50,7 @@ import com.uber.rides.ws.Store;
 import com.uber.rides.ws.WS;
 import com.uber.rides.ws.driver.DriverData;
 import com.uber.rides.ws.driver.messages.out.TripAssigned;
+import com.uber.rides.ws.driver.messages.out.TripEnded;
 import com.uber.rides.ws.driver.messages.out.TripStarted;
 import com.uber.rides.ws.rider.messages.out.TripInvite;
 import com.uber.rides.ws.rider.messages.out.UberUpdate;
@@ -71,8 +72,29 @@ public class Trips extends Controller {
     @Autowired ThreadPoolTaskScheduler scheduler;
     @Autowired DriverSimulator simulator;
 
+    @PostMapping("/end")
+    @Secured({ Roles.DRIVER })
+    @Transactional
+    public Object endTrip() {
+        var driverData = store.drivers.get(authenticatedUserId());
+        if (driverData == null) {
+            return badRequest(CONNECTION_ENDED);
+        }
+
+        var trip = driverData.getUser().getCurrentTrip();
+        if (trip == null) {
+            return badRequest("You are currently not on a trip. Please start by choosing a route.");
+        }
+
+        context.db().merge(trip);
+        trip.getRiders().forEach(r -> ws.sendMessageToUser(r.getId(), new TripEnded()));
+
+        return ok();
+    }
+
     @PostMapping("/start")
     @Secured({ Roles.DRIVER })
+    @Transactional
     public Object startTrip() {
 
         var driverData = store.drivers.get(authenticatedUserId());
@@ -104,12 +126,14 @@ public class Trips extends Controller {
         simulator.runTask(driverData.getUser(), trip.getDirections(), false);
         trip.setStatus(Trip.Status.IN_PROGRESS);
         trip.setStartedAt(LocalDateTime.now());
+        context.db().merge(trip);
 
         return ok();
     }
 
     @PostMapping("/order-ride")
     @Secured({ Roles.RIDER })
+    @Transactional
     public Object orderRide() {
         var riderData = store.riders.get(authenticatedUserId());
         if (riderData == null) {
@@ -166,6 +190,10 @@ public class Trips extends Controller {
             return badRequest("Could not find a route to the start of the trip.");
         }
 
+        trip.setDriver(driver.getUser());
+        trip.setCar(driver.getUser().getCar());
+
+        context.db().merge(trip);
 
         trip.getRiders().forEach(r -> ws.sendMessageToUser(r.getId(), new UberUpdate(UberUpdate.Status.FOUND)));
 
@@ -183,8 +211,6 @@ public class Trips extends Controller {
         driver.getUser().setCurrentTrip(trip);
         driver.setDirections(pickupDirections);
         trip.setStatus(Trip.Status.PAID);
-        trip.setDriver(driver.getUser());
-        trip.setCar(driver.getUser().getCar());
 
         var tripAssigned = new TripAssigned(trip, pickupDirections);
         scheduler.schedule(
@@ -193,10 +219,8 @@ public class Trips extends Controller {
         );
         ws.sendMessageToUser(driver.getUser().getId(), tripAssigned);
 
-        // Send message to all riders that the driver is on his way
-
-        simulator.runTask(driver.getUser(), pickupDirections.routes[0], false);
         trip.setStatus(Status.AWAITING_PICKUP);
+        simulator.runTask(driver.getUser(), pickupDirections.routes[0], false);
 
         return ok();
     }

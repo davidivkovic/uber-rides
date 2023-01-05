@@ -197,7 +197,7 @@ type AutocompleteLocation = {
 })
 export default class Looking {
 
-  makeEmptyStopover = () => ({ placeId: '', address: '', secondaryAddress: '', longitude: 0, latitude: 0 })
+  makeEmptyStopover = () => ({ placeId: '', address: '', secondaryAddress: '', longitude: 0, latitude: 0, marker: null })
 
   icons = icons
   stopoverInputs: {
@@ -205,7 +205,8 @@ export default class Looking {
     address: string,
     secondaryAddress: string,
     longitude: number,
-    latitude: number
+    latitude: number,
+    marker?: google.maps.Marker
   }[] = [
       this.makeEmptyStopover(),
       this.makeEmptyStopover()
@@ -227,7 +228,9 @@ export default class Looking {
   distance: string
   duration: string
 
-  constructor(public router: Router, public route: ActivatedRoute) { }
+  constructor(public router: Router, public route: ActivatedRoute) {
+    ridesStore.setState(store => store.data = {})
+  }
 
   async onActivated(navigatedFrom: string) {
     if (ridesStore.favoriteRoutePicked) {
@@ -268,16 +271,20 @@ export default class Looking {
         ?? this.autocompleteLocations[index][0]
 
       const geometry = await this.selectLocation(index, locationToSelect, false, true)
-      createMarker(geometry.lat(), geometry.lng(), index === this.stopoverInputs.length - 1)
+      if (this.stopoverInputs[index].marker) {
+        this.stopoverInputs[index].marker.setMap(null)
+      }
+      const marker = createMarker(geometry.lat(), geometry.lng(), index === this.stopoverInputs.length - 1)
+      this.stopoverInputs[index].marker = marker
 
       this.checkLocationsCompleted()
       ridesStore.locationPicked = null
     }
 
     if (navigatedFrom === 'choose-time') {
-      if (ridesStore.state.scheduledAt) {
-        const day = ridesStore.state.scheduledAt.isSame(dayjs(), 'day') ? 'Today' : 'Tomorrow'
-        this.departureTime = day + ridesStore.state.scheduledAt.format(', h:mm A')
+      if (ridesStore.data.scheduledAt) {
+        const day = ridesStore.data.scheduledAt.isSame(dayjs(), 'day') ? 'Today' : 'Tomorrow'
+        this.departureTime = day + ridesStore.data.scheduledAt.format(', h:mm A')
       } else {
         this.departureTime = 'Depart now'
       }
@@ -298,10 +305,10 @@ export default class Looking {
       destinationPlaceId: this.stopoverInputs[this.stopoverInputs.length - 1].placeId,
       waypointPlaceIds: this.stopoverInputs.slice(1, -1).map(s => s.placeId),
       routingPreference: this.routingPreference,
-      scheduledAt: ridesStore.state.scheduledAt
+      scheduledAt: ridesStore.data.scheduledAt
     })
 
-    ridesStore.setState(store => store.state.directions = directions)
+    ridesStore.setState(store => store.data.directions = directions)
 
     this.distance = formatDistance(directions.distanceInMeters)
     this.duration = formatDuration(directions.durationInSeconds)

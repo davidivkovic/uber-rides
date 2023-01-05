@@ -1,6 +1,6 @@
-import { ridesStore } from '@app/stores/ridesStore';
-import { userStore } from '@app/stores';
 import { carMarkers, map } from '@app/api/google-maps'
+import { ridesStore } from '@app/stores/ridesStore'
+import { userStore } from '@app/stores'
 
 const blackCarThumbnail = 'https://i.imgur.com/CZ8ufVo.png'
 const whiteCarThumbnail = 'https://i.imgur.com/4eo1JxA.png'
@@ -31,7 +31,7 @@ export default (message: {
   const carRemoved = position.lat() === 0 && position.lng() === 0
   const isSelf =
     userStore.user?.car?.registration === message.registration ||
-    ridesStore.state.trip?.car?.registration === message.registration
+    ridesStore.data.trip?.car?.registration === message.registration
   let marker = findMarker(message.registration)
 
   if (carRemoved) {
@@ -66,9 +66,9 @@ export default (message: {
   }
 
   if (isSelf) {
-    if (ridesStore.state?.pickupPolyline) {
+    if (ridesStore.mapElements?.pickupPolyline) {
       let idx = 0
-      let path = ridesStore.state.pickupPolyline.getPath().getArray() as google.maps.LatLng[]
+      let path = ridesStore.mapElements.pickupPolyline.getPath().getArray() as google.maps.LatLng[]
       for (let i = 0; i < path.length - 1; i++) {
         const edge = google.maps.geometry.poly.isLocationOnEdge(position, new google.maps.Polyline({ path: [path[i], path[i + 1]] }), 0.0001)
         if (edge) {
@@ -78,20 +78,28 @@ export default (message: {
       }
       path = idx === 0 ? path.slice(1) : path.slice(idx + 1)
       path.unshift(position)
-      ridesStore.state.pickupPolyline.setPath(path)
+      ridesStore.mapElements.pickupPolyline.setPath(path)
       ridesStore.setState(store => {
-        store.state.pickup.driverDuration = message.driverDuration
-        store.state.pickup.driverDistance = message.driverDistance
+        store.data.pickup.driverDuration = message.driverDuration
+        store.data.pickup.driverDistance = message.driverDistance
       })
       if (google.maps.geometry.spherical.computeDistanceBetween(
-        new google.maps.LatLng(ridesStore.state.trip.route.start.latitude, ridesStore.state.trip.route.start.longitude),
+        new google.maps.LatLng(ridesStore.data.trip.route.start.latitude, ridesStore.data.trip.route.start.longitude),
         position
       ) <= 50) {
-        ridesStore.setState(store => store.state.pickup.canStart = true)
+        ridesStore.setState(store => store.data.pickup.canStart = true)
       }
+
+      if (google.maps.geometry.spherical.computeDistanceBetween(
+        path[path.length - 1],
+        position
+      ) <= 50) {
+        ridesStore.setState(store => store.data.trip.canFinish = true)
+      }
+      window.detector.detectChanges()
     }
     // getMarkerDom(message.registration)?.classList?.add
-    ridesStore.setState(store => store.state.currentLocation = position)
+    ridesStore.setState(store => store.data.currentLocation = position)
     map.panTo(position)
     map.panBy(-180, 0)
   }

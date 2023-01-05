@@ -142,12 +142,12 @@ export default class ChooseTime {
 
   deleteTime() {
     this.selectedTime = null
-    ridesStore.setState(store => store.state.scheduledAt = null)
+    ridesStore.setState(store => store.data.scheduledAt = null)
     this.location.back()
   }
 
   confirmTime() {
-    ridesStore.setState(store => store.state.scheduledAt = this.selectedTime)
+    ridesStore.setState(store => store.data.scheduledAt = this.selectedTime)
     this.location.back()
   }
 

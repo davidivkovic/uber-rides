@@ -55,7 +55,7 @@ export default class Navigation {
   constructor() {
     watch(
       ridesStore,
-      () => ridesStore.state?.instructions,
+      () => ridesStore.data?.instructions,
       (curr, prev) => {
         this.opacity = 0
         if (curr.includes('right') || curr.includes('east')) this.direction = 'right'

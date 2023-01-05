@@ -1,11 +1,10 @@
-import { ridesStore } from '@app/stores/ridesStore';
 import { Component } from '@angular/core'
 import { CurrencyPipe, NgIf } from '@angular/common'
 import dayjs from 'dayjs'
 import { Dialog } from '@app/components/ui/dialog'
 import { computed, formatDistance, formatDuration } from '@app/utils'
-import { dialogStore } from '@app/stores'
-import { createMessage, OutboundMessages } from './messages'
+import { dialogStore, ridesStore } from '@app/stores'
+import { OutboundMessages } from './messages'
 import { send } from '../ws'
 
 export default (message: { inviter: any, trip: any }) => {
@@ -18,17 +17,12 @@ export default (message: { inviter: any, trip: any }) => {
     },
     status => {
       const accepted = status === 'accept'
-      send(
-        createMessage(
-          OutboundMessages.ANSWER_TRIP_INVITE,
-          { inviterId: message.inviter.id, accepted }
-        )
-      )
+      send(OutboundMessages.ANSWER_TRIP_INVITE, { inviterId: message.inviter.id, accepted })
       if (accepted) {
         message.trip.riders = message.trip.riders.map((r: any) => ({ accepted: true, declined: false, ...r }))
         ridesStore.setState(store => {
-          store.state.inviter = message.inviter
-          store.state.trip = message.trip
+          store.data.inviter = message.inviter
+          store.data.trip = message.trip
         })
         window.router.navigate(['passengers'])
       }

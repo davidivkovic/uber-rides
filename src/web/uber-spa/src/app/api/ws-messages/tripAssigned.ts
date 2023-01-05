@@ -11,14 +11,14 @@ export default async (message: { trip: any, directions: any, driverDuration: num
   message.duration = message.directions.routes[0].legs.reduce((a: any, b: any) => a + b.duration.inSeconds, 0)
   message.trip.riders.forEach((passenger: any) => passenger.accepted = true)
   ridesStore.setState(store => {
-    store.state.trip = message.trip
-    store.state.pickup = message
-    store.state.pickupPolyline = pickupPolyline
-    store.state.pickupMarker = pickupMarker
+    store.data.trip = message.trip
+    store.data.pickup = message
+    store.mapElements.pickupPolyline = pickupPolyline
+    store.mapElements.pickupMarker = pickupMarker
   })
   if (userStore.user.role === 'ROLE_DRIVER') {
     await window.router.navigate(['/pickup'])
-    window.detector.detectChanges()
   }
+  window.detector.detectChanges()
   new Audio('/assets/sounds/trip_assigned.m4r').play()
 }

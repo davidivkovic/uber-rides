@@ -16,32 +16,37 @@ import trips from '@app/api/trips'
     <div class="flex flex-col h-[700px] w-[400px] p-4 bg-white pointer-events-auto rounded-xl overflow-y-clip">
       <StatusBar></StatusBar>
       <h1 class="text-xl leading-10 transition mt-1">Ride overview</h1>
-      <div *ngIf="ridesStore.state.trip">
+      <div *ngIf="ridesStore.data.trip">
         <div class="mb-1.5">
           <RouteDetails 
             [stops]="stops()" 
-            [distance]="ridesStore.state.trip.distanceInMeters"
-            [duration]="ridesStore.state.trip.durationInSeconds"
+            [distance]="ridesStore.data.trip.distanceInMeters"
+            [duration]="ridesStore.data.trip.durationInSeconds"
           >
           </RouteDetails>
         </div>
         <PassengersStatus 
-          [passengers]="ridesStore.state.trip.riders"
+          [passengers]="ridesStore.data.trip.riders"
           [canRemove]="false"
         >
         </PassengersStatus>
       </div>
-      <div *ngIf="!ridesStore.state?.trip" class="mt-1">
+      <div *ngIf="ridesStore.data?.trip" class="mt-1">
         <h1 class="text-xl leading-[44px] transition">Head to the next stop</h1>
         <p class="text-zinc-500 text-[15px] -mt-2.5">You will be able to finish the ride once you arrive at the destination</p>
         <div>
-          <h3 class="text-xl leading-5">{{ formatDistance(ridesStore.state?.pickup?.driverDistance) }}</h3>
-          <p class="text-[15px] text-zinc-700">approx. {{ formatDuration(ridesStore.state?.pickup?.driverDuration) }}</p>
+          <h3 class="text-xl leading-5">{{ formatDistance(ridesStore.data?.pickup?.driverDistance) }}</h3>
+          <p class="text-[15px] text-zinc-700">approx. {{ formatDuration(ridesStore.data?.pickup?.driverDuration) }}</p>
         </div>
         <Navigation class="mt-2"></Navigation>
       </div>
       <div class="mt-auto flex flex-col gap-y-1">
-        <button class="primary">Finish Ride</button>
+        <button 
+          *ngIf="ridesStore.data.trip.canFinish" 
+          class="primary"
+        >
+          Finish Ride
+        </button>
       </div>
     </div>
   `
@@ -65,15 +70,15 @@ export default class Drive {
   }
 
   stops = computed(
-    () => ridesStore.state.pickup,
-    () => [ridesStore.state.pickup.trip.route.start, ...ridesStore.state.pickup.trip.route.stops]
+    () => ridesStore.data.pickup,
+    () => [ridesStore.data.pickup.trip.route.start, ...ridesStore.data.pickup.trip.route.stops]
   )
 
   ngAfterViewInit() {
     subscribe(() => {
-      if (ridesStore.state.pickup && (ridesStore.state?.pickupPolyline?.getMap() !== map)) {
-        ridesStore.state.pickupPolyline.setMap(map)
-        ridesStore.state.pickupMarker.setMap(map)
+      if (ridesStore.data.pickup && (ridesStore.mapElements?.pickupPolyline?.getMap() !== map)) {
+        ridesStore.mapElements.pickupPolyline?.setMap(map)
+        ridesStore.mapElements.pickupMarker?.setMap(map)
       }
     })
   }

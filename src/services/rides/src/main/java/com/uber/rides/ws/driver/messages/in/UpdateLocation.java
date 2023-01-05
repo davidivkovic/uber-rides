@@ -3,10 +3,8 @@ package com.uber.rides.ws.driver.messages.in;
 import lombok.Getter;
 import lombok.Setter;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import com.uber.rides.ws.WS;
 import com.uber.rides.ws.InboundMessage;
 import com.uber.rides.ws.driver.DriverData;
 
@@ -21,8 +19,6 @@ public class UpdateLocation implements InboundMessage<DriverData> {
     public double longitude;
     public double duration;
     public double distance;
-
-    @Autowired WS ws;
 
     @Override
     public void handle(DriverData sender) {

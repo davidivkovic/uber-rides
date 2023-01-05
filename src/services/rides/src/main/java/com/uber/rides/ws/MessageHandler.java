@@ -1,6 +1,6 @@
 package com.uber.rides.ws;
 
-import static com.uber.rides.util.Utils.*;
+import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,12 +12,18 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.config.AutowireCapableBeanFactory;
 import org.springframework.stereotype.Component;
 
-import com.uber.rides.model.User.Roles;
+import com.uber.rides.ws.admin.AdminData;
+import com.uber.rides.ws.driver.DriverData;
 import com.uber.rides.ws.driver.messages.in.ConfirmTrip;
 import com.uber.rides.ws.driver.messages.in.StartTrip;
 import com.uber.rides.ws.driver.messages.in.UpdateLocation;
+import com.uber.rides.ws.rider.RiderData;
 import com.uber.rides.ws.rider.messages.in.AnswerTripInvite;
 import com.uber.rides.ws.rider.messages.in.RemoveTripPassenger;
+
+import static com.uber.rides.util.Utils.*;
+import static com.uber.rides.model.User.Roles.*;
+
 
 @Component
 @SuppressWarnings(UNCHECKED)
@@ -25,31 +31,38 @@ public class MessageHandler {
     
     @Autowired AutowireCapableBeanFactory container;
     Logger log = LoggerFactory.getLogger(MessageHandler.class);
-    
+
+    static Map<String, Class<? extends InboundMessage<DriverData>>> driverMessages = Map.of(
+        UpdateLocation.TYPE, UpdateLocation.class,
+        ConfirmTrip.TYPE, ConfirmTrip.class,
+        StartTrip.TYPE, StartTrip.class
+    );
+
+    static Map<String, Class<? extends InboundMessage<RiderData>>> riderMessages = Map.of(
+        AnswerTripInvite.TYPE, AnswerTripInvite.class,
+        RemoveTripPassenger.TYPE, RemoveTripPassenger.class
+    );
+
+    static Map<String, Class<? extends InboundMessage<AdminData>>> adminMessages = Map.of(
+    );
+
+    static Map<String, Class<? extends InboundMessage<UserData>>> sharedMessages = Map.of(
+    );
+
     static EmptyMessage emptyMessage = new EmptyMessage();
     
     public void handle(UserData sender, String type, String payload) {
 
-        Class<? extends InboundMessage<? extends UserData>> messageType = EmptyMessage.class;
-        
-        if (Roles.DRIVER.equals(sender.getRole())) messageType = switch (type) {
-            case UpdateLocation.TYPE -> UpdateLocation.class;
-            case ConfirmTrip.TYPE -> ConfirmTrip.class;
-            case StartTrip.TYPE -> StartTrip.class;
-            /* Catch unknown events */
+        var messageType = switch (sender.getRole()) {
+            case DRIVER -> driverMessages.get(type);
+            case RIDER -> riderMessages.get(type);
+            case ADMIN -> adminMessages.get(type);
             default -> EmptyMessage.class;
-        };
+        }; 
 
-        else if (Roles.RIDER.equals(sender.getRole())) messageType = switch (type) {
-            case AnswerTripInvite.TYPE -> AnswerTripInvite.class;
-            case RemoveTripPassenger.TYPE -> RemoveTripPassenger.class;
-            default -> EmptyMessage.class;
-        };
-        
-        else if (Roles.ADMIN.equals(sender.getRole())) messageType = switch (type) {
-            default -> EmptyMessage.class;
-        };
-        
+        if (messageType == null) messageType = sharedMessages.get(type);
+        if (messageType == null) messageType = EmptyMessage.class;
+
         try { 
             if (messageType == EmptyMessage.class) {
                 emptyMessage.handle(sender);
@@ -67,5 +80,6 @@ public class MessageHandler {
             WS.sendMessage(sender.session, ErrorMessages.INTERNAL_SERVER_ERROR);
             log.error("Failed to create service of type {}.", messageType.getName());
         }
+        
     }
 }

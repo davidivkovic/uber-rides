@@ -6,7 +6,7 @@ import { CloseButton } from '@app/components/ui/base/closeButton'
 import riders from '@app/api/riders'
 import { ridesStore } from '@app/stores/ridesStore'
 import { send } from '@app/api/ws'
-import { createMessage, OutboundMessages } from '@app/api/ws-messages/messages'
+import { OutboundMessages } from '@app/api/ws-messages/messages'
 
 @Component({
   standalone: true,
@@ -99,7 +99,7 @@ export default class AddPassengers {
   }
 
   onActivated() {
-    this.passengers = JSON.parse(JSON.stringify(ridesStore.state?.passengers ?? []))
+    this.passengers = JSON.parse(JSON.stringify(ridesStore.data?.passengers ?? []))
     this.removedPassengers = []
   }
 
@@ -130,23 +130,18 @@ export default class AddPassengers {
 
   async confirmPassengers() {
     ridesStore.setState(store => {
-      store.state.passengers = this.passengers.map(p => ({ accepted: false, declined: false, ...p }))
-      store.state.passengersChanged = true
+      store.data.passengers = this.passengers.map(p => ({ accepted: false, declined: false, ...p }))
+      store.data.passengersChanged = true
       this.location.back()
     })
     this.removedPassengers.forEach(passenger => {
-      send(
-        createMessage(
-          OutboundMessages.REMOVE_TRIP_PASSENGER,
-          { passengerId: passenger.id }
-        )
-      )
+      send(OutboundMessages.REMOVE_TRIP_PASSENGER, { passengerId: passenger.id })
     })
   }
 
   cancel() {
     ridesStore.setState(store => {
-      store.state.passengersChanged = false
+      store.data.passengersChanged = false
       this.location.back()
     })
   }

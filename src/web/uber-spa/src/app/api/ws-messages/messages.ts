@@ -15,10 +15,4 @@ enum OutboundMessages {
   NOT_LOOKING = 'NOT_LOOKING'
 }
 
-
-const createMessage = (type: OutboundMessages, message: any = {}) => {
-  if (typeof message !== 'string') message = JSON.stringify(message)
-  return type + '\n' + message
-}
-
-export { InboundMessages, OutboundMessages, createMessage }
+export { InboundMessages, OutboundMessages }

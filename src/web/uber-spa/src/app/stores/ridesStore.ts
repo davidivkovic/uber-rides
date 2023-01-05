@@ -1,6 +1,4 @@
-import { directions } from '@app/api/google-maps';
-import { action, state, createStore, computed } from 'usm-mobx'
-import dayjs from 'dayjs'
+import { action, state, createStore, watch, subscribe } from 'usm-mobx'
 
 type Location = {
   placeId: string,
@@ -22,11 +20,21 @@ class RidesStore {
   }
 
   @state
-  state = {} as any
+  pages = {} as any
+
+  @state
+  mapElements = {} as any
+
+  @state
+  data = localStorage.getItem('rides-store') ? JSON.parse(localStorage.getItem('rides-store')) : {}
 
   @action
   setState(thunk: (instance: RidesStore) => void) {
     thunk(this)
+  }
+
+  constructor() {
+    subscribe(this, () => localStorage.setItem('rides-store', JSON.stringify(this.data)))
   }
 }
 

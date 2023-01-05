@@ -2,6 +2,7 @@ package com.uber.rides.model;
 
 import java.util.List;
 
+import javax.persistence.Column;
 import javax.persistence.ElementCollection;
 import javax.persistence.Embedded;
 import javax.persistence.Entity;
@@ -31,7 +32,7 @@ public class Route {
     @Id @GeneratedValue Long id;
     String name;
     String thumbnail;
-    String encodedPolyline;
+    @Column(length = 8192) String encodedPolyline;
     double distance;
     @Embedded Location swBounds;
     @Embedded Location neBounds;

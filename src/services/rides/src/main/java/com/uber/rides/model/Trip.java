@@ -18,6 +18,7 @@ import javax.persistence.Transient;
 
 import com.google.maps.model.DirectionsRoute;
 
+import javax.persistence.CascadeType;
 import javax.persistence.Column;
 
 import lombok.AllArgsConstructor;
@@ -50,11 +51,11 @@ public class Trip {
     @JoinColumn(name = "driver_id") 
     User driver;
 
-    @ManyToOne(fetch = FetchType.LAZY) 
+    @ManyToOne(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST, CascadeType.MERGE}) 
     @JoinColumn(name = "route_id") 
     Route route;
 
-    @ManyToOne(fetch = FetchType.LAZY) 
+    @ManyToOne(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinColumn(name = "car_id") 
     Car car;
 

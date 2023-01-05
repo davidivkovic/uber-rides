@@ -5,7 +5,7 @@ import { subscribe, watch } from 'usm-mobx'
 import { ridesStore } from '@app/stores/ridesStore'
 import { dialogStore, notificationStore } from '@app/stores'
 import trips from '@app/api/trips'
-import { createMessage, OutboundMessages } from '@app/api/ws-messages/messages'
+import { OutboundMessages } from '@app/api/ws-messages/messages'
 import { send } from '@app/api/ws'
 import PassengersStatus from '@app/components/rides/passengersStatus'
 import payments from '@app/api/payments'
@@ -19,19 +19,19 @@ import { PayDialog } from '@app/pages/(business)/profile/components/choosePaymen
     <div class="h-[700px] w-[400px] flex flex-col py-4 bg-white rounded-xl pointer-events-auto">
       <h3 class="text-4xl px-4">Choose a Ride</h3>
       <div 
-        *ngIf="ridesStore.state?.directions?.carTypes?.length > 0"
+        *ngIf="ridesStore.data?.directions?.carTypes?.length > 0"
         class="py-3 px-3.5 space-y-3 overflow-y-auto no-scrollbar w-full"
-        [ngClass]="{ 'max-h-[340px]': ridesStore.state?.passengers?.length == 3 }"
+        [ngClass]="{ 'max-h-[340px]': ridesStore.data?.passengers?.length == 3 }"
       >
         <div
-          *ngFor="let carType of ridesStore.state?.directions?.carTypes"
+          *ngFor="let carType of ridesStore.data?.directions?.carTypes"
           (click)="selectCarType(carType)"
           class="rounded-md w-full flex items-center py-1 pr-2.5 transition"
           [ngClass]="{
-            'ring-2 ring-neutral-500 ring-offset-[3px] transition-none': carType.carType === selectedCarType?.carType && !ridesStore.state.rideChosen,
-            'cursor-pointer': !ridesStore.state.rideChosen,
-            'pointer-events-none': ridesStore.state.rideChosen,
-            'bg-zinc-100': carType.carType === selectedCarType?.carType && ridesStore.state.rideChosen
+            'ring-2 ring-neutral-500 ring-offset-[3px] transition-none': carType.carType === selectedCarType?.carType && !ridesStore.data.rideChosen,
+            'cursor-pointer': !ridesStore.data.rideChosen,
+            'pointer-events-none': ridesStore.data.rideChosen,
+            'bg-zinc-100': carType.carType === selectedCarType?.carType && ridesStore.data.rideChosen
           }"
           
         >
@@ -59,7 +59,7 @@ import { PayDialog } from '@app/pages/(business)/profile/components/choosePaymen
             <div class="flex items-center justify-between">
               <div class="text-center">
                 <h3 class="text-[22px]">
-                  {{ ridesStore.state.directions.carPricesInUsd[carType.carType] | currency:'USD'}}
+                  {{ ridesStore.data.directions.carPricesInUsd[carType.carType] | currency:'USD'}}
                 </h3>
                 <p 
                   *ngIf="anyPassengerReady" 
@@ -75,7 +75,7 @@ import { PayDialog } from '@app/pages/(business)/profile/components/choosePaymen
         </div>
       </div>
       <PassengersStatus 
-        [passengers]="ridesStore.state?.passengers"
+        [passengers]="ridesStore.data?.passengers"
         [canRemove]="true"
         (passengerRemoved)="removePassenger($event)"
         class="mt-3 px-5"
@@ -120,8 +120,8 @@ import { PayDialog } from '@app/pages/(business)/profile/components/choosePaymen
         *ngIf="lookingForRide"
         [disabled]="!passengersReady"
         [ngClass]="{ 
-          'pointer-events-none': ridesStore.state.uberFound, 
-          'cursor-wait': ridesStore.state.uberFound 
+          'pointer-events-none': ridesStore.data.uberFound, 
+          'cursor-wait': ridesStore.data.uberFound 
         }"
         (click)="cancelOrder()"
         class="primary mx-4 !text-base mt-auto"
@@ -129,11 +129,11 @@ import { PayDialog } from '@app/pages/(business)/profile/components/choosePaymen
         <div 
           class="flex items-center"
           [ngClass]="{ 
-            'justify-center': ridesStore.state.uberFound
+            'justify-center': ridesStore.data.uberFound
           }"
         >
           <svg 
-            *ngIf="!ridesStore.state.uberFound"
+            *ngIf="!ridesStore.data.uberFound"
             class="animate-spin -ml-2 mr-2.5 h-4 w-4 text-white" 
             fill="none" 
             viewBox="0 0 24 24"
@@ -141,14 +141,14 @@ import { PayDialog } from '@app/pages/(business)/profile/components/choosePaymen
             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
           </svg>
-          <span *ngIf="!ridesStore.state.uberFound">
+          <span *ngIf="!ridesStore.data.uberFound">
             Looking for an {{ this.selectedCarType?.name }}
           </span>
-          <span *ngIf="ridesStore.state.uberFound">
+          <span *ngIf="ridesStore.data.uberFound">
             {{ uberFoundText }}
           </span>
           <svg 
-            *ngIf="ridesStore.state.uberFound"
+            *ngIf="ridesStore.data.uberFound"
             class="animate-spin ml-2 -mr-2 h-4 w-4 text-white" 
             fill="none" 
             viewBox="0 0 24 24"
@@ -156,7 +156,7 @@ import { PayDialog } from '@app/pages/(business)/profile/components/choosePaymen
             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
           </svg>
-          <span *ngIf="!ridesStore.state.uberFound" class="ml-auto -mr-1.5">
+          <span *ngIf="!ridesStore.data.uberFound" class="ml-auto -mr-1.5">
             {{ lookingDuration }}s
           </span>
         </div>
@@ -179,19 +179,19 @@ export default class ChooseRide {
   methodLogos = methodLogos
 
   constructor(public location: Location, public router: Router, public detector: ChangeDetectorRef) {
-    if (!ridesStore.state?.directions) {
+    if (!ridesStore.data?.directions) {
       router.navigate(['/looking'])
     }
-    ridesStore.setState(store => store.state.chooseRidesPage = this)
+    ridesStore.setState(store => store.pages.chooseRidesPage = this)
     subscribe(ridesStore, () => detector?.detectChanges())
     watch(
       ridesStore,
-      () => ridesStore.state.passengers,
+      () => ridesStore.data.passengers,
       () => this.checkPassengersReady()
     )
     watch(
       ridesStore,
-      () => ridesStore.state.uberFound,
+      () => ridesStore.data.uberFound,
       (curr, old) => {
         if (!curr) return
         setTimeout(() => this.uberFoundText = 'Processing payment...', 1500)
@@ -222,23 +222,23 @@ export default class ChooseRide {
   }
 
   cancelOrder() {
-    if (ridesStore.state.uberFound) return
+    if (ridesStore.data.uberFound) return
     this.lookingForRide = false
     this.lookingInterval && clearInterval(this.lookingInterval)
-    if (!ridesStore.state?.passengers || ridesStore.state?.passengers?.length === 0) {
-      ridesStore.setState(store => store.state.rideChosen = false)
+    if (!ridesStore.data?.passengers || ridesStore.data?.passengers?.length === 0) {
+      ridesStore.setState(store => store.data.rideChosen = false)
     }
-    send(createMessage(OutboundMessages.NOT_LOOKING))
+    send(OutboundMessages.NOT_LOOKING)
   }
 
   async pollOrder() {
     this.lookingForRide = true
     this.lookingDuration = 1
-    if (!ridesStore.state.rideChosen) {
-      ridesStore.setState(store => store.state.rideChosen = true)
+    if (!ridesStore.data.rideChosen) {
+      ridesStore.setState(store => store.data.rideChosen = true)
       try {
         const trip = await trips.chooseRide(this.selectedCarType.carType)
-        trip && ridesStore.setState(store => store.state.trip = trip)
+        trip && ridesStore.setState(store => store.data.trip = trip)
       }
       catch (e) {
         console.log(e.message)
@@ -257,7 +257,7 @@ export default class ChooseRide {
   }
 
   async orderRide() {
-    if (ridesStore.state.trip == null) return
+    if (ridesStore.data.trip == null) return
     try {
       await trips.orderRide()
       this.lookingInterval && clearInterval(this.lookingInterval)
@@ -269,27 +269,27 @@ export default class ChooseRide {
 
   checkPassengersReady() {
     this.passengersReady =
-      ridesStore.state?.passengers?.every((p: any) => p.accepted || p.declined) ||
-      ridesStore.state?.passengers?.length === 0
-    this.anyPassengerReady = ridesStore.state?.passengers?.some((p: any) => p.accepted)
+      ridesStore.data?.passengers?.every((p: any) => p.accepted || p.declined) ||
+      ridesStore.data?.passengers?.length === 0
+    this.anyPassengerReady = ridesStore.data?.passengers?.some((p: any) => p.accepted)
   }
 
   selectFirstCarType() {
-    this.selectedCarType = ridesStore.state?.directions?.carTypes[0]
+    this.selectedCarType = ridesStore.data?.directions?.carTypes[0]
   }
 
   async onActivated(navigatedFrom: string) {
     if (!this.selectedCarType?.carType) this.selectFirstCarType()
     if (navigatedFrom === 'add-passengers') {
       try {
-        if (!ridesStore.state.rideChosen && ridesStore.state?.passengers?.length) {
+        if (!ridesStore.data.rideChosen && ridesStore.data?.passengers?.length) {
           await trips.chooseRide(this.selectedCarType.carType)
-          ridesStore.setState(store => store.state.rideChosen = true)
+          ridesStore.setState(store => store.data.rideChosen = true)
         }
         // ne valjda kad udjes da invite passengere, remove nekoga i ides acceept ne posalje remove passenger ws message
-        if (ridesStore.state?.passengersChanged) {
-          const trip = await trips.invitePassengers(ridesStore.state.passengers.map((p: any) => p.id))
-          trip && ridesStore.setState(store => store.state.trip = trip)
+        if (ridesStore.data?.passengersChanged) {
+          const trip = await trips.invitePassengers(ridesStore.data.passengers.map((p: any) => p.id))
+          trip && ridesStore.setState(store => store.data.trip = trip)
         }
       }
       catch (error) {
@@ -304,14 +304,9 @@ export default class ChooseRide {
   }
 
   removePassenger(passenger: any) {
-    send(
-      createMessage(
-        OutboundMessages.REMOVE_TRIP_PASSENGER,
-        { passengerId: passenger.id }
-      )
-    )
+    send(OutboundMessages.REMOVE_TRIP_PASSENGER, { passengerId: passenger.id })
     ridesStore.setState(store => {
-      store.state.passengers = store.state.passengers.filter((p: any) => p.id !== passenger.id)
+      store.data.passengers = store.data.passengers.filter((p: any) => p.id !== passenger.id)
     })
   }
 

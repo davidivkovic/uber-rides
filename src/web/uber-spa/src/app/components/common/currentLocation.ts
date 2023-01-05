@@ -19,15 +19,15 @@ export default class CurrentLocation {
     let updates = 0
     watch(
       ridesStore,
-      () => ridesStore.state?.currentLocation,
+      () => ridesStore.data?.currentLocation,
       async (curr, prev) => {
-        if (updates === 4) updates = 1
+        if (updates === 5) updates = 1
         if (updates++ > 1) return // Prevents the location from being updated too often
         if (!curr || curr === prev) return
         const location = await geocoder.geocode({ location: curr })
         this.location = location.results[0].address_components[1].long_name
       }
     )
-    subscribe(() => ridesStore.setState(store => store.state.currentLocation = map.getCenter()))
+    subscribe(() => ridesStore.setState(store => store.data.currentLocation = map.getCenter()))
   }
 }

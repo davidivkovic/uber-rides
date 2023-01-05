@@ -11,8 +11,8 @@ enum UberStatus {
 
 export default (message: { status: UberStatus }) => {
   ridesStore.setState(store => {
-    store.state.uberStatus = message.status
-    store.state.uberFound = message.status === UberStatus.FOUND
+    store.data.uberStatus = message.status
+    store.data.uberFound = message.status === UberStatus.FOUND
   })
 }
 
