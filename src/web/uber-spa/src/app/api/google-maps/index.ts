@@ -1,3 +1,4 @@
+import { ridesStore } from '@app/stores';
 import jailbreak from './jailbreak'
 import mapStyles from './mapStyles.json'
 import icons from './icons'
@@ -26,7 +27,14 @@ let serializableState = localStorage.getItem(stateKey)
     infoWindows: []
   }
 
-jailbreak()
+const subscribe = (fn: any) => subscribers.push(fn)
+
+const serializeState = (skipChecks = false) => {
+  serializableState.polylines = serializableState.polylines.filter(p => p?.canSerialize?.() || skipChecks)
+  serializableState.markers = serializableState.markers.filter(m => m?.canSerialize?.() || skipChecks)
+  serializableState.infoWindows = serializableState.infoWindows.filter(iw => iw?.canSerialize?.() || skipChecks)
+  localStorage.setItem(stateKey, JSON.stringify(serializableState))
+}
 
 const initMap = () => {
   mapHtmlElement = document.getElementById(elementId)
@@ -46,7 +54,13 @@ const initMap = () => {
   subscribers = []
 }
 
-const createMarker = (latitude: number, longitude: number, isTerminal: boolean) => {
+const createMarker = (
+  latitude: number,
+  longitude: number,
+  isTerminal: boolean,
+  name = '',
+  serialize = true
+) => {
   const marker = new google.maps.Marker({
     position: {
       lat: latitude,
@@ -63,14 +77,29 @@ const createMarker = (latitude: number, longitude: number, isTerminal: boolean) 
       } as any
     },
     map
-  })
+  });
+  (marker as any).name = name
   markers.push(marker)
-  serializableState.markers.push({ latitude, longitude, isTerminal })
-  localStorage.setItem(stateKey, JSON.stringify(serializableState))
+
+  if (serialize) {
+    serializableState.markers.push({
+      latitude,
+      longitude,
+      isTerminal,
+      canSerialize: () => marker.getMap() != null && marker.getMap() === map
+    })
+    serializeState()
+  }
+
   return marker
 }
 
-const createPolyline = (path: string | google.maps.LatLng[], color = '#000') => {
+const createPolyline = (
+  path: string | google.maps.LatLng[],
+  color = '#000',
+  name = '',
+  serialize = true
+) => {
   const polyline = new google.maps.Polyline({
     path: typeof path === 'string' ? google.maps.geometry.encoding.decodePath(path) : path,
     map,
@@ -78,10 +107,20 @@ const createPolyline = (path: string | google.maps.LatLng[], color = '#000') => 
     strokeOpacity: 0.7,
     strokeWeight: 4,
     clickable: false,
-  })
+  });
+  (polyline as any).name = name
   polylines.push(polyline)
-  serializableState.polylines.push({ path, color })
-  localStorage.setItem(stateKey, JSON.stringify(serializableState))
+
+  if (serialize) {
+    serializableState.polylines.push({
+      path,
+      color,
+      name,
+      canSerialize: () => polyline.getMap() != null && polyline.getMap() === map
+    })
+    serializeState()
+  }
+
   return polyline
 }
 
@@ -90,7 +129,8 @@ const createInfoWindow = (
   longitude: number,
   address: string,
   index: number,
-  arrayLength: number
+  arrayLength: number,
+  serialize = true
 ) => {
   const verb = { 0: 'From', [arrayLength - 1]: 'To' }[index] ?? 'Stop'
   const infoWindow = new google.maps.InfoWindow({
@@ -99,7 +139,7 @@ const createInfoWindow = (
       lng: longitude
     },
     content: /*html*/`
-      <div id="gm-iw-c-${index}" class="flex items-center px-3 py-2 space-x-2 cursor-pointer">
+      <div id="gm-iw-c-${index}" class="flex items-center px-3 py-2 space-x-2 cursor-pointer rounded">
         <span class="text-[15px] select-none">${verb}: ${formatAddress(address)}</span>
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
           <path d="M16.9 12l-4.6 6H8.5l4.6-6-4.6-6h3.8l4.6 6z" fill="currentColor">
@@ -114,8 +154,20 @@ const createInfoWindow = (
   })
   infoWindow.open(map)
   infoWindows.push(infoWindow)
-  serializableState.infoWindows.push({ latitude, longitude, address, index, arrayLength })
-  localStorage.setItem(stateKey, JSON.stringify(serializableState))
+
+  if (serialize) {
+    serializableState.infoWindows.push({
+      latitude,
+      longitude,
+      address,
+      index,
+      arrayLength,
+      canSerialize: () => (infoWindow as any).getMap() != null && (infoWindow as any).getMap() === map
+    })
+    serializeState()
+  }
+
+  return infoWindow
 }
 
 const removeAllElements = () => {
@@ -131,24 +183,37 @@ const removeAllElements = () => {
 }
 
 const refreshAllElements = () => {
-  console.log('refreshing')
   const refresh = () => {
-    polylines?.forEach(l => l.setMap(map))
-    markers?.forEach(m => m.setMap(map))
-    infoWindows?.forEach(w => w.open(map))
-    serializableState.infoWindows.forEach(({ latitude, longitude, address, index, arrayLength }) => {
-      createInfoWindow(latitude, longitude, address, index, arrayLength)
+    polylines?.forEach(l => l.getMap() != null && l.setMap(map))
+    markers?.forEach(m => m.getMap() != null && m.setMap(map))
+    infoWindows?.forEach(w => (w as any).getMap() != null && w.open(map))
+
+    serializableState.infoWindows.forEach(({ latitude, longitude, address, index, arrayLength }) =>
+      createInfoWindow(latitude, longitude, address, index, arrayLength, false)
+    )
+    serializableState.markers.forEach(({ latitude, longitude, isTerminal, name }) =>
+      createMarker(latitude, longitude, isTerminal, name, false)
+    )
+    serializableState.polylines.forEach(({ path, color, name }) => {
+      createPolyline(path, color, name, false)
     })
-    serializableState.markers.forEach(({ latitude, longitude, isTerminal }) => {
-      createMarker(latitude, longitude, isTerminal)
-    })
-    serializableState.polylines.forEach(({ path, color }) => {
-      createPolyline(path, color)
-    })
+    ridesStore.setMapElements()
   }
   if (map) refresh()
   else subscribe(() => refresh())
 }
+
+const key = window.atob('QUl6YVN5Q2tVT2RaNXk3aE1tMHlyY0NRb0N2THd6ZE02TThzNXFr')
+const script = Object.assign(
+  document.createElement('script'),
+  {
+    id: scriptName,
+    src: 'https://maps.googleapis.com/maps/api/js?libraries=places,directions,geometry&language=en&key=' + key,
+    async: true,
+    defer: true,
+    onload: initMap
+  }
+)
 
 const init = (htmlElementId: string) => {
   if (!document.getElementById(scriptName)) {
@@ -160,18 +225,7 @@ const init = (htmlElementId: string) => {
   }
 }
 
-const subscribe = (fn: any) => subscribers.push(fn)
-
-const script = Object.assign(
-  document.createElement('script'),
-  {
-    id: scriptName,
-    src: 'https://maps.googleapis.com/maps/api/js?libraries=places,directions,geometry&language=en&key=AIzaSyB41DRUbKWJHPxaFjMAwdrzWzbVKartNGg&v=beta',
-    async: true,
-    defer: true,
-    onload: initMap
-  }
-)
+jailbreak()
 
 export {
   init,
@@ -184,9 +238,12 @@ export {
   icons,
   carMarkers,
   polylines,
+  markers,
   createMarker,
   createPolyline,
   createInfoWindow,
   removeAllElements,
-  refreshAllElements
+  refreshAllElements,
+  serializableState,
+  serializeState
 }

@@ -57,6 +57,7 @@ export default class Navigation {
       ridesStore,
       () => ridesStore.data?.instructions,
       (curr, prev) => {
+        if (!curr) return
         this.opacity = 0
         if (curr.includes('right') || curr.includes('east')) this.direction = 'right'
         else if (curr.includes('left') || curr.includes('west')) this.direction = 'left'

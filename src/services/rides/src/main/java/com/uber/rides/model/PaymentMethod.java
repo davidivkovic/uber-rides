@@ -20,8 +20,6 @@ import lombok.Setter;
 
 import com.braintreegateway.CustomerRequest;
 import com.braintreegateway.PaymentMethodRequest;
-import com.braintreegateway.Result;
-import com.braintreegateway.Transaction;
 import com.braintreegateway.TransactionRequest;
 
 import static com.uber.rides.util.Utils.gateway;
@@ -121,19 +119,19 @@ public class PaymentMethod {
     }
 
     public Payment authorize(double amount, String currency) {
-        TransactionRequest request = new TransactionRequest()
+        var request = new TransactionRequest()
             .paymentMethodToken(this.token)
             .currencyIsoCode(currency)
             .amount(BigDecimal.valueOf(amount));
       
-      Result<Transaction> result = gateway.transaction().sale(request);
-      if(!result.isSuccess()) return null;
+        var result = gateway.transaction().sale(request);
+        if(!result.isSuccess()) return null;
 
-      return Payment.builder()
-        .amount(amount)
-        .currency(currency)
-        .capturedAt(LocalDateTime.now())
-        .transactionId(result.getTarget().getId())
-        .build();
+        return Payment.builder()
+            .amount(amount)
+            .currency(currency)
+            .capturedAt(LocalDateTime.now())
+            .transactionId(result.getTarget().getId())
+            .build();
     }
 }

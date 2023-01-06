@@ -6,7 +6,7 @@ import PassengersStatus from '@app/components/rides/passengersStatus'
 import RouteDetails from '@app/components/rides/routeDetails'
 import StatusBar from './components/statusBar'
 import Navigation from './components/navigation'
-import { map, subscribe } from '@app/api/google-maps'
+import { map, polylines, refreshAllElements, subscribe } from '@app/api/google-maps'
 import trips from '@app/api/trips'
 
 @Component({
@@ -33,21 +33,21 @@ import trips from '@app/api/trips'
       </div>
       <div *ngIf="ridesStore.data?.trip" class="mt-1">
         <h1 class="text-xl leading-[44px] transition">Head to the next stop</h1>
-        <p class="text-zinc-500 text-[15px] -mt-2.5">You will be able to finish the ride once you arrive at the destination</p>
+        <p class="text-zinc-500 text-[15px] -mt-2.5">The ride will finish once you arrive at the destination</p>
         <div>
           <h3 class="text-xl leading-5">{{ formatDistance(ridesStore.data?.pickup?.driverDistance) }}</h3>
           <p class="text-[15px] text-zinc-700">approx. {{ formatDuration(ridesStore.data?.pickup?.driverDuration) }}</p>
         </div>
         <Navigation class="mt-2"></Navigation>
       </div>
-      <div class="mt-auto flex flex-col gap-y-1">
+      <!-- <div class="mt-auto flex flex-col gap-y-1">
         <button 
           *ngIf="ridesStore.data.trip.canFinish" 
           class="primary"
         >
           Finish Ride
         </button>
-      </div>
+      </div> -->
     </div>
   `
 })
@@ -75,11 +75,13 @@ export default class Drive {
   )
 
   ngAfterViewInit() {
-    subscribe(() => {
-      if (ridesStore.data.pickup && (ridesStore.mapElements?.pickupPolyline?.getMap() !== map)) {
-        ridesStore.mapElements.pickupPolyline?.setMap(map)
-        ridesStore.mapElements.pickupMarker?.setMap(map)
-      }
-    })
+    // subscribe(() => {
+    //   if (ridesStore.data.pickup && (ridesStore.mapElements?.pickupPolyline?.getMap() !== map)) {
+    //     ridesStore.mapElements.pickupPolyline?.setMap(map)
+    //     ridesStore.mapElements.pickupMarkers?.forEach(m => m.setMap(map))
+    //   }
+    // })
+    console.log(polylines.length)
+    if (polylines.length === 0 || polylines[0]?.getMap() !== map) refreshAllElements()
   }
 }

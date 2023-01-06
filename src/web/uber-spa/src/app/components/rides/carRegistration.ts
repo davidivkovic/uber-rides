@@ -9,7 +9,7 @@ import { computed } from '@app/utils'
       <h3 class="text-[13.5px] tracking-wide px-3 pl-11 py-1.5 rounded-full border">
         {{ registration() }}
       </h3>
-      <img [src]="car.type.image" class="absolute h-10 w-10 object-cover left-1 -top-[5px]"/>
+      <img [src]="car?.type?.image" class="absolute h-10 w-10 object-cover left-1 -top-[5px]"/>
     </div>
   `
 })

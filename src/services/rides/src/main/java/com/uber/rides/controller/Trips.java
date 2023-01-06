@@ -50,7 +50,6 @@ import com.uber.rides.ws.Store;
 import com.uber.rides.ws.WS;
 import com.uber.rides.ws.driver.DriverData;
 import com.uber.rides.ws.driver.messages.out.TripAssigned;
-import com.uber.rides.ws.driver.messages.out.TripEnded;
 import com.uber.rides.ws.driver.messages.out.TripStarted;
 import com.uber.rides.ws.rider.messages.out.TripInvite;
 import com.uber.rides.ws.rider.messages.out.UberUpdate;
@@ -71,26 +70,6 @@ public class Trips extends Controller {
     @Autowired WS ws;
     @Autowired ThreadPoolTaskScheduler scheduler;
     @Autowired DriverSimulator simulator;
-
-    @PostMapping("/end")
-    @Secured({ Roles.DRIVER })
-    @Transactional
-    public Object endTrip() {
-        var driverData = store.drivers.get(authenticatedUserId());
-        if (driverData == null) {
-            return badRequest(CONNECTION_ENDED);
-        }
-
-        var trip = driverData.getUser().getCurrentTrip();
-        if (trip == null) {
-            return badRequest("You are currently not on a trip. Please start by choosing a route.");
-        }
-
-        context.db().merge(trip);
-        trip.getRiders().forEach(r -> ws.sendMessageToUser(r.getId(), new TripEnded()));
-
-        return ok();
-    }
 
     @PostMapping("/start")
     @Secured({ Roles.DRIVER })
@@ -123,7 +102,7 @@ public class Trips extends Controller {
         ws.sendMessageToUser(driverData.getUser().getId(), tripStarted);
         trip.getRiders().forEach(rider -> ws.sendMessageToUser(rider.getId(), tripStarted));
         
-        simulator.runTask(driverData.getUser(), trip.getDirections(), false);
+        simulator.runTask(driverData.getUser(), trip.getDirections(), true);
         trip.setStatus(Trip.Status.IN_PROGRESS);
         trip.setStartedAt(LocalDateTime.now());
         context.db().merge(trip);
@@ -152,6 +131,7 @@ public class Trips extends Controller {
             .drivers
             .values()
             .stream()
+            .filter(DriverData::isOnline)
             .filter(DriverData::isAvailable)
             .filter(d -> d.getUser().getCurrentTrip() == null)
             .filter(d -> d.getUser().getCar().getType().getCarType().equals(trip.getCar().getType().getCarType()))

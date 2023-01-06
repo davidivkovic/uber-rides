@@ -15,10 +15,13 @@ import org.springframework.stereotype.Component;
 import com.uber.rides.ws.admin.AdminData;
 import com.uber.rides.ws.driver.DriverData;
 import com.uber.rides.ws.driver.messages.in.ConfirmTrip;
+import com.uber.rides.ws.driver.messages.in.EndTrip;
+import com.uber.rides.ws.driver.messages.in.Online;
 import com.uber.rides.ws.driver.messages.in.StartTrip;
 import com.uber.rides.ws.driver.messages.in.UpdateLocation;
 import com.uber.rides.ws.rider.RiderData;
 import com.uber.rides.ws.rider.messages.in.AnswerTripInvite;
+import com.uber.rides.ws.rider.messages.in.NotLooking;
 import com.uber.rides.ws.rider.messages.in.RemoveTripPassenger;
 
 import static com.uber.rides.util.Utils.*;
@@ -35,11 +38,14 @@ public class MessageHandler {
     static Map<String, Class<? extends InboundMessage<DriverData>>> driverMessages = Map.of(
         UpdateLocation.TYPE, UpdateLocation.class,
         ConfirmTrip.TYPE, ConfirmTrip.class,
-        StartTrip.TYPE, StartTrip.class
+        StartTrip.TYPE, StartTrip.class,
+        EndTrip.TYPE, EndTrip.class,
+        Online.TYPE, Online.class
     );
 
     static Map<String, Class<? extends InboundMessage<RiderData>>> riderMessages = Map.of(
         AnswerTripInvite.TYPE, AnswerTripInvite.class,
+        NotLooking.TYPE, NotLooking.class,
         RemoveTripPassenger.TYPE, RemoveTripPassenger.class
     );
 

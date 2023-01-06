@@ -5,12 +5,13 @@ import lombok.Setter;
 
 import com.google.maps.model.DirectionsResult;
 
+import java.time.LocalDateTime;
+
 import org.springframework.web.socket.WebSocketSession;
 
 import com.uber.rides.model.User;
 import com.uber.rides.model.User.Roles;
 import com.uber.rides.ws.UserData;
-import com.uber.rides.ws.rider.messages.out.CarLocation;
 
 @Getter
 @Setter
@@ -22,8 +23,9 @@ public class DriverData extends UserData {
     public double distance;
     public double heading;
     public boolean isAvailable = true;
-    public boolean isOnline = true;
     public DirectionsResult directions;
+    public int minutesFatigue = 0;
+    public LocalDateTime fatigueStart = LocalDateTime.now();
 
     public DriverData(User user, WebSocketSession session) {
         super(user, session);
@@ -36,9 +38,7 @@ public class DriverData extends UserData {
     
     @Override
     public void onDisconnected() {
-        this.ws.broadcast(
-            Roles.RIDER,
-            new CarLocation(this.user.getCar().getRegistration())
-        );
+        setLatitude(0);
+        setLongitude(0);
     }
 }

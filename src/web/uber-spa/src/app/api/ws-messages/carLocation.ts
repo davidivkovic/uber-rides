@@ -1,6 +1,5 @@
-import { carMarkers, map } from '@app/api/google-maps'
-import { ridesStore } from '@app/stores/ridesStore'
-import { userStore } from '@app/stores'
+import { carMarkers, map, serializableState, serializeState } from '@app/api/google-maps'
+import { userStore, ridesStore } from '@app/stores'
 
 const blackCarThumbnail = 'https://i.imgur.com/CZ8ufVo.png'
 const whiteCarThumbnail = 'https://i.imgur.com/4eo1JxA.png'
@@ -79,23 +78,28 @@ export default (message: {
       path = idx === 0 ? path.slice(1) : path.slice(idx + 1)
       path.unshift(position)
       ridesStore.mapElements.pickupPolyline.setPath(path)
+      serializableState.polylines.forEach((p: any) => {
+        p.name === 'pickup' && (p.path = path)
+      })
+      serializeState(true)
       ridesStore.setState(store => {
+        if (!ridesStore.data.pickup) return
         store.data.pickup.driverDuration = message.driverDuration
         store.data.pickup.driverDistance = message.driverDistance
       })
-      if (google.maps.geometry.spherical.computeDistanceBetween(
+
+      const canStart = google.maps.geometry.spherical.computeDistanceBetween(
         new google.maps.LatLng(ridesStore.data.trip.route.start.latitude, ridesStore.data.trip.route.start.longitude),
         position
-      ) <= 50) {
-        ridesStore.setState(store => store.data.pickup.canStart = true)
-      }
-
-      if (google.maps.geometry.spherical.computeDistanceBetween(
+      ) <= 50
+      const canFinish = google.maps.geometry.spherical.computeDistanceBetween(
         path[path.length - 1],
         position
-      ) <= 50) {
-        ridesStore.setState(store => store.data.trip.canFinish = true)
-      }
+      ) <= 50
+
+      ridesStore.setState(store => store.data.pickup.canStart = canStart)
+      ridesStore.setState(store => store.data.trip.canFinish = canFinish)
+
       window.detector.detectChanges()
     }
     // getMarkerDom(message.registration)?.classList?.add

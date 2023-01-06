@@ -11,11 +11,11 @@ import org.hibernate.internal.SessionFactoryImpl;
 import com.speedment.jpastreamer.application.JPAStreamer;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Repository;
-import org.springframework.web.context.annotation.RequestScope;
 
 @Repository
-@RequestScope
+@Scope("prototype")
 public class DbContext {
 
     private class Factory extends SessionFactoryDelegatingImpl {

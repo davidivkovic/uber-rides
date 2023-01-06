@@ -29,15 +29,24 @@ const registerCar = async (data: {
 }
 
 const pollLiveLocations = async () => {
+
   if (isPolling) return
   isPolling = true
 
+  const getLiveLocations = () => fetch(
+    basePath + '/live-locations',
+    { method: 'GET' }
+  )
+
   const handler = await import('./ws-messages/carLocation')
 
+  let response = await getLiveLocations()
+  for (const carLocation of await response.json()) {
+    handler.default(carLocation)
+  }
+
   setInterval(async () => {
-    const response = await fetch(basePath + '/live-locations', {
-      method: 'GET'
-    })
+    response = await getLiveLocations()
     for (const carLocation of await response.json()) {
       if (!delays[carLocation.registration]) {
         delays[carLocation.registration] = Math.random() * 5000

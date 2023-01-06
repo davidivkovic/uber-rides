@@ -1,6 +1,7 @@
 package com.uber.rides.simulator;
 
 import java.net.URL;
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -21,6 +22,8 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import lombok.AllArgsConstructor;
 
@@ -60,7 +63,6 @@ import com.uber.rides.service.ImageStore;
 import com.uber.rides.ws.WS;
 
 import static com.uber.rides.util.Utils.*;
-import static com.uber.rides.util.GeoUtils.*;
 
 @AllArgsConstructor
 class Directions {
@@ -84,6 +86,8 @@ public class DriverSimulator {
     @Autowired PasswordEncoder passwordEncoder;
     @Autowired ThreadPoolTaskScheduler scheduler;
     @Autowired WS ws;
+    
+    Logger logger = LoggerFactory.getLogger(DriverSimulator.class);
 
     Map<Long, ScheduledFuture<?>> tasks = new ConcurrentHashMap<>();
     Map<Long, Sim> sims = new ConcurrentHashMap<>();
@@ -140,6 +144,12 @@ public class DriverSimulator {
         catch (Exception e) {
             return false; 
         }
+    }
+
+    void runTask(User driver, LatLng start) {
+        var coordinates = getRandomCoordinates(this.areaOfInterest, 5);
+        coordinates.add(0, start);
+        runTask(driver, getDirections(coordinates), true);
     }
 
     void runTask(User driver) {
@@ -212,11 +222,16 @@ public class DriverSimulator {
         try {
             var sim = sims.get(driver.getId());
             if (!locations.hasNext()) {
-                if (driver.getCurrentTrip() != null) {
+                if (driver.getCurrentTrip() != null && rerunOnEnd) {
                     sim.session.sendMessage(new TextMessage("END_TRIP\n{}"));
                 }
                 cancelTask(driver);
-                if (rerunOnEnd) runTask(driver);
+                if (rerunOnEnd) {
+                    scheduler.schedule(
+                        () -> runTask(driver, locations.previous().location), 
+                        Instant.now().plusSeconds(15)
+                    );
+                }
                 return;
             }
             var index = locations.nextIndex() + 1;
@@ -257,6 +272,7 @@ public class DriverSimulator {
             if (session != null) {
                 sims.put(driver.getId(), new Sim(session, 0));
             }
+            logger.info("Started simulation for driver: {}", driver.getEmail());
             return session;
         } catch (Exception e) { 
             return null; 
@@ -267,16 +283,17 @@ public class DriverSimulator {
         var drivers = query.stream(User.class)
             .filter(
                 User$.role.equal(Roles.DRIVER).and(
-                User$.email.startsWith("driver-x-gene.keeling"))
+                User$.email.startsWith("driver-x"))
             )
             .limit(numberOfDrivers)
             .toList();
             
         var allDrivers = new ArrayList<>(drivers);
         var db = dbFactory.createEntityManager();
+        var tx = db.getTransaction();
         
         try {
-            db.getTransaction().begin();
+            tx.begin();
             for (int i = 0; i < numberOfDrivers - drivers.size(); i++) {
                 var faker = new Faker();
                 var name = faker.name();
@@ -292,7 +309,7 @@ public class DriverSimulator {
                     .registration(vehicle.licensePlate().toUpperCase())
                     .build();
 
-                db.merge(car);
+                db.persist(car);
                 
                 var driver = User
                     .builder()
@@ -313,16 +330,16 @@ public class DriverSimulator {
                     )
                     .build();
 
-                db.merge(driver);
+                db.persist(driver);
                 allDrivers.add(driver);
             }
-            
-            db.flush();
-            db.getTransaction().commit();
-            db.close();
+            tx.commit();
         }
         catch(Exception e) {
-            db.getTransaction().rollback();
+            tx.rollback();
+            e.printStackTrace();
+        }
+        finally {
             db.close();
         }
 

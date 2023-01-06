@@ -1,8 +1,7 @@
 package com.uber.rides.ws;
 
-import static com.uber.rides.util.Utils.*;
-
 import java.io.IOException;
+import java.time.Instant;
 import java.util.Map;
 import java.util.Optional;
 
@@ -16,10 +15,13 @@ import io.jsonwebtoken.Claims;
 import com.fasterxml.jackson.core.JsonProcessingException;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.event.EventListener;
 import org.springframework.http.server.ServerHttpRequest;
 import org.springframework.http.server.ServerHttpResponse;
 import org.springframework.http.server.ServletServerHttpRequest;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.socket.CloseStatus;
@@ -36,12 +38,16 @@ import com.uber.rides.model.Trip;
 import com.uber.rides.model.User;
 import com.uber.rides.model.User.Roles;
 import com.uber.rides.security.JWT;
+import com.uber.rides.simulator.DriverSimulator;
+
+import static com.uber.rides.util.Utils.*;
 
 @Configuration
 @EnableWebSocket
 class WSConfig implements WebSocketConfigurer {
 
     @Autowired WS handler;
+    @Autowired DriverSimulator simulator;
 
     @Override
     public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
@@ -76,6 +82,12 @@ class WSConfig implements WebSocketConfigurer {
             
         });
     }
+
+    @EventListener(ApplicationReadyEvent.class)
+    public void applicationReady() {
+        simulator.start(2);
+    }
+
 }
 
 @Component
@@ -83,6 +95,7 @@ public class WS extends TextWebSocketHandler {
 
     @Autowired MessageHandler messageHandler;
     @Autowired EntityManagerFactory dbFactory;
+    @Autowired ThreadPoolTaskScheduler scheduler;
     @Autowired Store store;
 
     Logger logger = LoggerFactory.getLogger(WS.class);
@@ -102,15 +115,9 @@ public class WS extends TextWebSocketHandler {
                 return;
             }
             var userData = store.get(user.getId());
-            if (userData == null) {
-                store.put(user, session);
-                userData = store.get(user.getId());
-                if (userData != null) userData.onConnected();
-            }
-            // else {
-            //     userData.setSession(session); // ne moze jer simulator koristi stari session
-            //     userData.onConnected();
-            // }
+            if (userData == null) userData = store.put(user, session);
+            else userData.setSession(session); // ne moze jer simulator koristi stari session -> SEEMS FIXED
+            userData.onConnected();
             super.afterConnectionEstablished(session);
         }
         catch (Exception e) {
@@ -143,7 +150,14 @@ public class WS extends TextWebSocketHandler {
         var userData = store.get((Long) session.getAttributes().get(USER_ID));
         if (userData != null) {
             userData.onDisconnected();
-            store.remove(userData.getUser().getId());
+            userData.setSession(null);
+            scheduler.schedule(
+                () -> {
+                    if (userData.getSession() != null && userData.getSession().isOpen()) return;
+                    store.remove(userData.getUser().getId());
+                }, 
+                Instant.now().plusSeconds(300)
+            );
         }
         try { session.close(); } 
         catch (IOException e) { /* Ignore */}
@@ -175,23 +189,6 @@ public class WS extends TextWebSocketHandler {
         var data = store.get(userId);
         if (data != null) {
             sendMessage(data.session, message);
-        }
-    }
-
-    public void broadcast(String role, OutboundMessage message) {
-        try { broadcast(role, message.serialize()); } 
-        catch (JsonProcessingException e) {
-            logger.error("Could not serialize message of type {}", message.getClass()); 
-        }
-    }
-
-    public void broadcast(String role, String message) {
-        var iterator = store.getMap(role).values().iterator();
-        while (iterator.hasNext()) {
-            var data = iterator.next();
-            if (data != null) {
-                sendMessage(data.session, message);
-            }
         }
     }
 

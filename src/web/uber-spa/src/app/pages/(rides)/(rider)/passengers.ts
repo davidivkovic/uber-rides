@@ -2,7 +2,7 @@ import { Component } from '@angular/core'
 import { Router } from '@angular/router'
 import { CurrencyPipe, NgClass, NgFor, NgIf } from '@angular/common'
 import { watch } from 'usm-mobx'
-import { createInfoWindow, createMarker, createPolyline, map, refreshAllElements, removeAllElements, subscribe } from '@app/api/google-maps'
+import { createInfoWindow, createMarker, createPolyline, map, polylines, refreshAllElements, removeAllElements, subscribe } from '@app/api/google-maps'
 import { ridesStore } from '@app/stores/ridesStore'
 import { computed, formatDistance, formatDuration } from '@app/utils'
 import PassengersStatus from '@app/components/rides/passengersStatus'
@@ -30,7 +30,10 @@ import DriverDetails from '@app/components/common/driverDetails'
         <div class="flex items-center bg-[#f6f6f6] rounded-md mt-3 py-2.5 mb-1 pr-3.5">
           <div class="relative -ml-1 ">
             <img [src]="ridesStore.data.trip.car.type.image" class="w-[100px] h-[100px] -mt-7" />
-            <h3 class="absolute -bottom-2 left-3 text-[13px] tracking-wide px-1.5 py-[0.5px] rounded ring-[1.35px] ring-black">
+            <h3 
+              *ngIf="ridesStore.data.trip.car.registration"
+              class="absolute -bottom-2 left-3 text-[13px] tracking-wide px-1.5 py-[0.5px] rounded-sm ring-[1.35px] ring-black"
+            >
               {{ ridesStore.data.trip.car.registration.replace('-', ' • ') }}
             </h3>
           </div>
@@ -72,9 +75,16 @@ import DriverDetails from '@app/components/common/driverDetails'
       
         <div *ngIf="pickupPending || ridesStore.data.tripInProgress">
           <DriverDetails [driver]="ridesStore.data.trip.driver"></DriverDetails>
-          <div>
+          <div *ngIf="!ridesStore.data.trip.canStart && !ridesStore.data.trip.canFinish">
             <h3 class="text-xl leading-5">{{ formatDistance(ridesStore.data?.pickup?.driverDistance) }}</h3>
             <p class="text-[15px] text-zinc-700">approx. {{ formatDuration(ridesStore.data?.pickup?.driverDuration) }}</p>
+          </div>
+          <div *ngIf="ridesStore.data.pickup.canStart && !ridesStore.data.tripInProgress">
+            <h1 class="text-xl transition">The driver is at the pickup location</h1>
+            <p class="text-zinc-500 text-[15px] -mt-0.5">Make yourself comfortable in the vehicle</p>
+          </div>
+          <div *ngIf="ridesStore.data.trip.canFinish">
+
           </div>
         </div>
 
@@ -143,7 +153,7 @@ export default class Passengers {
   pickupPending = false
 
   ngAfterViewInit() {
-    refreshAllElements()
+    if (polylines.length === 0 || polylines[0]?.getMap() !== map) refreshAllElements()
   }
 
   constructor(public router: Router) {

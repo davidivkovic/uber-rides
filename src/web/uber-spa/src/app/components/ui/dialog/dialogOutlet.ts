@@ -46,7 +46,9 @@ export default class DialogOutlet implements AfterViewInit {
         const dialog = dialogRef.nativeElement
         dialogStore.setNativeElement(dialog)
         dialog.onclose = () => this.removeInjector(dialog.id)
-        setTimeout(() => dialog.showModal(), 0)
+        if (document.contains(dialog) && !dialog.open) {
+          setTimeout(() => dialog.showModal(), 0)
+        }
       })
     })
   }

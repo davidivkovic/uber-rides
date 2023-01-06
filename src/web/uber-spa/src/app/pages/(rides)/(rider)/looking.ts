@@ -230,6 +230,7 @@ export default class Looking {
 
   constructor(public router: Router, public route: ActivatedRoute) {
     ridesStore.setState(store => store.data = {})
+    ridesStore.setState(store => store.pages.lookingPage = this)
   }
 
   async onActivated(navigatedFrom: string) {
@@ -291,6 +292,16 @@ export default class Looking {
       if (this.locationsCompleted) await this.getDirections()
     }
 
+  }
+
+  cleanUp() {
+    this.stopoverInputs = [
+      this.makeEmptyStopover(),
+      this.makeEmptyStopover()
+    ]
+    this.autocompleteLocations = []
+    this.focusedStopover = -2
+    this.locationsCompleted = false
   }
 
   async getDirections() {

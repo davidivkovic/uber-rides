@@ -1,4 +1,4 @@
-import { Component } from '@angular/core'
+import { ChangeDetectorRef, Component } from '@angular/core'
 import { Location, NgClass } from '@angular/common'
 import { ActivatedRoute } from '@angular/router'
 import { geocoder, map } from '@app/api/google-maps'
@@ -11,14 +11,14 @@ import { ridesStore } from '@app/stores/ridesStore'
     <div class="h-[700px]">
       <div class="w-[400px] p-4 bg-white rounded-xl pointer-events-auto">
         <h3 class="text-[28px] leading-[34px]">{{ title }}</h3>
-        <div [hidden]="!isDragging && location.address !==''" class="w-52 h-3.5 mt-2 mb-4 rounded-sm bg-zinc-200"></div>
-        <p [hidden]="isDragging || location.address ===''" class="text-lg pt-0.5 pb-2 text-zinc-700">
+        <div [hidden]="!isDragging && location.address !== '' && !isLoading" class="w-52 h-3.5 mt-2 mb-4 rounded-sm bg-zinc-200"></div>
+        <p [hidden]="isDragging || location.address === '' || isLoading" class="text-lg pt-0.5 pb-2 text-zinc-700">
           {{ location.address }}, {{location.secondaryAddress}}
         </p>
         <button 
           (click)="pickLocation()"
           class="primary w-full !text-base"
-          [ngClass]="{ 'cursor-default pointer-events-none' : isDragging }"
+          [ngClass]="{ 'cursor-default pointer-events-none' : isDragging || isLoading }"
         >
           {{ confirmationText }}
         </button>
@@ -40,14 +40,21 @@ export default class PickLocation {
   confirmationText: string
   mapListeners: google.maps.MapsEventListener[]
   mapOverlay: HTMLElement
-  isDragging: boolean
+  isDragging = false
+  isLoading = false
 
-  constructor(route: ActivatedRoute, public routerLocation: Location) {
-    const locationType = route.snapshot.queryParamMap.get('type')
-    const longitude = Number(route.snapshot.queryParamMap.get('longitude'))
-    const latitude = Number(route.snapshot.queryParamMap.get('latitude'))
-    this.location.address = route.snapshot.queryParamMap.get('address')
-    this.location.secondaryAddress = route.snapshot.queryParamMap.get('secondaryAddress')
+  constructor(
+    public route: ActivatedRoute,
+    public routerLocation: Location,
+    public detector: ChangeDetectorRef
+  ) { }
+
+  onActivated() {
+    const locationType = this.route.snapshot.queryParamMap.get('type')
+    const longitude = Number(this.route.snapshot.queryParamMap.get('longitude'))
+    const latitude = Number(this.route.snapshot.queryParamMap.get('latitude'))
+    this.location.address = this.route.snapshot.queryParamMap.get('address')
+    this.location.secondaryAddress = this.route.snapshot.queryParamMap.get('secondaryAddress')
 
     this.title = {
       'pickup': 'Set pickup location',
@@ -86,32 +93,47 @@ export default class PickLocation {
     `
 
     const getAddress = async () => {
+      this.isLoading = true
+
+      const previousAddress = this.location.address
+      const previousSecondaryAddress = this.location.secondaryAddress
+
       this.location.address = this.location.secondaryAddress = ''
-      const response = await geocoder.geocode({ location: map.getCenter() })
-      const result = response.results[0];
-      [this.location.address, this.location.secondaryAddress] = result?.formatted_address.split(',').slice(0, 2)
-      this.location.placeId = result.place_id
-      this.location.longitude = result.geometry.location.lng()
-      this.location.latitude = result.geometry.location.lat()
+      this.detector.detectChanges()
+
+      try {
+        const response = await geocoder.geocode({ location: map.getCenter() })
+        const result = response.results[0];
+
+        [this.location.address, this.location.secondaryAddress] = result?.formatted_address.split(',').slice(0, 2)
+        this.location.placeId = result.place_id
+        this.location.longitude = result.geometry.location.lng()
+        this.location.latitude = result.geometry.location.lat()
+      }
+      catch {
+        this.location.address = previousAddress
+        this.location.secondaryAddress = previousSecondaryAddress
+      }
+
+      this.isLoading = false
+      this.detector.detectChanges()
     }
 
     this.mapListeners = [
       google.maps.event.addListener(map, 'dragstart', () => {
         this.isDragging = true
         setMarker(this.mapOverlay)
+        this.detector.detectChanges()
       }),
-      // google.maps.event.addListener(map, 'dragend', async () => {
-      //   this.isDragging = false
-      //   setMarker(this.mapOverlay)
-      // }),
       google.maps.event.addListener(map, 'center_changed', () => {
         marker.setPosition(map.getCenter())
       }),
-      google.maps.event.addListener(map, 'idle', () => {
+      google.maps.event.addListener(map, 'idle', async () => {
         this.isDragging = false
         setMarker(this.mapOverlay)
         marker.setPosition(map.getCenter())
-        getAddress()
+        this.detector.detectChanges()
+        await getAddress()
       })
     ]
 
@@ -119,12 +141,16 @@ export default class PickLocation {
     !this.location.address && getAddress()
   }
 
+  ngOnInit() {
+    this.onActivated()
+  }
+
   pickLocation = () => {
     ridesStore.setState(store => store.locationPicked = this.location)
     this.routerLocation.back()
   }
 
-  ngOnDestroy() {
+  onDeactivated() {
     this.mapListeners.forEach(listener => listener.remove())
     this.mapOverlay.innerHTML = ''
   }

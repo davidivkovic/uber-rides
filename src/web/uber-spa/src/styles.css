@@ -50,7 +50,7 @@
   }
 
   label {
-    @apply text-gray-500 
+    @apply text-gray-500;
   }
 
   button {
@@ -127,7 +127,7 @@
 
 .gmnoprint > div {
   box-shadow: none !important;
-  border-radius: 6px !important;
+  border-radius: 5px !important;
 }
 
 .gm-style-iw {

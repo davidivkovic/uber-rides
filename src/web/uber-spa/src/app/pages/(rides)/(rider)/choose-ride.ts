@@ -81,25 +81,27 @@ import { PayDialog } from '@app/pages/(business)/profile/components/choosePaymen
         class="mt-3 px-5"
       >
       </PassengersStatus>
-      <div class="h-10 w-full mt-auto" (click)="changePaymentMethod()">
-      <div
-      class=" w-full cursor-pointer flex items-center p-5"
-    >
-      <div class="w-[30px] h-full flex items-center justify-top">
-        <img
-          [src]="methodLogos[defaultPaymentMethod?.typeDetails ?? 'default']"
-          alt="Payment method icon"
-          class="h-[22px] w-[22px] object-contain"
-        />
-      </div>
-      <div class="flex justify-between items-center flex-1">
-        <div class="flex space-x-1 items-baseline">
-          <div class="text-sm">{{ defaultPaymentMethod?.name ?? "Add payment method" }}</div>
-          <div class="text-xs">{{ defaultPaymentMethod?.email }}</div>
+      <div 
+        *ngIf="!lookingForRide" 
+        class="h-10 w-full mt-auto" 
+        (click)="changePaymentMethod()"
+      >
+        <div class=" w-full cursor-pointer flex items-center p-5" > 
+          <div class="w-[30px] h-full flex items-center justify-top">
+            <img
+              [src]="methodLogos[defaultPaymentMethod?.typeDetails ?? 'default']"
+              alt="Payment method icon"
+              class="h-[22px] w-[22px] object-contain"
+            />
+          </div>
+          <div class="flex justify-between items-center flex-1">
+            <div class="flex space-x-1 items-baseline">
+              <div class="text-sm">{{ defaultPaymentMethod?.name ?? "Add payment method" }}</div>
+              <div class="text-xs">{{ defaultPaymentMethod?.email }}</div>
+            </div>
+            <svg width="1em" height="1em" viewBox="0 0 24 24" fill="none"><title>Chevron right small</title><path d="M16.9 12l-4.6 6H8.5l4.6-6-4.6-6h3.8l4.6 6z" fill="currentColor"></path></svg>
+          </div>
         </div>
-        <svg width="1em" height="1em" viewBox="0 0 24 24" fill="none"><title>Chevron right small</title><path d="M16.9 12l-4.6 6H8.5l4.6-6-4.6-6h3.8l4.6 6z" fill="currentColor"></path></svg>
-      </div>
-    </div>
       </div>
       <button 
         *ngIf="!lookingForRide"
@@ -212,13 +214,17 @@ export default class ChooseRide {
         method.name = `${method.typeDetails} - ${method.cardNumber.slice(15)} (${method.nickname})`
       }
       this.defaultPaymentMethod = method
-    } catch(err) {
-      
+    } catch (err) {
+
     }
   }
 
   changePaymentMethod() {
-    dialogStore.openDialog(PayDialog, { refetchDefaultMethod: () => this.fetchDefaultMethod() }, () => this.fetchDefaultMethod())
+    dialogStore.openDialog(
+      PayDialog,
+      { refetchDefaultMethod: this.fetchDefaultMethod },
+      this.fetchDefaultMethod
+    )
   }
 
   cancelOrder() {

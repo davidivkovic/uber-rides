@@ -27,15 +27,15 @@ public class UpdateLocation implements InboundMessage<DriverData> {
         if (car == null) return;
 
         var heading = Math.toDegrees(Math.atan2(
-            longitude - sender.getLongitude(),
-            latitude - sender.getLatitude())
-        );
+            getLongitude() - sender.getLongitude(),
+            getLatitude() - sender.getLatitude()
+        ));
 
-        sender.setLongitude(longitude);
-        sender.setLatitude(latitude);
+        sender.setLongitude(getLongitude());
+        sender.setLatitude(getLatitude());
         sender.setHeading(heading);
-        sender.setDuration(duration);
-        sender.setDistance(distance);
+        sender.setDuration(getDuration());
+        sender.setDistance(getDistance());
 
     }
 

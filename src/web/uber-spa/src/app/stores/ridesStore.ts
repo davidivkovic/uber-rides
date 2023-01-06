@@ -1,4 +1,5 @@
-import { action, state, createStore, watch, subscribe } from 'usm-mobx'
+import { markers, polylines } from '@app/api/google-maps'
+import { action, state, createStore, subscribe } from 'usm-mobx'
 
 type Location = {
   placeId: string,
@@ -23,7 +24,20 @@ class RidesStore {
   pages = {} as any
 
   @state
-  mapElements = {} as any
+  mapElements = {
+    pickupPolyline: null as google.maps.Polyline,
+    pickupMarkers: [] as google.maps.Marker[],
+    pickupInfoWindows: [] as google.maps.InfoWindow[]
+  }
+
+  @action
+  setMapElements() {
+    this.mapElements = {
+      pickupPolyline: polylines.find((p: any) => p.name === 'pickup'),
+      pickupMarkers: markers.filter((m: any) => m.name === 'pickup'),
+      pickupInfoWindows: []
+    }
+  }
 
   @state
   data = localStorage.getItem('rides-store') ? JSON.parse(localStorage.getItem('rides-store')) : {}

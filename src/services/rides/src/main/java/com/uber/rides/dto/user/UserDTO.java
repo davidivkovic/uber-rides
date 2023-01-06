@@ -45,5 +45,6 @@ public class UserDTO {
     boolean blocked;
     boolean completedRegistration;
     Car car;
+    double rating;
 
 }

@@ -6,7 +6,7 @@ import PassengersStatus from '@app/components/rides/passengersStatus'
 import RouteDetails from '@app/components/rides/routeDetails'
 import StatusBar from './components/statusBar'
 import Navigation from './components/navigation'
-import { map, subscribe } from '@app/api/google-maps'
+import { map, polylines, refreshAllElements, subscribe } from '@app/api/google-maps'
 import trips from '@app/api/trips'
 import { Router } from '@angular/router'
 
@@ -88,11 +88,12 @@ export default class Pickup {
   )
 
   ngAfterViewInit() {
-    subscribe(() => {
-      if (ridesStore.data.pickup && (ridesStore.mapElements?.pickupPolyline?.getMap() !== map)) {
-        ridesStore.mapElements.pickupPolyline?.setMap(map)
-        ridesStore.mapElements.pickupMarker?.setMap(map)
-      }
-    })
+    // subscribe(() => {
+    //   if (ridesStore.data.pickup && (ridesStore.mapElements?.pickupPolyline?.getMap() !== map)) {
+    //     ridesStore.mapElements.pickupPolyline?.setMap(map)
+    //     ridesStore.mapElements.pickupMarkers?.forEach(m => m.setMap(map))
+    //   }
+    // })
+    if (polylines.length === 0 || polylines[0]?.getMap() !== map) refreshAllElements()
   }
 }

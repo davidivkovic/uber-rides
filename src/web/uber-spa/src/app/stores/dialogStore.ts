@@ -5,8 +5,7 @@ class DialogData {
   id: string
   component: () => typeof Dialog
   props: any
-  close: () => void
-  onclose: (data?: any) => void
+  close: (param?: any) => void
   nativeElement?: HTMLDialogElement
 }
 
@@ -18,9 +17,7 @@ class DialogStore {
   @action
   openDialog(
     component: typeof Dialog,
-    props: {
-      noCloseButton: boolean
-    } | {},
+    props: { noCloseButton: boolean } | {},
     onclose: (param: any) => void = () => { }
   ) {
     const id = `dialog-${this.dialogs.length}`
@@ -28,8 +25,10 @@ class DialogStore {
       id,
       component: () => component,
       props,
-      close: () => this.closeDialog(id),
-      onclose
+      close: param => {
+        onclose(param)
+        this.closeDialog(id)
+      },
     })
   }
 

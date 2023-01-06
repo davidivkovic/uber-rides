@@ -25,7 +25,7 @@ public class Store {
 
     public Map<Long, Map<Long, ? extends UserData>> index = new ConcurrentHashMap<>();
 
-    public void put(User user, WebSocketSession session) {
+    public UserData put(User user, WebSocketSession session) {
         switch (user.getRole()) {
             case Roles.ADMIN -> {
                 var admin = new AdminData(user, session);
@@ -46,6 +46,7 @@ public class Store {
                 index.put(user.getId(), riders);
             }
         }
+        return this.get(user.getId());
     }
 
     public UserData get(Long id) {

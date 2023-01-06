@@ -2,22 +2,23 @@ import { ridesStore, userStore } from "@app/stores"
 import { createInfoWindow, createMarker, createPolyline, map, removeAllElements } from "../google-maps"
 
 export default async (message: { trip: any }) => {
-  const stops = [message.trip.route.start, ...message.trip.route.stops]
+  message.trip.riders.forEach((passenger: any) => passenger.accepted = true)
   removeAllElements()
-  const tripPolyline = createPolyline(message.trip.route.encodedPolyline)
+  const stops = [message.trip.route.start, ...message.trip.route.stops]
+  const tripPolyline = createPolyline(message.trip.route.encodedPolyline, '#000', 'pickup')
   const tripMarkers = stops.map((stop, index) => {
-    return createMarker(stop.latitude, stop.longitude, index === stops.length - 1)
+    return createMarker(stop.latitude, stop.longitude, index === stops.length - 1, 'pickup')
   })
   const tripInfoWindows = stops.map((stop, index) => {
     return createInfoWindow(stop.latitude, stop.longitude, stop.address, index, stops.length)
   })
   ridesStore.mapElements.pickupPolyline?.setMap(null)
-  ridesStore.mapElements.pickupMarker?.setMap(null)
+  ridesStore.mapElements.pickupMarkers?.forEach(m => m.setMap(null))
   ridesStore.setState(store => {
     store.data.trip = message.trip
     store.mapElements.pickupPolyline = tripPolyline
-    store.mapElements.pickupMarker = tripMarkers
-    store.data.pickupInfoWindows = tripInfoWindows
+    store.mapElements.pickupMarkers = tripMarkers
+    store.mapElements.pickupInfoWindows = tripInfoWindows
     store.data.tripInProgress = true
   })
   map.fitBounds(new google.maps.LatLngBounds(

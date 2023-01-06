@@ -3,6 +3,7 @@ import { Routes } from '@angular/router'
 const routes: Routes = [
   {
     path: '',
+    data: { reuseRoute: true },
     loadComponent: () => import('./index'),
     children: [
       {
@@ -30,6 +31,7 @@ const routes: Routes = [
           },
           {
             path: 'pick-location',
+            data: { reuseRoute: true },
             loadComponent: () => import('./pick-location')
           },
           {
@@ -46,11 +48,12 @@ const routes: Routes = [
       },
       {
         path: 'passengers',
+        data: { reuseRoute: true },
         loadComponent: () => import('./passengers')
       },
       {
         path: 'riding',
-        loadComponent: () => import('./riding')
+        loadComponent: () => import('./riding') // Probably not needed
       }
     ]
   }

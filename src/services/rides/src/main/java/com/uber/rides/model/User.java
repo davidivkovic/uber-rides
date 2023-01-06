@@ -79,6 +79,8 @@ public class User implements UserDetails {
     double rating;
     OTP confirmationCode;
     String customerId;
+    int minutesFatigue;
+    LocalDateTime fatigueStart;
 
     @OneToOne(fetch = FetchType.LAZY) UserUpdateRequest updateRequest;
     @OneToOne Car car;

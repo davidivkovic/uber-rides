@@ -99,7 +99,7 @@ export class PayDialog extends Dialog {
   }
 
   addMethod() {
-    this.close()
+    setTimeout(() => this.close(), 1)
     dialogStore.openDialog(
       PaymentMethodDialog,
       { setDefault: true },

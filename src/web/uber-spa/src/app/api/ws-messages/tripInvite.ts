@@ -6,6 +6,7 @@ import { computed, formatDistance, formatDuration } from '@app/utils'
 import { dialogStore, ridesStore } from '@app/stores'
 import { OutboundMessages } from './messages'
 import { send } from '../ws'
+import { createInfoWindow, createMarker, createPolyline, removeAllElements } from '../google-maps'
 
 export default (message: { inviter: any, trip: any }) => {
   dialogStore.openDialog(
@@ -19,6 +20,16 @@ export default (message: { inviter: any, trip: any }) => {
       const accepted = status === 'accept'
       send(OutboundMessages.ANSWER_TRIP_INVITE, { inviterId: message.inviter.id, accepted })
       if (accepted) {
+        message.trip.riders.forEach((passenger: any) => passenger.accepted = true)
+        const stops = [message.trip.route.start, ...message.trip.route.stops]
+        removeAllElements()
+        createPolyline(message.trip.route.encodedPolyline, '#000')
+        stops.map((stop, index) => {
+          return createMarker(stop.latitude, stop.longitude, index === stops.length - 1)
+        })
+        stops.map((stop, index) => {
+          return createInfoWindow(stop.latitude, stop.longitude, stop.address, index, stops.length)
+        })
         message.trip.riders = message.trip.riders.map((r: any) => ({ accepted: true, declined: false, ...r }))
         ridesStore.setState(store => {
           store.data.inviter = message.inviter

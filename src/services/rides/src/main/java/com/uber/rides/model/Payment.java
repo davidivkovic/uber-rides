@@ -9,9 +9,6 @@ import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 
-import com.braintreegateway.Result;
-import com.braintreegateway.Transaction;
-
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
@@ -45,14 +42,12 @@ public class Payment {
     String transactionId;
 
     public boolean capture() {
-        Result<Transaction> result = gateway.transaction()
-            .submitForSettlement(this.transactionId);
+        var result = gateway.transaction().submitForSettlement(this.transactionId);
         return result.isSuccess();
     }
 
     public boolean refund() {
-        Result<Transaction> voidResult = gateway.transaction()
-            .voidTransaction(this.transactionId);
+        var voidResult = gateway.transaction().voidTransaction(this.transactionId);
         return voidResult.isSuccess();
     }
 }

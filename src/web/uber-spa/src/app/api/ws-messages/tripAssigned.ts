@@ -5,8 +5,10 @@ import { ridesStore } from '@app/stores/ridesStore'
 export default async (message: { trip: any, directions: any, driverDuration: number, driverDistance: number } | any) => {
   const points = google.maps.geometry.encoding.decodePath(message.directions.routes[0].overviewPolyline.encodedPath)
   const desintaion = points[points.length - 1]
-  const pickupMarker = createMarker(desintaion.lat(), desintaion.lng(), true)
-  const pickupPolyline = createPolyline(points)
+  const pickupMarker = userStore.user.role === 'ROLE_DRIVER'
+    ? createMarker(desintaion.lat(), desintaion.lng(), true, 'pickup')
+    : null
+  const pickupPolyline = createPolyline(points, '#000', 'pickup')
   message.distance = message.directions.routes[0].legs.reduce((a: any, b: any) => a + b.distance.inMeters, 0)
   message.duration = message.directions.routes[0].legs.reduce((a: any, b: any) => a + b.duration.inSeconds, 0)
   message.trip.riders.forEach((passenger: any) => passenger.accepted = true)
@@ -14,7 +16,7 @@ export default async (message: { trip: any, directions: any, driverDuration: num
     store.data.trip = message.trip
     store.data.pickup = message
     store.mapElements.pickupPolyline = pickupPolyline
-    store.mapElements.pickupMarker = pickupMarker
+    if (pickupMarker !== null) store.mapElements.pickupMarkers = [pickupMarker]
   })
   if (userStore.user.role === 'ROLE_DRIVER') {
     await window.router.navigate(['/pickup'])

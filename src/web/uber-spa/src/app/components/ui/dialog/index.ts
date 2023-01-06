@@ -13,8 +13,7 @@ export class Dialog {
     this.props = data.props
   }
 
-  close = (data?: any) => {
-    this.data.onclose(data)
-    this.data.close()
+  close = (data: any = null) => {
+    this.data.close(data)
   }
 }

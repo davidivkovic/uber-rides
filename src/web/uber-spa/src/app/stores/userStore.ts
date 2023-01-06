@@ -31,6 +31,12 @@ class UserStore {
     this.user = {}
   }
 
+  @action
+  setIsOnline(isOnline: boolean) {
+    this.user.isOnline = isOnline
+    localStorage.setItem(userKey, JSON.stringify(this.user))
+  }
+
   @computed
   get isAuthenticated() {
     return Object.keys(this.user).length !== 0
