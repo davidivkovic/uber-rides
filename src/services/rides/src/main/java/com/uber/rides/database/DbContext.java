@@ -9,12 +9,9 @@ import org.hibernate.internal.SessionFactoryImpl;
 
 import com.speedment.jpastreamer.application.JPAStreamer;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Repository;
+import org.springframework.stereotype.Service;
 
-@Repository
-@Scope("prototype")
+@Service
 public class DbContext {
 
     private class Factory extends SessionFactoryDelegatingImpl {
@@ -34,8 +31,11 @@ public class DbContext {
     }
 
     @PersistenceContext EntityManager db;
-    @Autowired JPAStreamer readonlyQuery;
     JPAStreamer query;
+
+    public EntityManager db() {
+        return db;
+    }
 
     public JPAStreamer query() {
         if (query == null) query = JPAStreamer.of(new Factory(db));
@@ -43,11 +43,7 @@ public class DbContext {
     }
 
     public JPAStreamer readonlyQuery() {
-        return readonlyQuery;
-    }
-
-    public EntityManager db() {
-        return db;
+        return query();
     }
 
 }
