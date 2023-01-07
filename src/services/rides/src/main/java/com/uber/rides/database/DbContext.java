@@ -3,6 +3,10 @@ package com.uber.rides.database;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 
+import org.hibernate.Session;
+import org.hibernate.engine.spi.SessionFactoryDelegatingImpl;
+import org.hibernate.internal.SessionFactoryImpl;
+
 import com.speedment.jpastreamer.application.JPAStreamer;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,24 +17,37 @@ import org.springframework.stereotype.Repository;
 @Scope("prototype")
 public class DbContext {
 
-    @PersistenceContext EntityManager db;
-    JPAStreamer query;
+    private class Factory extends SessionFactoryDelegatingImpl {
 
-    public EntityManager db() {
-        return db;
-    }
+        EntityManager db;
 
-    public JPAStreamer query() {
-        if (query == null) {
-            query = JPAStreamer.of(() -> db);
+        public Factory(EntityManager db) {
+            super(db.getEntityManagerFactory().unwrap(SessionFactoryImpl.class));
+            this.db = db;
         }
 
+        @Override
+        public Session createEntityManager() {
+            return (Session) db;
+        }
+        
+    }
+
+    @PersistenceContext EntityManager db;
+    @Autowired JPAStreamer readonlyQuery;
+    JPAStreamer query;
+
+    public JPAStreamer query() {
+        if (query == null) query = JPAStreamer.of(new Factory(db));
         return query;
     }
 
-    /* compat */
     public JPAStreamer readonlyQuery() {
-        return query();
+        return readonlyQuery;
+    }
+
+    public EntityManager db() {
+        return db;
     }
 
 }

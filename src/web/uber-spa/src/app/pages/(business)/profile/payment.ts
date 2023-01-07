@@ -12,19 +12,19 @@ import methodLogos from '@app/../assets/files/payment-methods.json'
   imports: [CardNumberHidden, NgIf, NgFor],
   template: `
     <div>
-      <h3 class="text-3xl">Saved payment methods</h3>
+      <h3 class="text-3xl mb-4">Saved payment methods</h3>
       <div
         *ngFor="let method of methods"
-        class="relative group w-[400px] flex flex-col justify-between bg-gray-100 rounded-lg h-[220px] mt-10 p-6"
+        class="relative group w-[390px] flex flex-col justify-between bg-gray-100 rounded-lg h-[210px] mt-6 p-6"
       >
         <div>
           <div
-            class="absolute hidden group-hover:flex items-center justify-center bg-black/[0.6] w-[400px] h-[220px] top-0 left-0 rounded-lg "
+            class="absolute hidden group-hover:flex items-center justify-center bg-black/[0.6] w-[390px] h-[210px] top-0 left-0 rounded-lg "
           >
             <svg
               (click)="removeMethod(method)"
               xmlns="http://www.w3.org/2000/svg"
-              class="icon icon-tabler icon-tabler-trash text-white cursor-pointer h-14 w-14 p-2"
+              class="icon icon-tabler icon-tabler-trash text-white cursor-pointer h-12 w-12 p-2"
               viewBox="0 0 24 24"
               stroke-width="2"
               stroke="currentColor"
@@ -102,7 +102,7 @@ export default class Payment {
           m.expirationDate = dayjs(m.expirationDate).format('MM/YY')
         }
       })
-    } catch (error) {}
+    } catch (error) { }
   }
 
   addMethod = async () => {

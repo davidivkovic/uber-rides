@@ -45,10 +45,21 @@ const startTrip = async () => {
   if (!response.ok) throw new Error(await response.text())
 }
 
+const getTrips = async (userId: string, order = 'START_DESC', page: any = 0) => {
+  const response = await fetch(
+    basePath + '?' + new URLSearchParams({ userId, order, page }).toString(),
+    {
+      method: 'GET'
+    }
+  )
+  if (!response.ok) throw new Error(await response.text())
+  return await response.json()
+}
 
 export default {
   chooseRide,
   invitePassengers,
   orderRide,
-  startTrip
+  startTrip,
+  getTrips
 }

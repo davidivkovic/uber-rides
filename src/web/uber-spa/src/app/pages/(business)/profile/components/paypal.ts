@@ -34,7 +34,7 @@ declare const paypal
 })
 export default class Paypal {
   @Input() setDefault: boolean;
-  
+
   @ViewChild('pp') paypalButton
 
   braintreeLoaded = false
@@ -117,7 +117,7 @@ export default class Paypal {
                 paypal
                   .Buttons({
                     style: {
-                      color: 'blue',
+                      color: 'gold',
                       label: 'paypal',
                       shape: 'rect',
                       height: 48
@@ -148,10 +148,10 @@ export default class Paypal {
                       console.log('PayPal payment canceled.')
                     },
 
-                    onError: function (err) {}
+                    onError: function (err) { }
                   })
                   .render('#paypal-button')
-                  .catch(err => {})
+                  .catch(err => { })
               }
             )
           }
