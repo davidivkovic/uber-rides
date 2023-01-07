@@ -65,7 +65,7 @@ export default (message: {
   }
 
   if (isSelf) {
-    if (ridesStore.mapElements?.pickupPolyline) {
+    if (ridesStore.data.trip || ridesStore.data.pickup) {
       let idx = 0
       let path = ridesStore.mapElements.pickupPolyline.getPath().getArray() as google.maps.LatLng[]
       for (let i = 0; i < path.length - 1; i++) {

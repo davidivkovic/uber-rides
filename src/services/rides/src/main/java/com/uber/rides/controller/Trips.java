@@ -8,6 +8,7 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
+import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -35,6 +36,7 @@ import com.uber.rides.dto.TripDTO;
 import com.uber.rides.dto.user.UserDTO;
 import com.uber.rides.model.Car;
 import com.uber.rides.model.Location;
+import com.uber.rides.model.Payment;
 import com.uber.rides.model.Route;
 import com.uber.rides.model.Route$;
 import com.uber.rides.model.Trip;
@@ -70,6 +72,9 @@ public class Trips extends Controller {
     @Autowired WS ws;
     @Autowired ThreadPoolTaskScheduler scheduler;
     @Autowired DriverSimulator simulator;
+
+    @Autowired Trip.Service tripService;
+    @Autowired Route.Service routeService;
 
     @PostMapping("/start")
     @Secured({ Roles.DRIVER })
@@ -173,23 +178,36 @@ public class Trips extends Controller {
         trip.setDriver(driver.getUser());
         trip.setCar(driver.getUser().getCar());
 
-        context.db().merge(trip);
+        context.db().persist(trip);
 
         trip.getRiders().forEach(r -> ws.sendMessageToUser(r.getId(), new UberUpdate(UberUpdate.Status.FOUND)));
 
         //send a websoket message to the riders that a driver has been found
         // Do the actual payment here   
 
-        // var riderIds = trip.getRiders().stream().map(User::getId).toList();
-        // var riders = context.readonlyQuery()
-        //     .stream(of(User.class).joining(User$.))
-        //     .filter(User$.id.in(riderIds))
-        //     .collect(Collectors.toMap(User::getId, User::getDefaultPaymentType));
-        // gateway.transaction().sale(null);
-        // gateway.transaction().submitForSettlement(txId);
+        var riderIds = trip.getRiders().stream().map(User::getId).toList();
+        var payments = context.readonlyQuery()
+            .stream(of(User.class).joining(User$.defaultPaymentMethod))
+            .filter(User$.id.in(riderIds))
+            .map(User::getDefaultPaymentMethod)
+            .parallel()
+            .map(m -> {
+                if (m == null) return null;
+                return m.authorize(trip.getTotalPrice() / riderIds.size(), "USD");
+            })
+            .toList();
+
+        if (payments.stream().anyMatch(Objects::isNull)) {
+            driver.setAvailable(true);
+            payments.parallelStream().filter(Objects::nonNull).forEach(Payment::refund);
+            trip.setStatus(Trip.Status.CANCELLED);
+            trip.getRiders().forEach(r -> ws.sendMessageToUser(r.getId(), new UberUpdate(UberUpdate.Status.PAYMENT_FAILED)));
+            return badRequest("Payment failed. Please try again later.");
+        }
 
         driver.getUser().setCurrentTrip(trip);
         driver.setDirections(pickupDirections);
+        trip.setPayments(payments);
         trip.setStatus(Trip.Status.PAID);
 
         var tripAssigned = new TripAssigned(trip, pickupDirections);
@@ -355,12 +373,11 @@ public class Trips extends Controller {
         }
 
         Stream<List<Trip>> stream;
-        var user = context.readonlyQuery().stream(User.class)
+        var user = context.query().stream(User.class)
             .filter(User$.id.equal(userId));
 
         if (isDriver) {
             stream = user.map(User::getTripsAsDriver);
-
         }
         else {
             stream = user.map(User::getTripsAsRider);
@@ -368,25 +385,27 @@ public class Trips extends Controller {
 
         var trips = stream
             .flatMap(Collection::stream)
-            .collect(Collectors.toList())
+            .filter(Trip$.status.equal(Trip.Status.COMPLETED))
+            .toList()
             .stream()
             .sorted(comparator)
             .skip(page * PAGE_SIZE)
             .limit(PAGE_SIZE)
             .toList();
         
-        var routes = context.readonlyQuery().stream(
+        var routes = context.query().stream(
                 of(Route.class)
                 .joining(Route$.stops)
             )
             .filter(Route$.id.in(trips.stream().map(Trip::getRouteId).toList()))
             .collect(Collectors.toMap(Route::getId, Function.identity()));
         
-        return context.readonlyQuery().stream(
+        return context.query().stream(
                 of(Trip.class)
                 .joining(Trip$.driver)
                 .joining(Trip$.riders)
                 .joining(Trip$.payments)
+                .joining(Trip$.car)
             )
             .filter(Trip$.id.in(trips.stream().map(Trip::getId).toList()))
             .sorted(comparator)

@@ -128,9 +128,9 @@ public class PaymentMethod {
         if(!result.isSuccess()) return null;
 
         return Payment.builder()
+            .user(user)
             .amount(amount)
             .currency(currency)
-            .capturedAt(LocalDateTime.now())
             .transactionId(result.getTarget().getId())
             .build();
     }

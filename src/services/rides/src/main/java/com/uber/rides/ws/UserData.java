@@ -1,5 +1,7 @@
 package com.uber.rides.ws;
 
+import java.time.LocalDateTime;
+
 import lombok.Getter;
 import lombok.Setter;
 
@@ -12,8 +14,6 @@ import com.uber.rides.model.User;
 import com.uber.rides.ws.shared.messages.out.SyncStatus;
 
 import static com.uber.rides.util.Utils.*;
-
-import java.time.LocalDateTime;
 
 @Getter
 @Setter

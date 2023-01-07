@@ -30,8 +30,6 @@ const registerCar = async (data: {
 
 const pollLiveLocations = async () => {
 
-  if (isPolling) return
-  isPolling = true
 
   const getLiveLocations = () => fetch(
     basePath + '/live-locations',
@@ -44,6 +42,9 @@ const pollLiveLocations = async () => {
   for (const carLocation of await response.json()) {
     handler.default(carLocation)
   }
+
+  if (isPolling) return
+  isPolling = true
 
   setInterval(async () => {
     response = await getLiveLocations()

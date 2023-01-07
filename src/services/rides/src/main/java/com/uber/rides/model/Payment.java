@@ -9,8 +9,10 @@ import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import static com.uber.rides.util.Utils.gateway;
@@ -19,6 +21,8 @@ import static com.uber.rides.util.Utils.gateway;
 @Setter
 @Entity
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class Payment {
 
     @Id
@@ -42,8 +46,15 @@ public class Payment {
     String transactionId;
 
     public boolean capture() {
-        var result = gateway.transaction().submitForSettlement(this.transactionId);
-        return result.isSuccess();
+        var success = gateway
+            .transaction()
+            .submitForSettlement(this.transactionId)
+            .isSuccess();
+        if (success) {
+            this.captured = true;
+            this.capturedAt = LocalDateTime.now();
+        }
+        return success;
     }
 
     public boolean refund() {

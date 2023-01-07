@@ -13,7 +13,7 @@ import DriverDetails from '@app/components/common/driverDetails'
   standalone: true,
   imports: [NgIf, NgFor, NgClass, PassengersStatus, RouteDetails, DriverDetails, CurrencyPipe],
   template: `
-    <div class="w-[400px] h-[700px] p-4 bg-white rounded-xl pointer-events-auto">
+    <div *ngIf="ridesStore.data.trip || ridesStore.data.pickup" class="w-[400px] h-[700px] p-4 bg-white rounded-xl pointer-events-auto">
       <div *ngIf="!ridesStore.data.trip" class="flex flex-col">
         <h1 class="text-3xl pb-1">Ride overview</h1>
         <p class="text-zinc-700">You are currently not a passenger on any rides</p>
@@ -79,7 +79,7 @@ import DriverDetails from '@app/components/common/driverDetails'
             <h3 class="text-xl leading-5">{{ formatDistance(ridesStore.data?.pickup?.driverDistance) }}</h3>
             <p class="text-[15px] text-zinc-700">approx. {{ formatDuration(ridesStore.data?.pickup?.driverDuration) }}</p>
           </div>
-          <div *ngIf="ridesStore.data.pickup.canStart && !ridesStore.data.tripInProgress">
+          <div *ngIf="ridesStore.data?.pickup?.canStart && !ridesStore.data.tripInProgress">
             <h1 class="text-xl transition">The driver is at the pickup location</h1>
             <p class="text-zinc-500 text-[15px] -mt-0.5">Make yourself comfortable in the vehicle</p>
           </div>
@@ -153,7 +153,7 @@ export default class Passengers {
   pickupPending = false
 
   ngAfterViewInit() {
-    if (polylines.length === 0 || polylines[0]?.getMap() !== map) refreshAllElements()
+    if (polylines.length === 0 || ridesStore.mapElements?.pickupPolyline?.getMap() !== map) refreshAllElements()
   }
 
   constructor(public router: Router) {

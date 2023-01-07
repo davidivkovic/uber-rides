@@ -38,7 +38,7 @@ public class DriverData extends UserData {
     
     @Override
     public void onDisconnected() {
-        setLatitude(0);
-        setLongitude(0);
+        // setLatitude(0);
+        // setLongitude(0); // move this logic to when the driver offline
     }
 }

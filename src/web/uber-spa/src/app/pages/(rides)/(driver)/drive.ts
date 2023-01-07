@@ -81,7 +81,7 @@ export default class Drive {
     //     ridesStore.mapElements.pickupMarkers?.forEach(m => m.setMap(map))
     //   }
     // })
-    console.log(polylines.length)
-    if (polylines.length === 0 || polylines[0]?.getMap() !== map) refreshAllElements()
+    // console.log(polylines.length)
+    if (!ridesStore.mapElements.pickupPolyline) refreshAllElements()
   }
 }

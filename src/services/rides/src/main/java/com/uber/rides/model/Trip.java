@@ -6,6 +6,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+
+import javax.persistence.CascadeType;
+import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
@@ -17,9 +20,6 @@ import javax.persistence.OneToMany;
 import javax.persistence.Transient;
 
 import com.google.maps.model.DirectionsRoute;
-
-import javax.persistence.CascadeType;
-import javax.persistence.Column;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -92,5 +92,10 @@ public class Trip {
 
     @Column(name = "car_id", insertable = false, updatable = false) 
     String carId;
+
+    @org.springframework.stereotype.Service
+    public static class Service {
+
+    }
     
 }

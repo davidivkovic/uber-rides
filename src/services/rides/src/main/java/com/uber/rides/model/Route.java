@@ -43,4 +43,9 @@ public class Route {
         return linkTo(methodOn(Routes.class).getThumbnail(thumbnail)).toString();
     }
 
+    @org.springframework.stereotype.Service
+    public static class Service {
+        
+    }
+
 }
