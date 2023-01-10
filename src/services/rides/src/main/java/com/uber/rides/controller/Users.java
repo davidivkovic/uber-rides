@@ -103,6 +103,7 @@ public class Users extends Controller {
         var updateRequest = user.getUpdateRequest();
         if (updateRequest == null) {
             updateRequest = mapper.map(user, UserUpdateRequest.class);
+            updateRequest.setUserId(user.getId());
         }
 
         mapper.map(request, updateRequest);
@@ -119,8 +120,8 @@ public class Users extends Controller {
         }
 
         if (authenticatedUserRole().equals(Roles.DRIVER)) {
-            user.setUpdateRequest(updateRequest);
             context.db().persist(updateRequest);
+            user.setUpdateRequest(updateRequest);
         }
         else {
             mapper.map(updateRequest, user);
@@ -137,43 +138,36 @@ public class Users extends Controller {
     @GetMapping("/updates")
     @Secured({ User.Roles.ADMIN })
     public Object getUpdateRequests(@RequestParam int page) {
-
-        long pageSize = 8;
-        return context.query().stream(UserUpdateRequest.class)
+        return context.query()
+            .stream(UserUpdateRequest.class)
             .sorted(UserUpdateRequest$.requestedAt.reversed())
-            .skip(page * pageSize)
-            .limit(pageSize)
+            .skip(page * PAGE_SIZE)
+            .limit(PAGE_SIZE)
+            .map(UserUpdateRequest::withProfilePicture)
             .toList();
-            
     }
     
     @Transactional
     @PostMapping("/{id}/updates")
     @Secured({ User.Roles.ADMIN })
-    public Object update(@PathVariable("id") @NotBlank Long userId, @RequestParam String action) {
+    public Object update(@PathVariable("id") @NotBlank Long id, @RequestParam String action) {
 
         action = action.toUpperCase();
         if (!action.matches("ACCEPT|REJECT")) {
             return badRequest("Invalid action. Valid actions are: ACCEPT, REJECT.");
         }
 
-        var user = context.query().stream(of(User.class).joining(User$.updateRequest))
-            .filter(User$.id.equal(userId))
-            .findFirst()
-            .orElse(null);
-        if (user == null) return badRequest(USER_NOT_EXIST);
+        var request = context.db().find(UserUpdateRequest.class, id);
+        if (request == null) return badRequest("User has no pending update requests.");
 
-        var updateRequest = user.getUpdateRequest();
-        if (updateRequest == null) {
-            return badRequest("User has no pending update requests.");
-        }
+        var user = context.db().find(User.class, request.getUserId());
 
         if (action.equals("ACCEPT")) {
-            mapper.map(updateRequest, user);
-            user.setUpdateRequest(null);
+            mapper.map(request, user);
         }
-
-        context.db().remove(updateRequest);
+        
+        user.setUpdateRequest(null);
+        context.db().remove(request);
 
         return ok();
 

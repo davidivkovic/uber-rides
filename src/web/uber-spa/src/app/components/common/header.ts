@@ -8,7 +8,7 @@ import { userStore } from '@app/stores/userStore'
   standalone: true,
   imports: [RouterModule, NgIf],
   template: `
-    <div class="bg-black h-14 w-full flex justify-center">
+    <div id="header" class="bg-black h-14 w-full flex justify-center">
       <div class="max-w-7xl px-3 w-full flex items-center justify-between mx-auto text-sm">
         <div class="flex space-x-5 items-center">
           <a routerLink="/" class="p-2 mb-1">

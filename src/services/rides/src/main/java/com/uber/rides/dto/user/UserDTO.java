@@ -6,12 +6,12 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import static com.uber.rides.util.Utils.mapper;
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.*;
 
 import com.uber.rides.model.Car;
 import com.uber.rides.model.User;
 import com.uber.rides.controller.Users;
+import static com.uber.rides.util.Utils.mapper;
 
 @Getter
 @Setter

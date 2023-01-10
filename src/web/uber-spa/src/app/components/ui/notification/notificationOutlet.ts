@@ -1,4 +1,3 @@
-import { watch } from 'usm-mobx';
 import { Component } from '@angular/core'
 import { NgComponentOutlet, NgForOf } from '@angular/common'
 import { NavigationEnd, Router } from '@angular/router'
@@ -10,7 +9,7 @@ import { Notification } from './'
   selector: 'NotificationOutlet',
   imports: [NgForOf, NgComponentOutlet, Notification],
   template: `
-    <div class="grid">
+    <div id="notification-outlet" class="grid">
       <Notification 
         *ngFor="let notification of notificationStore.notifications"
         (closed)="notification.close()"

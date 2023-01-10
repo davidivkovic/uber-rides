@@ -16,10 +16,10 @@ export default async (message: { trip: any }) => {
   ridesStore.mapElements.pickupMarkers?.forEach(m => m.setMap(null))
   ridesStore.setState(store => {
     store.data.trip = message.trip
+    store.data.tripInProgress = true
     store.mapElements.pickupPolyline = tripPolyline
     store.mapElements.pickupMarkers = tripMarkers
     store.mapElements.pickupInfoWindows = tripInfoWindows
-    store.data.tripInProgress = true
   })
   map.fitBounds(new google.maps.LatLngBounds(
     {

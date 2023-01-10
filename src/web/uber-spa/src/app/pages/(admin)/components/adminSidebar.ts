@@ -1,10 +1,9 @@
-import { NgFor } from '@angular/common'
 import { Component } from '@angular/core'
 import { RouterModule } from '@angular/router'
-import { userStore } from '@app/stores'
+import { NgFor } from '@angular/common'
 
 @Component({
-  selector: 'ProfileSidebar',
+  selector: 'AdminSidebar',
   standalone: true,
   imports: [RouterModule, NgFor],
   template: `
@@ -12,7 +11,7 @@ import { userStore } from '@app/stores'
       <a
         *ngFor="let option of options; trackBy: trackByName"
         [routerLink]="option.link"
-        [routerLinkActiveOptions]="{exact: true}"
+        [routerLinkActiveOptions]="{exact: false}"
         routerLinkActive="border-l-4 border-black bg-[#f1f1f1]"
         class="w-full block p-3 pl-6 cursor-pointer transition hover:bg-[#f9f9f9]"
       >
@@ -21,32 +20,33 @@ import { userStore } from '@app/stores'
     </aside>
   `
 })
-export default class ProfileSidebar {
+export default class AdminSidebar {
   options = [
     {
-      name: userStore.isRider ? 'Ride now' : 'Drive now',
-      link: '/'
+      name: 'Register Uber',
+      link: 'register-uber'
     },
     {
-      name: 'My rides',
-      link: 'rides'
+      name: 'Update Requests',
+      link: 'update-requests'
     },
     {
-      name: 'Settings',
-      link: 'settings'
+      name: 'Drivers',
+      link: 'drivers'
     },
     {
-      name: 'Change password',
-      link: 'password/change'
+      name: 'Riders',
+      link: 'riders'
     },
-    ...(userStore.isRider
-      ? [{
-        name: 'Payment methods',
-        link: 'payment'
-      }]
-      : []
-    )
+    {
+      name: 'Live Support',
+      link: 'live-support'
+    },
+    {
+      name: 'Analytics',
+      link: 'analytics'
+    }
   ]
 
-  trackByName = (item: any) => item.name;
+  trackByName = (option: any) => option.name;
 }

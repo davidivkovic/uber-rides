@@ -2,7 +2,7 @@ import { NgIf } from '@angular/common'
 import { Component } from '@angular/core'
 import { FormsModule, NgForm } from '@angular/forms'
 import users from '@app/api/users'
-import { notificationStore } from '@app/stores'
+import { notificationStore, userStore } from '@app/stores'
 import { resource } from '@app/utils'
 
 @Component({
@@ -128,7 +128,11 @@ export default class Settings {
         },
         this.image
       )
-      notificationStore.show('Your profile has successfully been updated.')
+      notificationStore.show(
+        userStore.isRider
+          ? 'Your profile has successfully been updated.'
+          : 'Your changes are noted and awaiting administrator approval.'
+      )
     }
     catch (error) {
       this.error = error.message

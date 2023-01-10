@@ -1,7 +1,7 @@
-import { ridesStore } from '@app/stores/ridesStore';
 import { Component } from '@angular/core'
 import { Location, NgClass, NgFor, NgIf } from '@angular/common'
 import { resource } from '@app/utils'
+import { ridesStore } from '@app/stores/ridesStore'
 import routes from '@app/api/routes'
 
 @Component({

@@ -14,6 +14,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -82,7 +84,8 @@ public class User implements UserDetails {
     int minutesFatigue;
     LocalDateTime fatigueStart;
 
-    @OneToOne(fetch = FetchType.LAZY) UserUpdateRequest updateRequest;
+    @OneToOne(fetch = FetchType.LAZY) 
+    @OnDelete(action = OnDeleteAction.NO_ACTION) UserUpdateRequest updateRequest;
     @OneToOne Car car;
     
     @OneToOne(fetch = FetchType.LAZY) PaymentMethod defaultPaymentMethod;

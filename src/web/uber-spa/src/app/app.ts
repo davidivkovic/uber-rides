@@ -8,7 +8,8 @@ export { }
 declare global {
   interface Window {
     router: Router,
-    detector: ChangeDetectorRef
+    detector: ChangeDetectorRef,
+    shellHeight: () => number
   }
 }
 
@@ -28,6 +29,11 @@ export class AppComponent {
   constructor(router: Router, detector: ChangeDetectorRef) {
     window.router = router
     window.detector = detector
+    window.shellHeight = () =>
+      window.innerHeight -
+      document.getElementById('footer')?.clientHeight ?? 0 +
+      document.getElementById('header')?.clientHeight ?? 0 +
+      document.getElementById('notification-outlet')?.clientHeight ?? 0
   }
 
 }

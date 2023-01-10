@@ -40,5 +40,6 @@ public class DriverData extends UserData {
     public void onDisconnected() {
         // setLatitude(0);
         // setLongitude(0); // move this logic to when the driver offline
+        super.onDisconnected();
     }
 }

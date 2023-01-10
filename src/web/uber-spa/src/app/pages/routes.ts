@@ -17,6 +17,14 @@ const routes: Routes = [
         },
         children: [{ path: '', component: Index }]
       },
+      // Admin routes on root path as defined by ./(admin)/routes
+      {
+        matcher: () => {
+          if (userStore.isAdmin) return { consumed: [] }
+          return null
+        },
+        loadChildren: async () => await import('./(admin)/routes').then(m => m.default) as Routes
+      },
       // Authenticated non-admin users on root path as defined by ./(rides)/routes  mixed with ./(business)/routes
       {
         matcher: () => {

@@ -48,6 +48,7 @@ public abstract class UserData {
     }
 
     public void onConnected() {
+        this.isOnline = true;
         var trip = user.getCurrentTrip();
         ws.sendMessageToUser(
             user.getId(), 
@@ -55,6 +56,8 @@ public abstract class UserData {
         );
     }
 
-    public void onDisconnected() {}
+    public void onDisconnected() {
+        this.isOnline = false;
+    }
 
 }
