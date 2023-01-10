@@ -33,6 +33,7 @@ public class Payments extends Controller {
 
     @Autowired DbContext context;
 
+    @Transactional
     @Secured({ Roles.RIDER })
     @GetMapping("/token")
     public String generatePaypalToken() {
