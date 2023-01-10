@@ -1,5 +1,8 @@
 package com.uber.rides.service;
 
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
+
 import javax.mail.internet.MimeMessage;
 
 import org.thymeleaf.spring6.SpringTemplateEngine;
@@ -10,6 +13,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.support.ResourceBundleMessageSource;
 import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.JavaMailSenderImpl;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
@@ -46,6 +50,23 @@ public class EmailSender {
             templateEngine.setTemplateEngineMessageSource(emailMessageSource());
             return templateEngine;
         }
+
+        @Bean
+        public JavaMailSender getJavaMailSender() {
+            var mailSender = new JavaMailSenderImpl();
+            mailSender.setHost("smtp.gmail.com");
+            mailSender.setPort(587);
+            
+            mailSender.setUsername("isamrsadventure@gmail.com");
+            mailSender.setPassword(new String(Base64.getDecoder().decode("bWlobmJuaWJiaHVrc3pycA=="), StandardCharsets.UTF_8));
+            
+            var props = mailSender.getJavaMailProperties();
+            props.put("mail.transport.protocol", "smtp");
+            props.put("mail.smtp.auth", "true");
+            props.put("mail.smtp.starttls.enable", "true");
+            
+            return mailSender;
+        }
     }
     private final JavaMailSender mailSender;
     private final SpringTemplateEngine templateEngine;
@@ -66,7 +87,6 @@ public class EmailSender {
             helper.setText(emailMessage.getHtmlBody(templateEngine), true);
             mailSender.send(message);
         }
-        catch (Exception e) { /* Not much we can do here except logging a message */}
-
+        catch (Exception e) { /* Not much we can do here except logging a message */ }
     }
 }
