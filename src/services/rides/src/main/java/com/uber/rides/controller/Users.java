@@ -8,6 +8,7 @@ import javax.validation.constraints.Size;
 
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.InputStreamResource;
@@ -52,9 +53,9 @@ public class Users extends Controller {
         path = "/pictures/{id}",
         produces = { MediaType.IMAGE_PNG_VALUE, MediaType.IMAGE_JPEG_VALUE }
     )
-    public Object getProfilePicture(@PathVariable("id") @NotBlank String pictureId) {
+    public Object getProfilePicture(@PathVariable("id") String pictureId) {
 
-        if (pictureId == null || pictureId.equals(User.DEFAULT_PFP)) {
+        if (StringUtils.isEmpty(pictureId) || pictureId.equals(User.DEFAULT_PFP)) {
             return new InputStreamResource(
                 getClass().getResourceAsStream("/images/" + User.DEFAULT_PFP)
             );
