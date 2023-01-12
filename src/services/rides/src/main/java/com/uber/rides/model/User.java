@@ -1,5 +1,6 @@
 package com.uber.rides.model;
 
+import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -43,7 +44,7 @@ public class User implements UserDetails {
     @Embeddable
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class OTP {
+    public static class OTP implements Serializable {
 
         static final Random random = new Random();
 

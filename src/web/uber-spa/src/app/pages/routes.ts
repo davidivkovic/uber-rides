@@ -1,4 +1,4 @@
-import { Routes, UrlSegment } from '@angular/router'
+import { Routes } from '@angular/router'
 import Layout from './layout'
 import Index from './index'
 import auth from './auth/routes'
@@ -33,7 +33,17 @@ const routes: Routes = [
         },
         loadChildren: async () => [
           ... await import('./(rides)/routes').then(m => m.default),
-          ... await import('./(business)/routes').then(m => m.default)
+          ... await import('./(business)/routes').then(m => m.default),
+        ] as Routes
+      },
+        // Authenticated users
+      {
+        matcher: () => {
+          if (userStore.isAuthenticated) return { consumed: [] }
+          return null
+        },
+        loadChildren: async () => [
+          ... await import('./chat/routes').then(m => m.default)
         ] as Routes
       },
       ...auth,

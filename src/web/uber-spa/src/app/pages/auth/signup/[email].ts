@@ -49,6 +49,7 @@ export default class EmailVerification {
   ngOnInit(): void {
     this.route.paramMap.subscribe(params => {
       this.email = params.get('email')
+      
     })
   }
 

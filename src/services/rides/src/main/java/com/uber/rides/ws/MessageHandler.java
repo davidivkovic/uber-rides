@@ -13,6 +13,7 @@ import org.springframework.beans.factory.config.AutowireCapableBeanFactory;
 import org.springframework.stereotype.Component;
 
 import com.uber.rides.ws.admin.AdminData;
+import com.uber.rides.ws.chat.InboundChatMessage;
 import com.uber.rides.ws.driver.DriverData;
 import com.uber.rides.ws.driver.messages.in.ConfirmTrip;
 import com.uber.rides.ws.driver.messages.in.EndTrip;
@@ -54,7 +55,7 @@ public class MessageHandler {
     );
 
     static Map<String, Class<? extends InboundMessage<UserData>>> sharedMessages = Map.of(
-        // EXAMPLE: InboundChatMessage.TYPE, InboundChatMessage.class
+        InboundChatMessage.TYPE, InboundChatMessage.class
     );
 
     static EmptyMessage emptyMessage = new EmptyMessage();

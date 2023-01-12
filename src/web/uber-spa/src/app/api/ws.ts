@@ -12,7 +12,9 @@ const handlers = {
   [InboundMessages.INSTRUCTIONS]: () => import('./ws-messages/instructions'),
   [InboundMessages.TRIP_STARTED]: () => import('./ws-messages/tripStarted'),
   [InboundMessages.UBER_UPDATE]: () => import('./ws-messages/uberUpdate'),
-  [InboundMessages.TRIP_ENDED]: () => import('./ws-messages/tripEnded')
+  [InboundMessages.TRIP_ENDED]: () => import('./ws-messages/tripEnded'),
+  [InboundMessages.MESSAGE_RECEIVED]: () => import('./ws-messages/messageReceived'),
+
 }
 
 const isConnected = () => ws?.OPEN
@@ -24,6 +26,7 @@ const connect = (accessToken: string) => {
   ws.onmessage = async (message: MessageEvent<any>) => {
     const tokens = message.data.split('\n')
     const header = InboundMessages[tokens[0]]
+    
     const body = JSON.parse(tokens[1])
 
     let handler: { default: (body: any) => void }
