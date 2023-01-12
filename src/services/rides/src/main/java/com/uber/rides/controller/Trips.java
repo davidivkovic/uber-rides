@@ -16,6 +16,7 @@ import java.util.stream.Stream;
 
 import javax.validation.constraints.Min;
 import javax.validation.constraints.Size;
+import javax.websocket.server.PathParam;
 
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,6 +25,7 @@ import org.springframework.security.access.annotation.Secured;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -37,6 +39,7 @@ import com.uber.rides.dto.user.UserDTO;
 import com.uber.rides.model.Car;
 import com.uber.rides.model.Location;
 import com.uber.rides.model.Payment;
+import com.uber.rides.model.Rating;
 import com.uber.rides.model.Route;
 import com.uber.rides.model.Route$;
 import com.uber.rides.model.Trip;
@@ -339,6 +342,27 @@ public class Trips extends Controller {
     }
 
     @Transactional
+    @PostMapping("/{id}/review")
+    @Secured({ Roles.RIDER })
+    public Object reviewTrip(@PathVariable("id") Long tripId, @RequestParam double rating, @RequestParam String comment) {
+
+        var trip = context.db().getReference(Trip.class, tripId);
+        if (trip == null) {
+            return badRequest("Trip not found.");
+        }
+
+        var user = context.db().getReference(User.class, authenticatedUserId());
+        var review = new Rating(trip, user, rating, comment);
+        context.db().persist(review);
+
+        trip.getRatings().add(review);
+
+        return ok();
+
+    }
+
+
+    @Transactional
     @GetMapping("")
     @Secured({ Roles.DRIVER, Roles.RIDER, Roles.ADMIN })
     public Object getTrips(@RequestParam Long userId, @RequestParam @Min(0) int page, @RequestParam String order) {
@@ -405,6 +429,7 @@ public class Trips extends Controller {
                 .joining(Trip$.driver)
                 .joining(Trip$.riders)
                 .joining(Trip$.payments)
+                .joining(Trip$.ratings)
                 .joining(Trip$.car)
             )
             .filter(Trip$.id.in(trips.stream().map(Trip::getId).toList()))

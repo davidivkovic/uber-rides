@@ -12,7 +12,7 @@ import { CloseButton } from '@app/components/ui/base/closeButton'
       *ngFor="let dialog of dialogStore.dialogs; trackBy: dialogIdentity"
       #dialog
       [id]="dialog.id"
-      class="backdrop:bg-black/25 rounded-lg"
+      class="backdrop:bg-black/40 rounded-lg"
     >
       <CloseButton *ngIf="!dialog.props?.noCloseButton" (click)="dialog.close()" class="absolute right-2 top-2"></CloseButton>
       <ng-container *ngComponentOutlet="dialog.component(); injector: createInjector(dialog)"></ng-container>

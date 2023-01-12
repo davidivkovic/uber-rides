@@ -58,7 +58,12 @@ declare const paypal
             <div class="mt-1 text-sm">Add payment method</div>
           </button>
         </div>
-        <button (click)="saveDefaultMethod()" class="primary w-full h-[56px] !text-lg">Save</button>
+        <button 
+          (click)="saveDefaultMethod()" 
+          class="flex items-center justify-center primary w-full !text-lg"
+        >
+          Save
+        </button>
       </div>
     </div>
   `

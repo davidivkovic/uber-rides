@@ -37,15 +37,17 @@ const serializeState = (skipChecks = false) => {
 }
 
 const initMap = () => {
-  mapHtmlElement = document.getElementById(elementId)
-  map = new google.maps.Map(mapHtmlElement, {
-    center: { lat: 40.7459, lng: -73.99999 }, // NYC
-    zoom: 15,
-    scrollwheel: false,
-    styles: mapStyles
-  })
+  if (elementId !== '') {
+    mapHtmlElement = document.getElementById(elementId)
+    map = new google.maps.Map(mapHtmlElement, {
+      center: { lat: 40.7459, lng: -73.99999 }, // NYC
+      zoom: 15,
+      scrollwheel: false,
+      styles: mapStyles
+    })
+    places = new google.maps.places.PlacesService(map)
+  }
 
-  places = new google.maps.places.PlacesService(map)
   autocomplete = new google.maps.places.AutocompleteService()
   geocoder = new google.maps.Geocoder()
   directions = new google.maps.DirectionsService()
@@ -215,9 +217,9 @@ const script = Object.assign(
   }
 )
 
-const init = (htmlElementId: string) => {
+const init = (htmlElementId = '') => {
+  elementId = htmlElementId
   if (!document.getElementById(scriptName)) {
-    elementId = htmlElementId
     document.head.appendChild(script)
   }
   else {

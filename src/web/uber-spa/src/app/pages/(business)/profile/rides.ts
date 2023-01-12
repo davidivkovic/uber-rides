@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms'
 import { userStore } from '@app/stores'
 import trips from '@app/api/trips'
 import TripDetails from '@app/components/common/tripDetails'
+import routes from '@app/api/routes'
 
 @Component({
   standalone: true,
@@ -24,11 +25,16 @@ import TripDetails from '@app/components/common/tripDetails'
         </select>
       </div>
       <div 
-        [style.height]="window.shellHeight() - 165 + 'px'"
-        class="mt-6 overflow-auto no-scrollbar"
+        [style.height]="window.shellHeight() - 108 + 'px'"
+        class="mt-6 overflow-auto no-scrollbar overscroll-contain pb-16"
       >
         <div *ngFor="let trip of trips; trackBy: ngForIdentity;" class="mb-4">
-          <TripDetails [trip]="trip"></TripDetails>
+          <TripDetails 
+            [trip]="trip" 
+            [canSaveRoute]="!savedRoutes[trip.route.id]"
+            (requestReload)="getTrips()"
+          >
+          </TripDetails>
         </div>
       </div>
     </div>
@@ -40,9 +46,12 @@ export default class Rides {
 
   order = 'START_DESC'
   trips = []
+  savedRoutes = {}
+  reviews = {}
 
   constructor() {
     this.getTrips()
+    userStore.user.role === 'ROLE_RIDER' && this.getSavedRoutes()
   }
 
   async getTrips() {
@@ -52,6 +61,20 @@ export default class Rides {
     catch (e) {
       console.log(e.message)
     }
+  }
+
+  async getSavedRoutes() {
+    try {
+      this.savedRoutes = (await routes.favorites()).reduce((acc, route) => ({ ...acc, [route.id]: true }), {})
+      console.log(this.savedRoutes)
+    }
+    catch (e) {
+      console.log(e.message)
+    }
+  }
+
+  routeSaved(routeId: number) {
+    this.savedRoutes = { ...this.savedRoutes, [routeId]: true }
   }
 
   ngForIdentity = (index: number, item: any) => item.id

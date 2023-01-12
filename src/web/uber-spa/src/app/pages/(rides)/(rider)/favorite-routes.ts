@@ -1,6 +1,6 @@
 import { Component } from '@angular/core'
 import { Location, NgClass, NgFor, NgIf } from '@angular/common'
-import { resource } from '@app/utils'
+import { formatAddress, resource } from '@app/utils'
 import { ridesStore } from '@app/stores/ridesStore'
 import routes from '@app/api/routes'
 
@@ -32,10 +32,8 @@ import routes from '@app/api/routes'
                   <div class="absolute left-0 bottom-0 bg-black bg-opacity-30 blur-lg w-full h-full"></div>
                   <div class="relative">
                     <p class="leading-4">{{ route.name }}</p>
-                    <div class="flex flex-wrap">
-                      <p class="text-sm">{{ route.start.address }}</p>
-                      <p *ngFor="let stop of route.stops" class="text-sm">, {{ stop.address }}</p>
-                    </div>
+                    <p class="text-sm">{{ formatAddress(route.start.address) }}</p>
+                    <p *ngFor="let stop of route.stops" class="text-sm">{{ formatAddress(stop.address) }}</p>
                   </div>
                 </div>
               </div>
@@ -59,10 +57,15 @@ import routes from '@app/api/routes'
 })
 export default class FavoriteRoutes {
 
+  formatAddress = formatAddress
   favoriteRoutes = resource(routes.favorites)
   selectedRouteIndex = 0
 
   constructor(public location: Location) { }
+
+  onActivated() {
+    this.favoriteRoutes.refetch()
+  }
 
   selectRoute(index: number) {
     const scrollInline = index > this.selectedRouteIndex ? 'start' : 'end'

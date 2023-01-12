@@ -61,6 +61,7 @@ public class Trip {
 
     @ManyToMany @Builder.Default Set<User> riders = new HashSet<>();
     @OneToMany @Builder.Default List<Payment> payments = new ArrayList<>();
+    @OneToMany @Builder.Default Set<Rating> ratings = new HashSet<>();
 
     Status status;
     LocalDateTime startedAt;

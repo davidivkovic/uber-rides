@@ -19,16 +19,11 @@ const favorites = async () => {
   return await response.json()
 }
 
-const createFavorite = async (data: {
-  name: string
-  start: Location
-  stops: Location[]
-}) => {
+const createFavorite = async (routeId: string) => {
   const response = await fetch(
-    basePath + '/favorites',
+    basePath + '/favorites?' + new URLSearchParams({ routeId }).toString(),
     {
-      method: 'POST',
-      body: JSON.stringify(data)
+      method: 'POST'
     }
   )
   if (!response.ok) throw new Error(await response.text())

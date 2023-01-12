@@ -5,9 +5,7 @@ const basePath = '/trips'
 const chooseRide = async (rideType: string) => {
   const response = await fetch(
     basePath + '/choose-ride?' + new URLSearchParams({ rideType }).toString(),
-    {
-      method: 'POST'
-    }
+    { method: 'POST' }
   )
   if (!response.ok) throw new Error(await response.text())
   return await response.json()
@@ -28,9 +26,7 @@ const invitePassengers = async (passengerIds: number[]) => {
 const orderRide = async () => {
   const response = await fetch(
     basePath + '/order-ride',
-    {
-      method: 'POST'
-    }
+    { method: 'POST' }
   )
   if (!response.ok) throw new Error(await response.text())
 }
@@ -38,9 +34,7 @@ const orderRide = async () => {
 const startTrip = async () => {
   const response = await fetch(
     basePath + '/start',
-    {
-      method: 'POST'
-    }
+    { method: 'POST' }
   )
   if (!response.ok) throw new Error(await response.text())
 }
@@ -48,12 +42,18 @@ const startTrip = async () => {
 const getTrips = async (userId: string, order = 'START_DESC', page: any = 0) => {
   const response = await fetch(
     basePath + '?' + new URLSearchParams({ userId, order, page }).toString(),
-    {
-      method: 'GET'
-    }
+    { method: 'GET' }
   )
   if (!response.ok) throw new Error(await response.text())
   return await response.json()
+}
+
+const reviewTrip = async (tripId: number, rating: number | any, comment: string) => {
+  const response = await fetch(
+    basePath + `/${tripId}/review?` + new URLSearchParams({ rating, comment }).toString(),
+    { method: 'POST' }
+  )
+  if (!response.ok) throw new Error(await response.text())
 }
 
 export default {
@@ -61,5 +61,6 @@ export default {
   invitePassengers,
   orderRide,
   startTrip,
-  getTrips
+  getTrips,
+  reviewTrip
 }

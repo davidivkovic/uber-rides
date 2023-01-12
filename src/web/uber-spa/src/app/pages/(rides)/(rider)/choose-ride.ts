@@ -223,7 +223,7 @@ export default class ChooseRide {
     dialogStore.openDialog(
       PayDialog,
       { refetchDefaultMethod: this.fetchDefaultMethod },
-      this.fetchDefaultMethod
+      () => this.fetchDefaultMethod()
     )
   }
 

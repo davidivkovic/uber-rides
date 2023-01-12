@@ -145,3 +145,12 @@
 div.gm-style-iw-tc {
   @apply !hidden;
 }
+
+.star-rating button,
+.star-rating button:hover ~ button {
+  @apply text-neutral-300;
+}
+
+.star-rating:hover button {
+  @apply text-black;
+}

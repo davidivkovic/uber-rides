@@ -23,6 +23,7 @@ public class TripDTO {
     Car car;
     
     List<UserDTO> riders;
+    List<RatingDTO> ratings;
 
     Status status;
     LocalDateTime startedAt;
