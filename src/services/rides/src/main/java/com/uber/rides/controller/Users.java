@@ -54,7 +54,7 @@ public class Users extends Controller {
     )
     public Object getProfilePicture(@PathVariable("id") @NotBlank String pictureId) {
 
-        if (pictureId.equals(User.DEFAULT_PFP)) {
+        if (pictureId == null || pictureId.equals(User.DEFAULT_PFP)) {
             return new InputStreamResource(
                 getClass().getResourceAsStream("/images/" + User.DEFAULT_PFP)
             );
