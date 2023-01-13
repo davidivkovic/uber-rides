@@ -15,8 +15,14 @@ import routes from '@app/api/routes'
   template: `
     <div #root class="cursor-pointer px-5 py-2.5 border rounded-md" (click)="expandTrip()">
       <div class="flex items-center justify-between pb-2">
-        <h3 class="text-lg">{{ trip.status === 'COMPLETED' ? 'Finished' : 'Scheduled' }}</h3>
-        <h3 class="text-sm tracking-wide">{{ dayjs(trip.startedAt).format(' hh:mm MMM D, YYYY') }}</h3>
+        <div class="flex items-center gap-x-2">
+          <h3 class="text-lg">{{ trip.status === 'COMPLETED' ? 'Finished' : (trip.scheduled ? 'Scheduled' : 'In Progress') }}</h3>
+          <div 
+          *ngIf="trip.status !== 'COMPLETED'"
+          class="w-2 h-2 mx-auto rounded-full bg-green-500"
+          ></div>
+        </div>
+        <h3 class="text-sm tracking-wide">{{ trip.status === 'COMPLETED' ? dayjs(trip.startedAt).format(' hh:mm MMM D, YYYY') : 'Just Now'}}</h3>
       </div>
       <div class="flex gap-x-0.5">
         <img 
@@ -25,7 +31,6 @@ import routes from '@app/api/routes'
           class="object-contain rounded-lg"
         />
         <div class="-mt-2.5">
-          <!-- <h3 class="text-lg ml-[26px] -mt-6">Route</h3> -->
           <RouteDetails 
             [stops]="stops()" 
             [small]="true" 
@@ -51,7 +56,7 @@ import routes from '@app/api/routes'
           >
             <button 
               (click)="saveRoute(); $event.stopPropagation()" 
-              *ngIf="canSaveRoute"
+              *ngIf="canSaveRoute && trip.status === 'COMPLETED'"
               class="flex w-full secondary !text-sm px-7 py-2 mb-1"
             >
               <svg class="mr-1.5 -ml-2" width="20" height="20" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
@@ -64,6 +69,7 @@ import routes from '@app/api/routes'
             </button>
             <button 
               (click)="rideAgain(); $event.stopPropagation()" 
+              *ngIf="canRideAgain && trip.status === 'COMPLETED'"
               class="flex w-full primary !text-sm px-7 py-2"
             >
               <svg class="mr-1.5 -ml-2" width="20" height="20" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
@@ -99,7 +105,7 @@ import routes from '@app/api/routes'
                 <p class="text-[13px]">{{ trip.driver.phoneNumber }}</p>
               </div>
               <div 
-                *ngIf="(userStore.user.id === rider.id && reviewExpiration() > 0) || reviews()[rider.id]"
+                *ngIf="((userStore.user.id === rider.id && reviewExpiration() <= 3) || reviews()[rider.id]) && trip.status === 'COMPLETED'"
                 class="w-px h-11 bg-neutral-200 -mt-0.5"
               >
               </div>
@@ -122,7 +128,7 @@ import routes from '@app/api/routes'
                 This passenger has not left a review
               </p>
               <div 
-                *ngIf="!reviews()[rider.id] && userStore.user.id === rider.id && reviewExpiration() > 0" 
+                *ngIf="!reviews()[rider.id] && userStore.user.id === rider.id && reviewExpiration() <= 3 && trip.status === 'COMPLETED'" 
                 class="-mt-0.5"
               >
                 <button 
@@ -159,6 +165,7 @@ export default class TripDetails {
 
   @Input() trip: any
   @Input() canSaveRoute = true
+  @Input() canRideAgain = true
   @Output() routeSaved = new EventEmitter<number>()
   @Output() requestReload = new EventEmitter()
   @ViewChild('root') root: ElementRef<HTMLDivElement>
@@ -185,8 +192,7 @@ export default class TripDetails {
     () => this.trip,
     () => {
       if (!this.trip) return 0
-      return dayjs(this.trip.startedAt).diff(dayjs().add(3, 'days'), 'days')
-      // return 1
+      return dayjs().add(3, 'days').diff(dayjs(this.trip.startedAt), 'days')
     }
 
   )
@@ -210,7 +216,6 @@ export default class TripDetails {
   }
 
   rideAgain() {
-    console.log('ride again', this.trip.route.id)
     ridesStore.setState(store => store.favoriteRoutePicked = this.trip.route)
     const unsubscribe = watch(
       ridesStore,
