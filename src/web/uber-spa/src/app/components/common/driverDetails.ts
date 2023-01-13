@@ -24,21 +24,30 @@ import { Component, Input } from '@angular/core'
         />
       </div>
       <div class="ml-3">
-        <h3 
-          [ngClass]="{
-            'text-[15px] leading-4': !small && !large,
-            'text-lg leading-5': large
-          }"
-        >
-          {{ driver.firstName }} {{ driver.lastName }}
-        </h3>
+        <div class="flex items-center gap-x-2">
+          <h3 
+            class="tracking-wide"
+            [ngClass]="{
+              'text-[15px] leading-4': !small && !large,
+              'text-lg leading-5': large
+            }"
+            >
+            {{ driver.firstName }} {{ driver.lastName }}
+          </h3>
+          <h3 
+            *ngIf="driver.blocked"
+            class="text-xs bg-red-100 border border-red-900/40 px-1 rounded text-red-700 w-fit tracking-wide"
+          >
+            Blocked
+          </h3>
+        </div>
         <p           
           [ngClass]="{
             'text-[13px]': !small && !large,
             'text-sm': large
           }"
         >
-          {{ driver.phoneNumber }}
+          {{ email ? driver.email : driver.phoneNumber }}
         </p>
       </div>
     </div>
@@ -48,4 +57,5 @@ export default class DriverDetails {
   @Input() driver: any
   @Input() small = false
   @Input() large = false
+  @Input() email = false
 }
