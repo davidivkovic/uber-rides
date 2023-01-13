@@ -1,4 +1,6 @@
 import dayjs from 'dayjs'
+import utc from 'dayjs/plugin/utc'
+import tz from 'dayjs/plugin/timezone'
 import { watch } from 'usm-mobx'
 import { NgClass, CurrencyPipe, NgIf, NgFor } from '@angular/common'
 import { Component, ElementRef, Input, ViewChild, EventEmitter, Output } from '@angular/core'
@@ -8,6 +10,9 @@ import RouteDetails from '@app/components/rides/routeDetails'
 import DriverDetails from '@app/components/common/driverDetails'
 import routes from '@app/api/routes'
 
+dayjs.extend(utc)
+dayjs.extend(tz)
+
 @Component({
   selector: 'TripDetails',
   standalone: true,
@@ -16,13 +21,20 @@ import routes from '@app/api/routes'
     <div #root class="cursor-pointer px-5 py-2.5 border rounded-md" (click)="expandTrip()">
       <div class="flex items-center justify-between pb-2">
         <div class="flex items-center gap-x-2">
-          <h3 class="text-lg">{{ trip.status === 'COMPLETED' ? 'Finished' : (trip.scheduled ? 'Scheduled' : 'In Progress') }}</h3>
+          <h3 class="text-lg">
+            {{ 
+              (trip.status === 'PAID' && trip.scheduled) 
+              ? statuses['SCHEDULED'] 
+              : (statuses[trip.status] ?? 'Finished') 
+            }}
+          </h3>
           <div 
-          *ngIf="trip.status !== 'COMPLETED'"
-          class="w-2 h-2 mx-auto rounded-full bg-green-500"
-          ></div>
+            *ngIf="trip.status === 'AWAITING_PICKUP' || trip.status === 'IN_PROGRESS'"
+            class="w-2 h-2 mx-auto rounded-full bg-green-500"
+          >
+          </div>
         </div>
-        <h3 class="text-sm tracking-wide">{{ trip.status === 'COMPLETED' ? dayjs(trip.startedAt).format(' hh:mm MMM D, YYYY') : 'Just Now'}}</h3>
+        <h3 class="text-sm tracking-wide"> {{ formattedDate() }} </h3>
       </div>
       <div class="flex gap-x-0.5">
         <img 
@@ -170,6 +182,28 @@ export default class TripDetails {
   @Output() requestReload = new EventEmitter()
   @ViewChild('root') root: ElementRef<HTMLDivElement>
   expanded = false
+
+  statuses = {
+    COMPLETED: 'Finished',
+    CANCELLED: 'Cancelled',
+    IN_PROGRESS: 'In Progress',
+    AWAITING_PICKUP: 'In Progress',
+    SCHEDULED: 'Scheduled',
+    PAID: 'Paid',
+  }
+
+  formattedDate = computed(
+    () => this.trip,
+    () => {
+      return (this.trip.status === 'COMPLETED')
+        ? dayjs.utc(this.trip.startedAt).tz('Europe/Belgrade').format(' hh:mm MMM D, YYYY')
+        : (
+          (this.trip.status === 'SCHEDULED' || this.trip.status === 'PAID')
+            ? dayjs.utc(this.trip.scheduledAt).tz('Europe/Belgrade').format(' hh:mm MMM D, YYYY')
+            : 'Just Now'
+        )
+    }
+  )
 
   stops = computed(
     [() => this.trip, () => this.expanded],
