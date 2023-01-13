@@ -43,10 +43,18 @@ import { formatDistance, formatDuration } from '@app/utils'
 
       </div>
       <div *ngIf="distance + duration > 0" class="absolute right-3 bottom-3 text-right z-10">
-        <h3 class="text-xl leading-5 mt-0.5">{{ formatDistance(distance) }}</h3>
+        <h3 
+          class="leading-5 mt-0.5"
+          [ngClass]="{
+            'text-lg': small, 
+            'text-xl': !small
+          }"
+        >
+          {{ formatDistance(distance) }}
+        </h3>
         <p class="text-sm text-gray-500">approx. {{ formatDuration(duration) }}</p>
       </div>
-    </div>
+    </div> 
   `
 })
 export default class RouteDetails {
