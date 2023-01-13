@@ -20,28 +20,12 @@ import { userStore } from '@app/stores/userStore'
           </a>
           <div>
             <button routerLink="/" class="primary rounded-3xl px-3 py-2 text-white">Home</button>
-            <button
-              [routerLink]="userStore.isAdmin ? '/chat' : '/live-support'"
+            <button *ngIf="!userStore.isAdmin"
+              routerLink="/live-support"
               class="primary rounded-3xl px-3 py-2"
             >
               Live support
             </button>
-            <div *ngIf="userStore.isAdmin" class="inline-block relative group">
-              <button class="primary rounded-3xl px-3 py-2 ">Register</button>
-              <div
-                id="content"
-                class="absolute hidden top-9 w-[150px] z-10 group-hover:block bg-[#eeeeee]  rounded-md "
-              >
-                <a
-                  routerLink="/auth/signup/drive"
-                  class="block text-base hover:bg-zinc-100 py-4 px-3 rounded-md cursor-pointer"
-                  >New driver</a
-                >
-                <a class="block text-base hover:bg-zinc-100 py-4 px-3 rounded-md cursor-pointer"
-                  >New admin</a
-                >
-              </div>
-            </div>
           </div>
         </div>
         <div *ngIf="userStore.isAuthenticated" class="space-x-2">
@@ -51,7 +35,7 @@ import { userStore } from '@app/stores/userStore'
               routerLink="profile/settings"
               class="primary rounded-3xl px-3 py-2 text-white"
             >
-              Settings
+              Profile
             </button>
             <button (click)="logout()" class="primary rounded-3xl px-3 py-2">Sign out</button>
           </div>

@@ -48,6 +48,16 @@ import { resource } from '@app/utils'
           <p class="text-gray-500 text-sm">Update your personal information</p>
         </div>
         <div class="flex space-x-3 items-center">
+          <p class="w-40">Email</p>
+          <input 
+            disabled
+            name="email"
+            type="text" 
+            class="text-gray-500"
+            [ngModel]="user.value.email"
+          />
+        </div>
+        <div class="flex space-x-3 items-center">
           <p class="w-40">First name</p>
           <input 
             required

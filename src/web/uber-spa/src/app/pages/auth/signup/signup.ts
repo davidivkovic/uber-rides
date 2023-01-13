@@ -10,6 +10,7 @@ import { userStore } from '@app/stores'
 @Component({
   standalone: true,
   imports: [NgIf, FormsModule, SocialMedia],
+  selector: 'Signup',
   template: `
     <div class="h-full w-[420px] space-y-4  py-4 mx-auto flex flex-col items-center justify-center">
       <form

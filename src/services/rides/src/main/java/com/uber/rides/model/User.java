@@ -115,6 +115,14 @@ public class User implements UserDetails {
         paymentMethods.removeIf(method -> method.id.equals(methodId));
     }
 
+    public void update(User user) {
+        this.setFirstName(user.getFirstName()); 
+        this.setLastName(user.getLastName()); 
+        this.setProfilePicture(user.getProfilePicture());
+        this.setCity(user.getCity());
+        this.setPhoneNumber(user.getPhoneNumber());
+    }
+
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return List.of(new SimpleGrantedAuthority(role));

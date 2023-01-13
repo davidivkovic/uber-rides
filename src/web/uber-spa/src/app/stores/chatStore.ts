@@ -11,6 +11,9 @@ class ChatStore {
   @state
   allConversations: any
 
+  @state
+  failedConnection: boolean = false
+
   @computed
   get messages() {
     return this.currentConversation?.messages.slice().reverse() ?? []
@@ -18,7 +21,6 @@ class ChatStore {
 
   @computed
   get allConversationsSorted() {
-    console.log('changing');
     return this.allConversations?.slice().sort((convo1: any, convo2: any) => {
       const date1 = new Date(convo1.messages[convo1.messages.length - 1].sentAt)
       const date2 = new Date(convo2.messages[convo2.messages.length - 1].sentAt)
@@ -31,7 +33,7 @@ class ChatStore {
   @action
   addConversation(conversation: any) {
     this.allConversations.push(conversation)
-    this.setCurrentConversation(this.currentConversation)
+    // this.setCurrentConversation(this.currentConversation.id)
   }
 
   @action
@@ -45,6 +47,11 @@ class ChatStore {
     } else {
       this.addMessageToCurrentConversation(message)
     }
+  }
+
+  @action
+  setFailedConnection(value: boolean) {
+    this.failedConnection = value
   }
 
   @action
@@ -65,6 +72,7 @@ class ChatStore {
   @action
   closeConversation() {
     this.currentConversation.closed = true
+    this.currentConversation.closedAt = new Date()
   }
 
   fetchAllConversations = async () => {
@@ -76,7 +84,7 @@ class ChatStore {
     let conversation: any
     if (id !== null) {
       conversation = await getChat(id)
-    } else {
+    } else if(!userStore.isAdmin) {
       try {
         conversation = await getClientChat()
       } catch (err) {
@@ -100,16 +108,25 @@ class ChatStore {
     }
     if (closeConversation) {
       this.closeConversation()
+      window.detector.detectChanges()
       return
     }
     this.addMessageToConversation(this.currentConversation?.id, newMessage)
+    window.detector.detectChanges()
   }
 
   onMessage = async ({ message, conversationId, conversationEnd }) => {
-    if (conversationEnd) {
-      this.closeConversation()
-      return
+    if(conversationId == null) {
+      this.setFailedConnection(true)
+      return window.router.navigate(['/live-support'])
     }
+
+    this.setFailedConnection(false)
+
+    if (conversationEnd) {
+      return this.closeConversation()
+    }
+
     if (userStore.isAdmin) {
       console.log(conversationId);
       const existing = this.allConversations.slice().filter(convo => convo.id === conversationId)

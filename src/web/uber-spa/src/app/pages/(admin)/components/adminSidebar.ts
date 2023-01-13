@@ -24,7 +24,7 @@ export default class AdminSidebar {
   options = [
     {
       name: 'Register Uber',
-      link: 'register-uber'
+      link: 'auth/signup/drive'
     },
     {
       name: 'Update Requests',
@@ -40,7 +40,7 @@ export default class AdminSidebar {
     },
     {
       name: 'Live Support',
-      link: 'live-support'
+      link: 'chat'
     },
     {
       name: 'Analytics',

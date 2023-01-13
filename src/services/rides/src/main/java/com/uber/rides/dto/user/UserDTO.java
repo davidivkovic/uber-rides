@@ -25,16 +25,19 @@ public class UserDTO {
         .typeMap(User.class, UserDTO.class)
         .addMappings(mapper -> mapper
             .using(c -> {
-                var profilePicture = (String) c.getSource();
-                if (profilePicture == null) profilePicture = User.DEFAULT_PFP;
-                else if (profilePicture.startsWith("http")) return profilePicture;
-                return linkTo(methodOn(Users.class).getProfilePicture(profilePicture)).toString();
+                String profilePicture;
+                var source = c.getSource();
+                if (source == null) profilePicture = User.DEFAULT_PFP;
+                else profilePicture = (String) source;
+                if (profilePicture.startsWith("http")) return profilePicture;
+                var l = linkTo(methodOn(Users.class).getProfilePicture(profilePicture)).toString();
+                return l;
             })
             .map(User::getProfilePicture, UserDTO::setProfilePicture)
         );
     }
 
-    long id;
+    Long id;
     String role;
     String firstName;
     String lastName;

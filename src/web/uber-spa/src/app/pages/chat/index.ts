@@ -1,16 +1,23 @@
-import { NgIf } from '@angular/common'
+import { NgClass, NgIf, NgStyle } from '@angular/common'
 import { Component } from '@angular/core'
 import { ActivatedRoute, Router, RouterModule } from '@angular/router'
 import { Conversation } from './conversation'
 import { Panel } from './panel'
-import { userStore } from '@app/stores'
+import { chatStore, userStore } from '@app/stores'
 
 @Component({
   standalone: true,
-  imports: [Panel, NgIf, Conversation, RouterModule],
+  imports: [Panel, NgIf, NgStyle, NgClass, Conversation, RouterModule],
   template: `
-    <div class="h-full w-full flex items-center justify-center bg-gray-200">
-      <div class="w-[1100px] mx-auto bg-white rounded-lg h-[800px] min-h-0 my-auto flex">
+    <div class="h-full w-full flex items-center justify-center bg-[#eeeeee]">
+      <div 
+        [style.height]="window.shellHeight() - 50 + 'px'"
+        [ngClass]="{
+          'w-[1000px]': userStore.isAdmin,
+          'w-[800px]': !userStore.isAdmin
+        }"
+        class="mx-auto bg-white rounded-lg my-auto flex"
+      >
         <Panel *ngIf="userStore.isAdmin"></Panel>
         <div class="flex-1 rounded-lg">
           <div
@@ -70,12 +77,25 @@ export default class Chat {
   conversationId = ''
 
   userStore = userStore
+  window = window
 
-  constructor(public router: Router, public route: ActivatedRoute) {}
+  constructor(public router: Router, public route: ActivatedRoute) {
+    if (userStore.isAdmin) {
+      this.route.paramMap.subscribe(async params => {
+        console.log('param map sub' + params.get('id'))
+        this.conversationId = params.get('id')
+        await chatStore.setCurrentConversation(this.conversationId)
+        window.detector.detectChanges()
+      })
+    }
+  }
 
-  ngOnInit(): void {
-    this.route.paramMap.subscribe(params => {
-      this.conversationId = params.get('id')
-    })
+  async ngOnInit() {
+    if (!userStore.isAdmin) { 
+      await chatStore.setCurrentConversation()
+      if (!chatStore.currentConversation) {
+        window.router.navigate(['/live-support'])
+      }
+    }
   }
 }

@@ -13,7 +13,6 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
-import javax.persistence.OneToOne;
 import javax.persistence.OrderBy;
 
 import lombok.AllArgsConstructor;
@@ -25,24 +24,8 @@ import lombok.Setter;
 @Setter
 @Entity
 @NoArgsConstructor
+@AllArgsConstructor
 public class Conversation {
-
-    @Embeddable
-    @AllArgsConstructor
-    @NoArgsConstructor
-    @Getter
-    @Setter
-    public static class Message {
-        User sender;
-        String content;
-        LocalDateTime sentAt;
-
-        public Message(User sender, String content) {
-            this.sender = sender;
-            this.content = content;
-            this.sentAt = LocalDateTime.now();
-        }
-    }
 
     public Conversation(User admin, User client) {
         this.admin = admin;
@@ -62,13 +45,11 @@ public class Conversation {
     boolean closed;
     LocalDateTime closedAt;
 
-    // jedan admin u konverzaciji sa vise ljudi
     @ManyToOne(fetch = FetchType.EAGER) 
     @JoinColumn(name = "admin_id")
     User admin;
 
-    // jedan user u jednoj konverzaciji sa adminom
-    @OneToOne(fetch = FetchType.EAGER) 
+    @ManyToOne(fetch = FetchType.EAGER) 
     @JoinColumn(name = "client_id") 
     User client;
 

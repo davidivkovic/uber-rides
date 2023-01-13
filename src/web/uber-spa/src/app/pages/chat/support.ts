@@ -1,3 +1,4 @@
+import { NgIf } from '@angular/common'
 import { Component } from '@angular/core'
 import { FormsModule } from '@angular/forms'
 import { Router, RouterModule } from '@angular/router'
@@ -5,7 +6,7 @@ import { chatStore } from '@app/stores'
 
 @Component({
   standalone: true,
-  imports: [RouterModule, FormsModule],
+  imports: [NgIf, RouterModule, FormsModule],
   template: `
     <div class="h-full flex items-center">
       <div class="h-fit w-[550px] mx-auto">
@@ -16,14 +17,17 @@ import { chatStore } from '@app/stores'
         </p>
         <form (submit)="initConversation($event)" class="flex w-full space-x-3 mt-10 items-center">
         <input ngNativeValidate required [(ngModel)]="message" name="message" type="text" class="h-14" placeholder="How can we help?">
-        <button class="primary h-14">Send</button>
+        <button class="primary h-14 rounded-lg">Send</button>
         </form>
+        <div *ngIf="chatStore.failedConnection" class="mt-5">Sorry, there are currently no admins online. Try again later.</div>
       </div>
     </div>
   `
 })
 export default class LiveSupport {
   message = ''
+
+  chatStore = chatStore
 
   constructor(public router: Router) {}
 

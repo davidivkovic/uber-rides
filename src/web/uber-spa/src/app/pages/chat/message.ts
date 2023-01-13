@@ -1,6 +1,8 @@
 import { NgIf } from '@angular/common'
 import { Component, Input } from '@angular/core'
 import { userStore } from '@app/stores'
+import { scheme, baseUrl } from '@app/api'
+import { computed } from '@app/utils'
 
 @Component({
   standalone: true,
@@ -23,16 +25,19 @@ import { userStore } from '@app/stores'
 })
 export class Message {
   @Input() message: any
+  scheme = scheme
+  baseUrl = baseUrl
 
   setClass() {
     if(this.isMine()) {
-      return 'bg-black/80 text-white justify-end rounded-br-none'
+      return 'bg-black text-white justify-end rounded-br-none'
     } 
-    return 'bg-gray-200/80 text-black rounded-bl-none'
+    return 'bg-[#eeeeee] text-black rounded-bl-none'
 
   }
 
   isMine() {
     return this.message.sender.id === userStore.user.id
   }
+
 }

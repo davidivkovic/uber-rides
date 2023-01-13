@@ -78,7 +78,7 @@ public class Authentication extends Controller {
         else {
             return badRequest("Only administrators can register administrators and drivers.");
         }
-        
+
         db.persist(user);
         if (!user.isEmailConfirmed()) {
             emailSender.send(user.getEmail(), new ConfirmEmailMessage(user));

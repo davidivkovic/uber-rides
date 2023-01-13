@@ -85,7 +85,7 @@ class WSConfig implements WebSocketConfigurer {
 
     @EventListener(ApplicationReadyEvent.class)
     public void applicationReady() {
-        simulator.start(2);
+        // simulator.start(2);
     }
 
 }
@@ -151,13 +151,13 @@ public class WS extends TextWebSocketHandler {
         if (userData != null) {
             userData.onDisconnected();
             userData.setSession(null);
-            scheduler.schedule(
-                () -> {
-                    if (userData.getSession() != null && userData.getSession().isOpen()) return;
-                    store.remove(userData.getUser().getId());
-                }, 
-                Instant.now().plusSeconds(300)
-            );
+            // scheduler.schedule(
+            //     () -> {
+            //         if (userData.getSession() != null && userData.getSession().isOpen()) return;
+            //         store.remove(userData.getUser().getId());
+            //     }, 
+            //     Instant.now().plusSeconds(300)
+            // );
         }
         try { session.close(); } 
         catch (IOException e) { /* Ignore */}

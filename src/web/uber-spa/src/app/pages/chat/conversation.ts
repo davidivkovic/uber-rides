@@ -1,10 +1,12 @@
-import { Component } from '@angular/core'
+import { Component, Input } from '@angular/core'
 import { NgFor, NgIf } from '@angular/common'
 import { FormsModule } from '@angular/forms'
 import { ActivatedRoute, RouterModule } from '@angular/router'
 import { Message } from './message'
 import { chatStore, userStore } from '@app/stores'
 import dayjs from 'dayjs'
+import { baseUrl, scheme } from '@app/api'
+import { computed } from '@app/utils'
 
 @Component({
   standalone: true,
@@ -19,21 +21,14 @@ import dayjs from 'dayjs'
         <div class="text-xl flex items-center justify-between">
           <div class="flex space-x-5 items-center">
             <img
-              src="https://images.unsplash.com/photo-1572965733194-784e4b4efa45?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=2670&q=80"
+              [src]="imageUrl()" 
               class="h-8 w-8 rounded-full object-cover"
             />
-            <div>
-              {{
-                chatStore.currentConversation.client?.firstName +
-                  ' ' +
-                  chatStore.currentConversation.client?.lastName
-              }}
-            </div>
+            <h3>{{ name() }}</h3>
           </div>
           <svg
             *ngIf="userStore.isAdmin && !chatStore.currentConversation.closed"
             (click)="endConversation()"
-            tool
             xmlns="http://www.w3.org/2000/svg"
             class="icon icon-tabler icon-tabler-message-2-off text-red-600 cursor-pointer"
             width="24"
@@ -65,7 +60,7 @@ import dayjs from 'dayjs'
             *ngIf="chatStore.currentConversation.closed"
             class="h-32 flex flex-col items-center justify-center"
           >
-            <div class="text-gray-500">{{ dayjs().format('MMM D, YYYY h:mm A') }}</div>
+            <div class="text-gray-500">{{ dayjs(chatStore.currentConversation.closedAt).format('MMM D, YYYY h:mm A') }}</div>
             <div class="text-lg">
               Chat ended by
               {{
@@ -101,21 +96,14 @@ import dayjs from 'dayjs'
   `
 })
 export class Conversation {
-  conversationId = ''
   message = ''
 
   chatStore = chatStore
   userStore = userStore
   dayjs = dayjs
 
-  constructor(public route: ActivatedRoute) {}
-
-  async ngOnInit() {
-    this.route.paramMap.subscribe(params => {
-      this.conversationId = params.get('id')
-      chatStore.setCurrentConversation(this.conversationId)
-    })
-  }
+  baseUrl = baseUrl
+  scheme = scheme
 
   async sendMessage(event: Event) {
     if(!this.message) return
@@ -127,4 +115,27 @@ export class Conversation {
   async endConversation() {
     chatStore.sendMessage('End', true)
   }
+
+  name = computed(
+    [() => userStore.isAdmin, () => chatStore.currentConversation],
+    () => {
+      if(!chatStore.currentConversation) return ''
+      const name = userStore.isAdmin 
+        ? chatStore.currentConversation.client.firstName + ' ' + chatStore.currentConversation.client.lastName
+        : chatStore.currentConversation.admin.firstName + ' ' + chatStore.currentConversation.admin.lastName
+      return name
+    }
+  )
+
+  imageUrl = computed(
+    [() => userStore.isAdmin, () => chatStore.currentConversation],
+    () => {
+      if(!chatStore.currentConversation) return ''
+      const profilePic: string = userStore.isAdmin 
+        ? chatStore.currentConversation.client.profilePicture 
+        : chatStore.currentConversation.admin.profilePicture
+      if(profilePic?.startsWith('http')) return profilePic
+      return scheme + baseUrl  + '/users/pictures/' + profilePic
+    }
+  )
 }

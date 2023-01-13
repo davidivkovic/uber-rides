@@ -33,6 +33,7 @@ import com.uber.rides.dto.user.UserDTO;
 import com.uber.rides.model.*;
 import com.uber.rides.model.User.Roles;
 import com.uber.rides.service.ImageStore;
+import com.uber.rides.ws.Store;
 
 @RestController
 @RequestMapping("/users")
@@ -43,6 +44,7 @@ public class Users extends Controller {
     @Autowired DbContext context;
     @Autowired ServletContext servlet;
     @Autowired ImageStore images;
+    @Autowired Store store;
 
     @ExceptionHandler({ MaxUploadSizeExceededException.class })
     public Object handleFilesizeExceeded() {
@@ -55,7 +57,10 @@ public class Users extends Controller {
     )
     public Object getProfilePicture(@PathVariable("id") String pictureId) {
 
-        if (StringUtils.isEmpty(pictureId) || pictureId.equals(User.DEFAULT_PFP)) {
+        if (StringUtils.isEmpty(pictureId) 
+            || pictureId.equalsIgnoreCase("null") 
+            || pictureId.equals(User.DEFAULT_PFP)
+        ) {
             return new InputStreamResource(
                 getClass().getResourceAsStream("/images/" + User.DEFAULT_PFP)
             );
@@ -127,6 +132,10 @@ public class Users extends Controller {
         else {
             mapper.map(updateRequest, user);
             user.setUpdateRequest(null);
+            var userData = store.get(user.getId());
+            if(userData != null && userData.getUser() != null) {
+                userData.getUser().update(user);
+            }
         }
 
         user.setCompletedRegistration(true);
