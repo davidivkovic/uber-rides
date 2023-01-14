@@ -1,6 +1,5 @@
 package com.uber.rides.dto;
 
-
 import lombok.Getter;
 import lombok.Setter;
 

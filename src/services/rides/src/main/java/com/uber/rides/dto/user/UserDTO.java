@@ -11,6 +11,8 @@ import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.*;
 import com.uber.rides.model.Car;
 import com.uber.rides.model.User;
 import com.uber.rides.controller.Users;
+import com.uber.rides.dto.TripDTO;
+
 import static com.uber.rides.util.Utils.mapper;
 
 @Getter
@@ -30,8 +32,7 @@ public class UserDTO {
                 if (source == null) profilePicture = User.DEFAULT_PFP;
                 else profilePicture = (String) source;
                 if (profilePicture.startsWith("http")) return profilePicture;
-                var l = linkTo(methodOn(Users.class).getProfilePicture(profilePicture)).toString();
-                return l;
+                return linkTo(methodOn(Users.class).getProfilePicture(profilePicture)).toString();
             })
             .map(User::getProfilePicture, UserDTO::setProfilePicture)
         );
@@ -46,8 +47,11 @@ public class UserDTO {
     String phoneNumber;
     String profilePicture;
     boolean blocked;
+    String blockReason;
     boolean completedRegistration;
     Car car;
     double rating;
+    boolean online;
+    // TripDTO currentTrip;
 
 }

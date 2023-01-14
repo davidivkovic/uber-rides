@@ -16,6 +16,7 @@ import com.uber.rides.dto.user.UserDTO;
 public class TripDTO {
 
     Long id;
+    Long ownerId;
 
     UserDTO rider;
     UserDTO driver;
