@@ -30,7 +30,8 @@ import { InnerHtml } from '@app/utils'
             <a 
               *ngIf="item.url"
               [id]="'menu-item-' + index"
-              [routerLink]="item.url" 
+              [routerLink]="item.url"
+              [queryParams]="item.query"
               class="hover:bg-gray-200 group flex items-center pl-4 pr-5 py-3 w-full" 
               role="menuitem" 
               tabindex="-1" 
@@ -62,6 +63,7 @@ export default class Dropdown {
     label: string
     icon: string
     url?: string
+    query?: { [key: string]: any }
     action?: () => void
   }[] = []
 

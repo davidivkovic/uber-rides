@@ -14,7 +14,7 @@ import { resource } from '@app/utils'
       #form="ngForm"
       (ngSubmit)="updateUser()"
       *ngIf="!user.loading || user?.value"
-      class="w-full space-y-8 max-w-md"
+      class="w-full max-w-md"
     >
       <div class="flex space-x-3 items-center">
         <label for="files">
@@ -42,7 +42,7 @@ import { resource } from '@app/utils'
           </div>
         </div>
       </div>
-      <div class="space-y-5">
+      <div class="space-y-5 mt-5">
         <div>
           <h2 class="text-xl">Personal information</h2>
           <p class="text-gray-500 text-sm">Update your personal information</p>
@@ -76,7 +76,7 @@ import { resource } from '@app/utils'
           />
         </div>
       </div>
-      <div class="space-y-5">
+      <div class="space-y-5 my-7">
         <div class="">
           <h2 class="text-xl">Additional information</h2>
           <p class="text-gray-500 text-sm">Update your additional information</p>
@@ -139,9 +139,9 @@ export default class Settings {
         this.image
       )
       notificationStore.show(
-        userStore.isRider
-          ? 'Your profile has successfully been updated.'
-          : 'Your changes are noted and awaiting administrator approval.'
+        userStore.isDriver
+          ? 'Your changes are noted and awaiting administrator approval.'
+          : 'Your profile has successfully been updated.'
       )
     }
     catch (error) {

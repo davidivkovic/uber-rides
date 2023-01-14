@@ -47,7 +47,6 @@ export default class Rides {
   order = 'START_DESC'
   trips = []
   savedRoutes = {}
-  reviews = {}
 
   constructor() {
     this.getTrips()
