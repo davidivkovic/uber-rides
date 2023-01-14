@@ -10,6 +10,7 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 import org.modelmapper.ModelMapper;
 
@@ -38,11 +39,60 @@ public class Utils {
     public static final String PU_KEY = new String(Base64.getDecoder().decode(BT_PU_KEY), StandardCharsets.UTF_8);
     public static final String TOKEN = new String(Base64.getDecoder().decode(BT_TOKEN), StandardCharsets.UTF_8);
 
+    /* Service Result Helper */
+
+    public static class Result<T> {
+        boolean success;
+        T result;
+        String error;
+
+        public boolean success() {
+            return success;
+        }
+
+        public String error() {
+            return error;
+        }
+
+        public T result() {
+            return result;
+        }
+
+        public static <T> Result<T> empty() {
+            var result = new Result<T>();
+            result.success = true;
+            return result;
+        }
+
+        public static <T, E> Result<T> error(Result<E> value) {
+            var result = new Result<T>();
+            result.success = false;
+            result.error = value.error;
+            return result;
+        }
+
+        public static <T> Result<T> value(T value) {
+            var result = new Result<T>();
+            result.success = true;
+            result.result = value;
+            return result;
+        }
+
+        public static <T> Result<T> error(String error) {
+            var result = new Result<T>();
+            result.success = false;
+            result.error = error;
+            return result;
+        }
+    }
+
     /* JSON Mapper */
 
     public static final ObjectMapper jsonMapper = new ObjectMapper()
+        .registerModules(new JavaTimeModule())
         .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
         .configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false)
+        .configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false)
         .setSerializationInclusion(Include.NON_NULL)
         .findAndRegisterModules();
 
@@ -62,6 +112,8 @@ public class Utils {
     )
     .setAudience(Collections.singletonList("152138799418-rdah02vercon3q3p9ubkh4jqa5vflpcr.apps.googleusercontent.com"))
     .build();
+
+    /* Payment processor */
 
     public static final BraintreeGateway gateway = new BraintreeGateway(
         Environment.SANDBOX,
