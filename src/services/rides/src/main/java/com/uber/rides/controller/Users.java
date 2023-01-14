@@ -94,7 +94,7 @@ public class Users extends Controller {
     
     @Transactional
     @PostMapping(path = "/updates", consumes = { MediaType.MULTIPART_FORM_DATA_VALUE })
-    @Secured({ Roles.DRIVER, Roles.RIDER })
+    @Secured({ Roles.DRIVER, Roles.RIDER, Roles.ADMIN })
     public Object update(@ModelAttribute @Validated UpdateRequest request) {
         
         var user = context.query().stream(
@@ -174,6 +174,10 @@ public class Users extends Controller {
 
         if (action.equals("ACCEPT")) {
             mapper.map(request, user);
+            var userData = store.get(user.getId());
+            if(userData != null && userData.getUser() != null) {
+                userData.getUser().update(user);
+            }
         }
         
         user.setUpdateRequest(null);
@@ -186,9 +190,13 @@ public class Users extends Controller {
     @Transactional
     @PostMapping("/{id}/block")
     @Secured({ Roles.ADMIN })
-    public Object block(@RequestParam boolean blocked, @RequestParam @Size(max = 300) String blockReason) {
+    public Object block(
+        @PathVariable("id") @NotBlank Long userId, 
+        @RequestParam boolean blocked, 
+        @RequestParam @Size(max = 300) String blockReason
+    ) {
 
-        var user = context.db().getReference(User.class, authenticatedUserId());
+        var user = context.db().getReference(User.class, userId);
         if (user == null) {
             return badRequest(USER_NOT_EXIST);
         }
