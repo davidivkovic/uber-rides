@@ -20,29 +20,6 @@ export default ({ poiClickHandler } = { poiClickHandler: null }) => {
                 callback(name, quotaShim)
               }
             }
-            // else if (name === 'common') {
-            //   content = content.toString()
-            //   const needle = '"&callback=_xdc_."'
-            //   const idx = content.indexOf(needle)
-            //   if (idx !== -1) {
-            //     content = content.slice(0, idx - 3)
-            //       + `
-            //       if (d.indexOf(\'GeocodeService\') !== -1) {
-            //         d += "&callback=_xdc_._" + (Math.random() * 100000000000).toString(36).substring(0, 6);
-            //       }
-            //       else {
-            //         d += "&callback=_xdc_." + k;
-            //       };
-            //     `
-            //       + content.slice(idx + needle.length + 3)
-
-            //     console.log(content.slice(idx - 30, idx + needle.length + 300))
-
-            //     let commonShim: () => void
-            //     eval('commonShim=' + content)
-            //     callback(name, commonShim)
-            //   }
-            // }
             else callback(name, content)
           }
           window['google']['maps']['__gjsload__'] = shim

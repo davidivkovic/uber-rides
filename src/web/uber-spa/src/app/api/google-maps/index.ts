@@ -7,6 +7,7 @@ import { formatAddress } from '@app/utils'
 const scriptName = 'google-maps-script'
 const stateKey = 'google-maps-state'
 
+let loaded = false
 let map: google.maps.Map
 let mapHtmlElement: HTMLElement
 let autocomplete: google.maps.places.AutocompleteService
@@ -19,6 +20,7 @@ let markers: google.maps.Marker[] = []
 let carMarkers: google.maps.Marker[] = []
 let infoWindows: google.maps.InfoWindow[] = []
 let subscribers = []
+let onLoadedCallbacks = []
 let serializableState = localStorage.getItem(stateKey)
   ? JSON.parse(localStorage.getItem(stateKey))
   : {
@@ -26,6 +28,7 @@ let serializableState = localStorage.getItem(stateKey)
     polylines: [],
     infoWindows: []
   }
+
 
 const subscribe = (fn: any) => subscribers.push(fn)
 
@@ -103,7 +106,7 @@ const createPolyline = (
   serialize = true
 ) => {
   const polyline = new google.maps.Polyline({
-    path: typeof path === 'string' ? google.maps.geometry.encoding.decodePath(path) : path,
+    path: (typeof path === 'string') ? google.maps.geometry.encoding.decodePath(path) : path,
     map,
     strokeColor: color,
     strokeOpacity: 0.7,
@@ -118,7 +121,11 @@ const createPolyline = (
       path,
       color,
       name,
-      canSerialize: () => polyline.getMap() != null && polyline.getMap() === map
+      canSerialize: () => {
+        const res = polyline.getMap() != null && polyline.getMap() === map
+        console.log(res, polyline.getMap(), map, polyline.getMap() === map, name)
+        return res
+      }
     })
     serializeState()
   }
@@ -176,6 +183,9 @@ const removeAllElements = () => {
   polylines?.forEach(l => l.setMap(null))
   markers?.forEach(m => m.setMap(null))
   infoWindows?.forEach(w => w.close())
+  polylines = []
+  markers = []
+  infoWindows = []
   serializableState = {
     markers: [],
     polylines: [],
@@ -210,10 +220,9 @@ const script = Object.assign(
   document.createElement('script'),
   {
     id: scriptName,
-    src: 'https://maps.googleapis.com/maps/api/js?libraries=places,directions,geometry&language=en&key=' + key,
+    src: 'https://maps.googleapis.com/maps/api/js?libraries=places,directions,geometry&language=en&callback=onLoad&key=' + key,
     async: true,
-    defer: true,
-    onload: initMap
+    defer: true
   }
 )
 
@@ -221,6 +230,18 @@ const init = (htmlElementId = '') => {
   elementId = htmlElementId
   if (!document.getElementById(scriptName)) {
     document.head.appendChild(script)
+  }
+  else if ((window as any).google) {
+    (window as any).onLoad()
+  }
+  else onLoadedCallbacks.push(initMap)
+}
+
+
+(window as any).onLoad = () => {
+  if (onLoadedCallbacks.length) {
+    onLoadedCallbacks.forEach(c => c())
+    onLoadedCallbacks = []
   }
   else {
     initMap()
