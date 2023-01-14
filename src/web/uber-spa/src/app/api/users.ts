@@ -87,11 +87,23 @@ const getRiders = async (page: any = 0, query: string) => {
   return []
 }
 
+const getDrivers = async (page: any = 0, criteria: 'ACTIVE' | 'ALL', query: string) => {
+  const response = await fetch(
+    '/drivers?' + new URLSearchParams({ page, criteria, query }),
+    {
+      method: 'GET'
+    }
+  )
+  if (response.ok) return await response.json()
+  return []
+}
+
 export default {
   getProfile,
   update,
   getUpdateRequests,
   resolveUpdateRequest,
   changeBlock,
-  getRiders
+  getRiders,
+  getDrivers
 }

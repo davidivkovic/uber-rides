@@ -56,11 +56,30 @@ const reviewTrip = async (tripId: number, rating: number | any, comment: string)
   if (!response.ok) throw new Error(await response.text())
 }
 
+const getCurrentTrip = async (userId: number | any) => {
+  const response = await fetch(
+    basePath + '/current?' + new URLSearchParams({ userId }).toString(),
+    { method: 'GET' }
+  )
+  if (!response.ok) throw new Error(await response.text())
+  return await response.json()
+}
+
+const cancelTrip = async (reason: string) => {
+  const response = await fetch(
+    basePath + '/cancel?' + new URLSearchParams({ reason }).toString(),
+    { method: 'POST' }
+  )
+  if (!response.ok) throw new Error(await response.text())
+}
+
 export default {
   chooseRide,
   invitePassengers,
   orderRide,
   startTrip,
   getTrips,
-  reviewTrip
+  reviewTrip,
+  getCurrentTrip,
+  cancelTrip
 }
