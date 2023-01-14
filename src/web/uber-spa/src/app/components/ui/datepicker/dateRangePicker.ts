@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, ElementRef, Component, Input, ChangeDetectionStrategy, ViewChild } from '@angular/core'
+import { ChangeDetectorRef, ElementRef, Component, Input, ChangeDetectionStrategy, ViewChild, EventEmitter, Output } from '@angular/core'
 import { NgIf } from '@angular/common'
 
 import dayjs from 'dayjs'
@@ -21,6 +21,13 @@ const dateFormat = 'ddd, MMM D'
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div #root class="relative w-min">
+      <label *ngIf="label"
+        for="range-date-picker"
+        class="cursor-pointer select-none text-[15px] font-medium text-black w-fit"
+      >
+        {{ label }}
+      </label> 
+      <br>
       <DateRangeInput
         [label]="label"
         [startDate]="selectedDates?.[0]"
@@ -28,25 +35,22 @@ const dateFormat = 'ddd, MMM D'
         [isOpen]="isOpen"
         (onButtonRef)="onButtonRef($event)"
         (mousedown)="mouseDown = true"
-        (click)="toggleIsOpen()"
-        (focus)="
-          !mouseDown && !isOpen && toggleIsOpen();
-          mouseDown = false
-        "
+        (click)="onInputClick()"
+        (focus)="onInputFocus()"
       >
       </DateRangeInput>
       <div 
         #datePicker
         *ngIf="isOpen"
         id="calendar-wrapper"
-        class="absolute z-50 mt-1.5 border bg-white p-5 pb-4"
+        class="absolute right-0 z-50 mt-1.5 border bg-white rounded-md p-5 pb-4"
       >
         <div id="calendar" class="relative">
           <button
-            *ngIf="!leftMonth.isSame(today, 'month')"
             id="previous-button"
+            *ngIf="future && !past ? (!leftMonth.isSame(today, 'month')) : true"
             (click)="toPreviousMonth()"
-            class="absolute left-0 text-neutral-400 hover:text-black"
+            class="absolute left-0 p-0 text-neutral-400 hover:text-black outline-none focus:border-black focus:ring-black focus:ring-2"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -54,7 +58,7 @@ const dateFormat = 'ddd, MMM D'
               viewBox="0 0 24 24"
               stroke-width="3"
               stroke="currentColor"
-              class="mx-0.5 mb-1 -mt-px h-6 w-6 p-1"
+              class="mx-px -mt-px h-6 w-6 p-1"
             >
               <path
                 stroke-linecap="round"
@@ -65,8 +69,9 @@ const dateFormat = 'ddd, MMM D'
           </button>
           <button
             id="next-button"
+            *ngIf="!future && past ? (!rightMonth().isSame(today, 'month')) : true"
             (click)="toNextMonth()"
-            class="absolute right-0 text-neutral-400 hover:text-black"
+            class="absolute right-0 p-0 text-neutral-400 hover:text-black outline-none focus:border-black focus:ring-black focus:ring-2"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -74,7 +79,7 @@ const dateFormat = 'ddd, MMM D'
               viewBox="0 0 24 24"
               stroke-width="3"
               stroke="currentColor"
-              class="mx-0.5 mb-1 -mt-px h-6 w-6 p-1"
+              class="mx-px -mt-px h-6 w-6 p-1"
             >
               <path
                 stroke-linecap="round"
@@ -86,6 +91,8 @@ const dateFormat = 'ddd, MMM D'
           <div id="calendar-content" class="flex">
             <Calendar
               id="left-calendar"
+              [past]="past"
+              [future]="future"
               [month]="leftMonth"
               [previewDate]="previewDate"
               [selectedDates]="selectedDates"
@@ -95,6 +102,8 @@ const dateFormat = 'ddd, MMM D'
             <Calendar
               id="right-calendar"
               class="pl-4"
+              [past]="past"
+              [future]="future"
               [month]="rightMonth()"
               [previewDate]="previewDate"
               [selectedDates]="selectedDates"
@@ -117,19 +126,24 @@ const dateFormat = 'ddd, MMM D'
 })
 export default class DateRangePicker {
 
-  constructor (private changeDetector: ChangeDetectorRef) {}
+  constructor(private changeDetector: ChangeDetectorRef) { }
 
   open: boolean
   @Input() set isOpen(value: boolean) {
     this.open = value
     this.changeDetector.markForCheck()
-  } 
+  }
   get isOpen() {
     return this.open
   }
 
   @Input() autoClose: boolean
   @Input() label: string
+  @Input() future = true
+  @Input() past = false
+
+  @Output() onDateSelected = new EventEmitter<dayjs.Dayjs[]>()
+  @Output() onClosed = new EventEmitter()
 
   @ViewChild('root') root: ElementRef<HTMLElement>
   @ViewChild('datePicker') datePicker: ElementRef<HTMLElement>
@@ -137,23 +151,34 @@ export default class DateRangePicker {
   dateInput: HTMLButtonElement
   onButtonRef = (ref: HTMLElement) => this.dateInput = ref as HTMLButtonElement
 
+  dirty = false
   mouseDown = false
   today = dayjs()
   previewDate: dayjs.Dayjs
   selectedDates: dayjs.Dayjs[] = []
 
   leftMonth = dayjs().startOf('M')
-  rightMonth = computed(() => this.leftMonth, () => this.leftMonth.add(1, 'M'))
+
+  ngOnInit() {
+    this.leftMonth = (this.past && !this.future)
+      ? dayjs().startOf('M').subtract(1, 'M')
+      : dayjs().startOf('M')
+  }
+
+  rightMonth = computed(
+    () => this.leftMonth,
+    () => this.leftMonth.add(1, 'M')
+  )
 
   endDate = computed(
     [() => this.selectedDates.length, () => this.previewDate, () => this.selectedDates[1]],
     () => {
       if (
-        this.selectedDates.length == 2 
+        this.selectedDates.length == 2
         ||
         (this.selectedDates.length > 0 &&
-         this.previewDate &&
-         this.previewDate.isAfter(this.selectedDates[0], 'day')
+          this.previewDate &&
+          this.previewDate.isAfter(this.selectedDates[0], 'day')
         )
       ) {
         return this.selectedDates[1] ?? this.previewDate
@@ -198,23 +223,49 @@ export default class DateRangePicker {
       this.selectedDates = [...this.selectedDates, date]
     }
     if (this.selectedDates.length == 2 && this.autoClose) {
-      this.isOpen = false
+      this.toggleIsOpen()
+    }
+    if (this.selectedDates.length == 2) {
+      this.onDateSelected.emit(this.selectedDates)
     }
   }
 
   toNextMonth = () => this.leftMonth = this.leftMonth.add(1, 'M')
   toPreviousMonth = () => this.leftMonth = this.leftMonth.subtract(1, 'M')
 
-  focusChange = () =>
-    this.isOpen && !this.root.nativeElement.contains(document.activeElement) && this.toggleIsOpen()
+  onInputFocus = () => {
+    !this.mouseDown && !this.isOpen && this.toggleIsOpen()
+    this.mouseDown = false
+  }
+
+  onInputClick = () => {
+    this.toggleIsOpen()
+  }
+
+  focusChange = () => {
+    console.log(this.dirty)
+    if (this.dirty) return
+    this.dirty = true
+    this.isOpen
+      && !this.datePicker?.nativeElement.contains(document.activeElement)
+      && !this.dateInput.contains(document.activeElement)
+      && this.toggleIsOpen()
+    this.dirty = false
+  }
 
   clickOutside = e => {
+    console.log(this.dirty)
+    if (this.dirty) return
+    this.dirty = true
+    console.log(this.isOpen, this.datePicker?.nativeElement.contains(e.target), this.dateInput.contains(e.target))
     if (
-      !this.datePicker?.nativeElement.contains(e.target) &&
-      !this.dateInput.contains(e.target)
+      this.isOpen
+      && !this.datePicker?.nativeElement.contains(e.target)
+      && !this.dateInput.contains(e.target)
     ) {
       this.toggleIsOpen()
     }
+    this.dirty = false
   }
 
   toggleIsOpen = () => {
@@ -223,8 +274,9 @@ export default class DateRangePicker {
       document.addEventListener('focus', this.focusChange, { capture: true })
       document.addEventListener('click', this.clickOutside, { capture: true })
     } else {
-      document.addEventListener('focus', this.focusChange, { capture: true })
+      document.removeEventListener('focus', this.focusChange, { capture: true })
       document.removeEventListener('click', this.clickOutside, { capture: true })
+      this.onClosed.emit()
     }
   }
 }

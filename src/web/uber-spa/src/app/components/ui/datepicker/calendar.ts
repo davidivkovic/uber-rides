@@ -57,6 +57,8 @@ export default class Calendar {
   @Input() month: dayjs.Dayjs
   @Input() previewDate: dayjs.Dayjs
   @Input() selectedDates: dayjs.Dayjs[]
+  @Input() future = true
+  @Input() past = false
 
   @Output() onDateSelected = new EventEmitter<dayjs.Dayjs>()
   @Output() onPreviewDateChange = new EventEmitter<dayjs.Dayjs>()
@@ -94,7 +96,13 @@ export default class Calendar {
     'inline-block w-9 leading-9',
     // day.isSame(this.today, 'day') ? 'text-indigo-700' : '',
     this.selectedDates?.some(d => d.isSame(day, 'day')) && 'bg-black !text-white hover:bg-black',
-    day.isBefore(this.today, 'day') ? 'pointer-events-none text-neutral-400' : 'cursor-pointer',
+    this.future && !this.past && day.isBefore(this.today, 'day')
+      ? 'pointer-events-none text-neutral-400'
+      : 'cursor-pointer',
+    this.past && !this.future && day.isAfter(this.today, 'day')
+      ? 'pointer-events-none text-neutral-400'
+      : 'cursor-pointer',
+    this.past && this.future && 'cursor-pointer',
     day && this.selectedDates?.every(d => d.date() != day.date()) && 'hover:bg-neutral-100',
     (
       (

@@ -18,29 +18,19 @@ const dateFormat = 'ddd, MMM D'
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [NgIf, NgClass],
   template: `
-    <div class="inline-block">
-      <label *ngIf="label"
-        for="range-date-picker"
-        class="cursor-pointer select-none text-[13px] font-medium text-neutral-900"
-      >
-        {{ label }}
-      </label> 
-      <br>
+    <div class="inline-block h-min">
       <button
         #buttonRef
         id="range-date-picker"
         (mousedown)="onmousedown.emit()"
         (click)="onclick.emit()"
         (focus)="onfocus.emit()"
-        class="group mt-0.5 inline-flex h-11 w-max items-center border border-neutral-300 bg-white px-5 pr-6 text-[13px] font-medium transition hover:border-neutral-600"
-        [ngClass]="{ '!border-neutral-600': isOpen }"
+        class="group w-max inline-flex items-center mt-0.5 text-sm px-5 pr-6 transition rounded-lg h-11 border-0 bg-[#eeeeee] outline-none focus:border-black focus:ring-black focus:ring-2 focus:bg-gray-50 placeholder:text-gray-500"
       >
         <svg
-          xmlns="http://www.w3.org/2000/svg"
           viewBox="0 0 20 20"
           fill="currentColor"
-          class="-ml-1.5 mr-2.5 -mt-px h-5 w-5 text-neutral-400 transition group-hover:text-neutral-600"
-          [ngClass]="{ '!text-neutral-600': isOpen }"
+          class="-ml-1.5 mr-2.5 -mt-px h-5 w-5 transition"
         >
           <path
             fill-rule="evenodd"
@@ -52,22 +42,16 @@ const dateFormat = 'ddd, MMM D'
           <span
             [ngClass]="[
               'transition',
-              startDate ? 
-                'font-medium text-neutral-900' :
-                'font-normal text-neutral-400 group-hover:text-neutral-600',
-              isOpen ? '!text-neutral-600' : ''
+              startDate ? 'font-medium' : 'font-normal'
             ]"
           >
             {{ formattedStartDate() }}
           </span>
-          <span class="mx-1.5 font-normal text-neutral-400">&#8211;</span>
+          <span class="mx-1.5 font-normal">&#8211;</span>
           <span
             [ngClass]="[
               'transition',
-              endDate ? 
-                'font-medium text-neutral-900' :
-                'font-normal text-neutral-400 group-hover:text-neutral-600',
-              isOpen ? '!text-neutral-600' : ''
+              endDate ? 'font-medium' :'font-normal'
             ]"
           >
             {{ formattedEndDate() }}
