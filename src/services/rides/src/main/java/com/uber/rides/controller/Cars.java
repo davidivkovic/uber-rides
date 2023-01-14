@@ -43,9 +43,10 @@ public class Cars extends Controller {
 
         var car = mapper.map(request, Car.class);
         car.setType(Car.getByType(request.getType()));
-        user.setCar(car);
 
         db.persist(car);
+        user.setCar(car);
+        
         db.merge(user);
 
         return ok();
@@ -68,7 +69,8 @@ public class Cars extends Controller {
             driver.getLongitude(),
             driver.getDuration(),
             driver.getDistance(),
-            driver.getHeading()
+            driver.getHeading(),
+            driver.getUser().getId()
         ))
         .toArray();
     }

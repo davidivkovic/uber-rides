@@ -41,12 +41,16 @@ public class Controller {
     }
 
     public static Long authenticatedUserId() {
-        return Long.parseLong(
-            SecurityContextHolder
-                .getContext()
-                .getAuthentication() 
-                .getName()
-        );
+        var id = SecurityContextHolder
+        .getContext()
+        .getAuthentication() 
+        .getName();
+
+        if (id.equalsIgnoreCase("AnonymousUser")) {
+            return -1L;
+        }
+
+        return Long.parseLong(id);
     }
 
     public static String authenticatedUserRole() {

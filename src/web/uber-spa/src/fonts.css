@@ -1,21 +1,22 @@
 @font-face {
   font-family: UberMoveText;
   font-display: fallback;
-  font-weigth: 400;
-  src: url("assets/fonts/UberMoveText-Regular.woff2") format("woff2");
+  font-weight: 400;
+  src: url("assets/fonts/UberMoveText-Medium.woff2") format("woff2");
 }
 
+/* 
 @font-face {
   font-family: UberMoveText;
   font-display: fallback;
-  font-weigth: 500;
+  font-weight: 500;
   src: url("assets/fonts/UberMoveText-Medium.woff2") format("woff2");
-}
+} */
 
 @font-face {
   font-family: UberMove;
   font-display: fallback;
-  font-weigth: 700;
+  font-weight: 700;
   src: url("assets/fonts/UberMove-Bold.woff2") format("woff2");
 }
 

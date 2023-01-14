@@ -1,9 +1,27 @@
 import { ActivatedRouteSnapshot, RouteReuseStrategy, DetachedRouteHandle, UrlSegment } from '@angular/router'
+import { userStore } from '@app/stores'
 
 export class CustomReuseStrategy implements RouteReuseStrategy {
 
+  userId: number | undefined = userStore?.user?.id
   storedHandles: { [key: string]: DetachedRouteHandle } = {}
   fullRoute: string
+
+  getHandle(key: string) {
+    if (this.userId !== userStore?.user?.id) {
+      this.userId = userStore?.user?.id
+      this.storedHandles = {}
+    }
+    return this.storedHandles?.[key]
+  }
+
+  setHandle(key: string, handle: DetachedRouteHandle) {
+    if (this.userId !== userStore?.user?.id) {
+      this.userId = userStore?.user?.id
+      this.storedHandles = {}
+    }
+    this.storedHandles[key] = handle
+  }
 
   shouldDetach(route: ActivatedRouteSnapshot): boolean {
     return route.data['reuseRoute'] || false
@@ -16,24 +34,24 @@ export class CustomReuseStrategy implements RouteReuseStrategy {
     if (handle) {
       (handle as any)?.componentRef?.instance?.onDeactivated?.()
     } else {
-      (this.storedHandles?.[id] as any)?.componentRef?.instance?.onActivated?.(this.fullRoute)
+      (this.getHandle(id) as any)?.componentRef?.instance?.onActivated?.(this.fullRoute)
     }
     if (route.data['reuseRoute']) {
-      this.storedHandles[id] = handle
+      this.setHandle(id, handle)
     }
   }
 
   shouldAttach(route: ActivatedRouteSnapshot): boolean {
     const id = this.createIdentifier(route)
-    const handle = this.storedHandles[id]
+    const handle = this.getHandle(id)
     const canAttach = !!route.routeConfig && !!handle
     return canAttach
   }
 
   retrieve(route: ActivatedRouteSnapshot): DetachedRouteHandle {
     const id = this.createIdentifier(route)
-    if (!route.routeConfig || !this.storedHandles[id]) return null
-    return this.storedHandles[id]
+    if (!route.routeConfig || !this.getHandle(id)) return null
+    return this.getHandle(id)
   }
 
   shouldReuseRoute(future: ActivatedRouteSnapshot, curr: ActivatedRouteSnapshot): boolean {

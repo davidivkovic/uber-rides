@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.uber.rides.model.User.Roles;
+import com.uber.rides.ws.Store;
 import com.uber.rides.database.DbContext;
 import com.uber.rides.dto.user.UserDTO;
 import com.uber.rides.model.User;
@@ -24,6 +25,7 @@ public class Riders extends Controller {
     static final long PAGE_SIZE = 8;
 
 	@Autowired DbContext context;
+    @Autowired Store store;
 
     @Transactional
     @GetMapping()
@@ -49,7 +51,11 @@ public class Riders extends Controller {
             .sorted(User$.firstName)
             .skip(page * PAGE_SIZE)
             .limit(PAGE_SIZE)
-            .map(rider -> mapper.map(rider, UserDTO.class))
+            .map(rider -> {
+                var dto = mapper.map(rider, UserDTO.class);
+                dto.setOnline(store.riders.containsKey(rider.getId()));
+                return dto;
+            })
             .toList();
     }
 

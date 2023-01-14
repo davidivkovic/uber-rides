@@ -10,12 +10,13 @@ function computed<T>(sources: any, getter: (previous?: T) => T): () => T {
   if ((sources as ShallowSource[]).some(s => s() !== undefined)) {
     cache = getter()
   }
-  let sourcesMemo = (sources as ShallowSource[]).map(s => s())
+  let sourcesMemo = (sources as ShallowSource[]).map(s => s?.())
+  const nOfSources = sources.length
   const update = () => {
     let dirty = false
-    for (let i = 0; i < sources.length; i++) {
-      const current = sources[i]()
-      if (current !== sourcesMemo[i]) {
+    for (let i = 0; i < nOfSources; i++) {
+      const current = sources[i]?.()
+      if (current !== sourcesMemo[i] || !current) {
         sourcesMemo[i] = current
         dirty = true
       }
@@ -52,7 +53,7 @@ function watchEffect(
   let sourcesMemo: (Primitive | Reference)[]
 
   if (sourcesIsFunction) sources = [sources]
-  sourcesMemo = (sources as ShallowSource[]).map(s => s())
+  sourcesMemo = (sources as ShallowSource[]).map(s => s?.())
 
   if (options?.immediate) {
     if (sourcesIsFunction) callback(undefined, sourcesMemo[0])
@@ -61,11 +62,12 @@ function watchEffect(
 
   let stopped = false
   stopHandle && stopHandle(() => stopped = true)
+  const nOfSources = sources.length
 
   const update = () => {
     if (stopped) return
     let prevSourcesMemo = sourcesMemo
-    for (let i = 0; i < sources.length; i++) {
+    for (let i = 0; i < nOfSources; i++) {
       const previous = sourcesMemo[i]
       const current = sources[i]()
       if (previous !== current) {
