@@ -1,6 +1,8 @@
 package com.uber.rides.controller;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+
 import javax.transaction.Transactional;
 import javax.validation.constraints.NotBlank;
 
@@ -10,6 +12,7 @@ import static com.speedment.jpastreamer.streamconfiguration.StreamConfiguration.
 
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.security.access.annotation.Secured;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -22,6 +25,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import com.uber.rides.model.*;
 import com.uber.rides.model.User.Roles;
 import com.uber.rides.database.DbContext;
+import com.uber.rides.dto.AnalyticsDTO;
 import com.uber.rides.dto.user.NewCardRequest;
 import com.uber.rides.dto.user.PaymentMethodDTO;
 
@@ -290,7 +294,7 @@ public class Payments extends Controller {
             return badRequest(USER_NOT_EXIST);
         }
 
-        Payment payment = user.getDefaultPaymentMethod().authorize(amount, currency);
+        Payment payment = user.getDefaultPaymentMethod().authorize(amount, currency, null);
         if(payment == null) {
             return badRequest("Something went wrong with the payment authorization");
         }
@@ -298,5 +302,31 @@ public class Payments extends Controller {
         // save payment to db
 
         return ok();
+    }
+    
+    @Transactional
+    @GetMapping("analytics")
+    @Secured({ Roles.RIDER, Roles.DRIVER, Roles.ADMIN })
+    public Object analytics(
+        @RequestParam Long userId, 
+        @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime from, 
+        @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime to
+    ) {
+        var dto = new AnalyticsDTO();
+        var filter = Payment$.capturedAt.between(from, to);
+        if (!Roles.ADMIN.equals(authenticatedUserRole())) {
+            filter = Payment$.userId.equal(userId)
+            .or(Payment$.driverId.equal(userId))
+            .and(Payment$.capturedAt.between(from, to));
+        }
+        context.query()
+            .stream(Payment.class)
+            .filter(filter)
+            .mapToDouble(Payment$.amount)
+            .forEach(p -> {
+                dto.setTotal(dto.getTotal() + p);
+                dto.setPayments(dto.getPayments() + 1);
+            });
+        return ok(dto);
     }
 }
