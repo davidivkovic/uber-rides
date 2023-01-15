@@ -10,6 +10,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.config.AutowireCapableBeanFactory;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import com.uber.rides.ws.admin.AdminData;
@@ -34,6 +35,7 @@ import static com.uber.rides.model.User.Roles.*;
 public class MessageHandler {
     
     @Autowired AutowireCapableBeanFactory container;
+    @Lazy @Autowired WS ws;
     Logger log = LoggerFactory.getLogger(MessageHandler.class);
 
     static Map<String, Class<? extends InboundMessage<DriverData>>> driverMessages = Map.of(
@@ -82,10 +84,10 @@ public class MessageHandler {
             message.handle(sender);
         } 
         catch (JsonProcessingException e) { 
-            WS.sendMessage(sender.session, ErrorMessages.MALFORMED_BODY);
+            ws.sendMessage(sender.session, ErrorMessages.MALFORMED_BODY);
         } 
         catch (BeansException e) {
-            WS.sendMessage(sender.session, ErrorMessages.INTERNAL_SERVER_ERROR);
+            ws.sendMessage(sender.session, ErrorMessages.INTERNAL_SERVER_ERROR);
             log.error("Failed to create service of type {}.", messageType.getName());
         }
 

@@ -50,7 +50,10 @@ public class InboundChatMessage implements InboundMessage<UserData> {
                 .findFirst()
                 .orElse(null);
             if(admin == null ) {
-                ws.sendMessageToUser(recipient.getId(), new OutboundChatMessage(new MessageDTO(), false, null));
+                ws.sendMessageToUser(
+                    sender.getUser().getId(), 
+                    new OutboundChatMessage(new MessageDTO(), false, null)
+                );
                 return;
             }   
             recipient = admin.getUser();
