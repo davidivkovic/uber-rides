@@ -1,11 +1,8 @@
 package com.uber.rides.ws;
 
 import java.io.IOException;
-import java.time.Instant;
 import java.util.Map;
 import java.util.Optional;
-
-import javax.persistence.EntityManagerFactory;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,6 +10,10 @@ import org.slf4j.LoggerFactory;
 import io.jsonwebtoken.Claims;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+
+import com.speedment.jpastreamer.application.JPAStreamer;
+
+import static com.speedment.jpastreamer.streamconfiguration.StreamConfiguration.*;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
@@ -34,8 +35,7 @@ import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 import org.springframework.web.socket.server.HandshakeInterceptor;
 
-import com.uber.rides.model.Trip;
-import com.uber.rides.model.User;
+import com.uber.rides.model.*;
 import com.uber.rides.model.User.Roles;
 import com.uber.rides.security.JWT;
 import com.uber.rides.simulator.DriverSimulator;
@@ -85,7 +85,7 @@ class WSConfig implements WebSocketConfigurer {
 
     @EventListener(ApplicationReadyEvent.class)
     public void applicationReady() {
-        // simulator.start(2);
+        simulator.start(3);
     }
 
 }
@@ -94,7 +94,7 @@ class WSConfig implements WebSocketConfigurer {
 public class WS extends TextWebSocketHandler {
 
     @Autowired MessageHandler messageHandler;
-    @Autowired EntityManagerFactory dbFactory;
+    @Autowired JPAStreamer query;
     @Autowired ThreadPoolTaskScheduler scheduler;
     @Autowired Store store;
 
@@ -106,17 +106,24 @@ public class WS extends TextWebSocketHandler {
 
         var userId = (Long) session.getAttributes().get(USER_ID);
         try {
-            var db = dbFactory.createEntityManager();
-            var user = db.find(User.class, userId);
-            db.close();
+            var user = query.stream(
+                of(User.class)
+                .joining(User$.car)
+            )
+            .filter(User$.id.equal(userId))
+            .findFirst()
+            .orElse(null);
 
             if (user == null) {
                 session.close(CloseStatus.NOT_ACCEPTABLE);
                 return;
             }
+            
             var userData = store.get(user.getId());
+
             if (userData == null) userData = store.put(user, session);
-            else userData.setSession(session); // ne moze jer simulator koristi stari session -> SEEMS FIXED
+            else userData.setSession(session);
+
             userData.onConnected();
             super.afterConnectionEstablished(session);
         }
@@ -159,19 +166,21 @@ public class WS extends TextWebSocketHandler {
             //     Instant.now().plusSeconds(300)
             // );
         }
-        try { session.close(); } 
-        catch (IOException e) { /* Ignore */}
+        // try { session.close(); } 
+        // catch (IOException e) { /* Ignore */}
         try { super.afterConnectionClosed(session, status); }
         catch (Exception e) { /* Ignore */ }
     }
 
-    public static void sendMessage(WebSocketSession session, String message) {
+    public void sendMessage(WebSocketSession session, String message) {
         sendMessage(session, new TextMessage(message));
     }
 
-    public static void sendMessage(WebSocketSession session, TextMessage message) {
-        if (session != null && session.isOpen()) {
-            try { session.sendMessage(message); }
+    public void sendMessage(WebSocketSession session, TextMessage message) {
+        if (session == null) return;
+        var userData = store.get((Long) session.getAttributes().get(USER_ID));
+        if (userData != null && userData.session.isOpen()) {
+            try { userData.session.sendMessage(message); }
             catch (IOException e) { /* Nothing special */ }
         }
     }
@@ -179,7 +188,7 @@ public class WS extends TextWebSocketHandler {
     public void sendMessageToUser(Long userId, OutboundMessage message) {
         var data = store.get(userId);
         if (data == null) return;
-        try { sendMessage(data.session, message.serialize()); }
+        try { synchronized (data) { sendMessage(data.session, message.serialize()); } }
         catch (JsonProcessingException e) { 
             logger.error("Could not serialize message of type {}", message.getClass()); 
         }
@@ -188,7 +197,7 @@ public class WS extends TextWebSocketHandler {
     public void sendMessageToUser(Long userId, String message) {
         var data = store.get(userId);
         if (data != null) {
-            sendMessage(data.session, message);
+            synchronized (data) { sendMessage(data.session, message); }
         }
     }
 

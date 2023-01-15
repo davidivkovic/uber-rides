@@ -57,7 +57,7 @@ public class AnswerTripInvite implements InboundMessage<RiderData> {
             .collect(Collectors
                 .toMap(
                     Entry::getKey,
-                    e -> e.getValue() / trip.getRiders().size()
+                    e -> e.getValue() / (trip.isSplitPayment() ? trip.getRiders().size() : 1)
                 )
             );
 

@@ -18,7 +18,7 @@ public class ImageStore {
 
     String storagePath;
 
-    private ImageStore() throws IOException, SecurityException, NullPointerException, InvalidPathException {
+    public ImageStore() throws IOException, SecurityException, NullPointerException, InvalidPathException {
         storagePath = new File(
             Path.of(
                 new FileSystemResource("").getFile().getPath(),
@@ -81,9 +81,7 @@ public class ImageStore {
             var file = new File(normalizedPath);
             var canonicalPath = file.getCanonicalPath();
 
-            if (!canonicalPath.startsWith(storagePath) ||
-                !file.exists()
-            ) return null;  
+            if (!canonicalPath.startsWith(storagePath) || !file.exists()) return null;  
 
             return canonicalPath;
         } 
