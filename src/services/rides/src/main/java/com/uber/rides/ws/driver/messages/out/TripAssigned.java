@@ -25,6 +25,7 @@ public class TripAssigned implements OutboundMessage {
     public TripAssigned(Trip trip, DirectionsResult directions) {
         this.trip = mapper.map(trip, TripDTO.class);
         this.directions = directions;
+        if (directions == null) return;
         this.driverDistance = Stream
             .of(directions.routes[0].legs)
             .mapToLong(leg -> leg.distance.inMeters)

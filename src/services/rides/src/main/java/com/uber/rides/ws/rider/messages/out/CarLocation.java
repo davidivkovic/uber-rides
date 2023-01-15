@@ -19,6 +19,7 @@ public class CarLocation implements OutboundMessage  {
     public double driverDuration;
     public double driverDistance;
     public double heading;
+    public Long driverId;
 
     @Override
     public String messageType() { return "CAR_LOCATION"; }

@@ -98,6 +98,7 @@ public class User implements UserDetails {
     @ManyToMany(mappedBy = "riders") List<Trip> tripsAsRider;
 
     @Transient Trip currentTrip;
+    @Transient @Builder.Default List<Trip> scheduledTrips = new ArrayList<>();
 
     public void addPaymentMethod(PaymentMethod method) {
         paymentMethods.add(method);
