@@ -11,7 +11,7 @@ import { computed } from '@app/utils'
   template: `
     <div class="flex space-x-3 items-end" [class]="{'justify-end': isMine()}">
       <img *ngIf="!isMine()"
-        [src]="message.sender.profilePicture"
+        [src]="imageUrl()"
         class="w-10 h-10 rounded-full bg-gray-50 object-cover"
       />
       <div
@@ -29,9 +29,9 @@ export class Message {
   baseUrl = baseUrl
 
   setClass() {
-    if(this.isMine()) {
+    if (this.isMine()) {
       return 'bg-black text-white justify-end rounded-br-none'
-    } 
+    }
     return 'bg-[#eeeeee] text-black rounded-bl-none'
 
   }
@@ -39,5 +39,15 @@ export class Message {
   isMine() {
     return this.message.sender.id === userStore.user.id
   }
+
+  imageUrl = computed(
+    () => this.message?.sender?.profilePicture,
+    () => {
+      const profilePic = this.message?.sender?.profilePicture
+      if (!profilePic) return 'defult_pfp.png'
+      if (profilePic.startsWith('http')) return profilePic
+      return scheme + baseUrl + '/users/pictures/' + profilePic
+    }
+  )
 
 }

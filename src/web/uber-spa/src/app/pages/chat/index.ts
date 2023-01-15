@@ -13,7 +13,7 @@ import { chatStore, userStore } from '@app/stores'
       <div 
         [style.height]="window.shellHeight() - 50 + 'px'"
         [ngClass]="{
-          'w-[1000px]': userStore.isAdmin,
+          'w-[1060px]': userStore.isAdmin,
           'w-[800px]': !userStore.isAdmin
         }"
         class="mx-auto bg-white rounded-lg my-auto flex"
@@ -91,11 +91,13 @@ export default class Chat {
   }
 
   async ngOnInit() {
-    if (!userStore.isAdmin) { 
+    if (!userStore.isAdmin) {
       await chatStore.setCurrentConversation()
       if (!chatStore.currentConversation) {
         window.router.navigate(['/live-support'])
       }
     }
+    chatStore.clearNotifications()
   }
+
 }
