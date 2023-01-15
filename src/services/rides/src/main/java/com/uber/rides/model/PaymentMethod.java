@@ -53,6 +53,7 @@ public class PaymentMethod {
     @Id @GeneratedValue Long id;
     String token;
     Type type;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
     User user;
@@ -118,7 +119,7 @@ public class PaymentMethod {
         gateway.paymentMethod().delete(token);
     }
 
-    public Payment authorize(double amount, String currency) {
+    public Payment authorize(double amount, String currency, User driver) {
         var request = new TransactionRequest()
             .paymentMethodToken(this.token)
             .currencyIsoCode(currency)
@@ -129,9 +130,14 @@ public class PaymentMethod {
 
         return Payment.builder()
             .user(user)
+            .userId(userId)
+            .driver(driver)
+            .driverId(driver.getId())
             .amount(amount)
             .currency(currency)
             .transactionId(result.getTarget().getId())
+            .captured(false)
+            .captureUrl("")
             .build();
     }
 }

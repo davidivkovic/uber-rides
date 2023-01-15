@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
+import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
@@ -25,8 +26,7 @@ import static com.uber.rides.util.Utils.gateway;
 @AllArgsConstructor
 public class Payment {
 
-    @Id
-    String id;
+    @Id @GeneratedValue Long id;
 
     String captureUrl;
     boolean captured;
@@ -34,14 +34,17 @@ public class Payment {
     double amount;
     String currency;
 
-    // nepotrebno
-    @ManyToOne(fetch = FetchType.LAZY) PaymentMethod method;
-
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
     User user;
     @Column(name = "user_id", insertable = false, updatable = false)
     Long userId;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "driver_id")
+    User driver;
+    @Column(name = "driver_id", insertable = false, updatable = false)
+    Long driverId;
 
     String transactionId;
 
