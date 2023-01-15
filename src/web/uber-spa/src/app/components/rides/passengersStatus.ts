@@ -1,11 +1,12 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core'
 import { NgIf, NgFor, NgClass } from '@angular/common'
 import { CloseButton } from '../ui/base/closeButton'
+import { PFP } from '@app/utils'
 
 @Component({
   standalone: true,
   selector: 'PassengersStatus',
-  imports: [NgIf, NgFor, CloseButton, NgClass],
+  imports: [NgIf, NgFor, CloseButton, NgClass, PFP],
   template: `
     <div *ngIf="passengers?.length">
       <h3 class="mb-0.5 tracking-wide">Passengers</h3>
@@ -14,7 +15,7 @@ import { CloseButton } from '../ui/base/closeButton'
         class="flex items-center space-x-3 py-1"
         [ngClass]="{ 'pr-2' : !canRemove }"
       >
-        <img [src]="passenger.profilePicture" class="w-7 h-7 rounded-full object-cover"/>
+        <img [src]="passenger.profilePicture | PFP" class="w-7 h-7 rounded-full object-cover"/>
         <h3 class="flex-1 leading-4 text-[15px] tracking-wide mt-0.5">{{ passenger.firstName}} {{ passenger.lastName }}</h3>
         <svg *ngIf="!passenger.accepted && !passenger.declined" class="animate-spin ml-auto mr-3 h-4 w-4 text-black" fill="none" viewBox="0 0 24 24">
           <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>

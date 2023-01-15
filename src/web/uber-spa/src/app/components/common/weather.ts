@@ -16,7 +16,7 @@ import { subscribe } from '@app/api/google-maps'
     >
       <img 
         [src]="'https://openweathermap.org/img/wn/' + currentWeather.weather[0].icon + '.png'"
-        class="h-8 w-8 object-cover pointer-events-none"
+        class="h-7 w-7 object-cover pointer-events-none"
         />
         <span class="pointer-events-none">{{ currentWeather.main.temp | number : '1.0-0' }} <span>°</span> </span>
       </div>

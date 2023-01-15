@@ -35,8 +35,8 @@ const addCard = async (data: {
   const response = await fetch(basePath + '/methods/card', { method: 'POST', body: JSON.stringify(data) })
   if (!response.ok) throw new Error(await response.text())
 }
- 
-const pay = async (data: {nonce: string, amount: number, email: string}) => {
+
+const pay = async (data: { nonce: string, amount: number, email: string }) => {
   const response = await fetch(
     basePath + '/pay',
     {
@@ -73,6 +73,15 @@ const getDefault = async () => {
   return await response.json()
 }
 
+const analytics = async (userId: number | any, from: any, to: any) => {
+  const response = await fetch(
+    basePath + '/analytics?' + new URLSearchParams({ userId, from, to }).toString(),
+    { method: 'GET' }
+  )
+  if (response.ok) return await response.json()
+  return []
+}
+
 export default {
   generatePaypalToken,
   getMethods,
@@ -81,5 +90,6 @@ export default {
   removePaymentMethod,
   pay,
   changeDefault,
-  getDefault
+  getDefault,
+  analytics
 }
