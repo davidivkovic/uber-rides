@@ -24,7 +24,7 @@ import auth from '@app/api/auth'
           required
           name="email"
           type="text"
-          placeholder="Enter email"
+          placeholder="Enter your email address"
           class=""
         />
         <input
@@ -33,7 +33,7 @@ import auth from '@app/api/auth'
           required
           type="password"
           name="password"
-          placeholder="Enter password"
+          placeholder="Enter your password"
           class=""
         />
         <p class="text-red-600 text-center text-sm">{{ error }}</p>
@@ -59,7 +59,7 @@ export default class Index {
   error: string = ''
   userStore = userStore
 
-  constructor(private router: Router) {}
+  constructor(private router: Router) { }
 
   login = async (form: NgForm) => {
     this.error = ''

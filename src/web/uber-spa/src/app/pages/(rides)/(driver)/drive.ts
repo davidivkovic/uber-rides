@@ -31,10 +31,10 @@ import trips from '@app/api/trips'
         >
         </PassengersStatus>
       </div>
-      <div *ngIf="ridesStore.data?.trip" class="mt-1">
+      <div *ngIf="ridesStore.data?.trip" class="-mt-0.5">
         <h1 class="text-xl leading-[44px] transition">Head to the next stop</h1>
         <p class="text-zinc-500 text-[15px] -mt-2.5">The ride will finish once you arrive at the destination</p>
-        <div>
+        <div class="mt-2">
           <h3 class="text-xl leading-5">{{ formatDistance(ridesStore.data?.pickup?.driverDistance) }}</h3>
           <p class="text-[15px] text-zinc-700">approx. {{ formatDuration(ridesStore.data?.pickup?.driverDuration) }}</p>
         </div>
