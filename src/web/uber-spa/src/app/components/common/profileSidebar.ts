@@ -43,9 +43,12 @@ export default class ProfileSidebar {
       ? [{
         name: 'Payment methods',
         link: 'payment'
-      }]
-      : []
-    )
+      }] : []
+    ),
+    {
+      name: userStore.isRider ? 'Spending' : 'Earnings',
+      link: 'spending'
+    }
   ]
 
   trackByName = (item: any) => item.name;

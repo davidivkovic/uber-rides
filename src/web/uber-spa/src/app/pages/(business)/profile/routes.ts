@@ -14,9 +14,12 @@ const routes: Routes = [
       },
       {
         path: 'password/change', loadComponent: () => import('./changePassword')
-      }, 
+      },
       {
         path: 'payment', loadComponent: () => import('./payment')
+      },
+      {
+        path: 'spending', loadComponent: () => import('./spending')
       }
     ]
   }

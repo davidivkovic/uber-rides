@@ -2,6 +2,7 @@ import { Component } from '@angular/core'
 import { RouterModule } from '@angular/router'
 import { NgIf } from '@angular/common'
 import { userStore } from '@app/stores/userStore'
+import { chatStore, ridesStore } from '@app/stores'
 
 @Component({
   selector: 'Header',
@@ -20,11 +21,16 @@ import { userStore } from '@app/stores/userStore'
           </a>
           <div>
             <button routerLink="/" class="primary rounded-3xl px-3 py-2 text-white">Home</button>
-            <button *ngIf="!userStore.isAdmin"
+            <button *ngIf="userStore.isAuthenticated && !userStore.isAdmin"
               routerLink="/live-support"
-              class="primary rounded-3xl px-3 py-2"
+              class="primary rounded-3xl px-3 py-2 relative"
             >
-              Live support
+              <span>Live support</span>
+              <span 
+                *ngIf="chatStore.notifications > 0" 
+                class="absolute top-0.5 right-0 bg-red-500 rounded-full w-2 h-2"
+              >
+              </span>
             </button>
           </div>
         </div>
@@ -36,6 +42,17 @@ import { userStore } from '@app/stores/userStore'
               class="primary rounded-3xl px-3 py-2 text-white"
             >
               Profile
+            </button>
+            <button *ngIf="userStore.isAdmin"
+              routerLink="/dashboard/settings"
+              class="primary rounded-3xl px-3 py-2 relative"
+            >
+              <span>Dashboard</span>
+              <span 
+                *ngIf="chatStore.notifications > 0" 
+                class="absolute top-0.5 right-0 bg-red-500 rounded-full w-2 h-2"
+              >
+              </span>
             </button>
             <button (click)="logout()" class="primary rounded-3xl px-3 py-2">Sign out</button>
           </div>
@@ -49,10 +66,15 @@ import { userStore } from '@app/stores/userStore'
   `
 })
 export default class Header {
-  userStore = userStore
 
-  logout = () => {
+  userStore = userStore
+  chatStore = chatStore
+
+  logout = async () => {
+    await window.router.navigate(['/auth/login'])
     userStore.removeUser()
-    location.href = '/'
+    ridesStore.setState(store => store.data = {})
+    location.reload()
   }
+
 }
