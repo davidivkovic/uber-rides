@@ -3,6 +3,7 @@ import { NgIf } from '@angular/common'
 import { Router } from '@angular/router'
 import * as googleOneTap from 'google-one-tap'
 import auth from '@app/api/auth'
+import { ridesStore } from '@app/stores'
 
 declare const google: typeof googleOneTap
 
@@ -16,17 +17,17 @@ declare const google: typeof googleOneTap
         <span class="text-xs bg-white px-2 text-gray-400 "> or </span>
       </div>
       <div class="space-y-2 mt-6">
-        <button 
-          (click)="loginWithGoogle()"
-          class="secondary relative w-full flex items-center justify-center space-x-2 h-[51px]"
-        >
-          <img
-            alt="Google icon"
-            class="h-4 w-4"
-            src="https://cdn-icons-png.flaticon.com/512/2991/2991148.png"
-          />
-          <p class="">Continue with Google</p>
-        </button>
+        <div class="w-full flex items-center justify-center overflow-clip cursor-pointer relative group">
+          <div class="absolute scale-[2] cursor-pointer" id="google-login-button-2"></div>
+          <button class="secondary relative w-full flex items-center justify-center space-x-2 h-[51px] pointer-events-none group-hover:bg-zinc-200">
+            <img
+              alt="Google icon"
+              class="h-4 w-4"
+              src="https://cdn-icons-png.flaticon.com/512/2991/2991148.png"
+            />
+            <p class="">Continue with Google</p>
+          </button>
+        </div>
         <button
           (click)="loginWithFacebook()"
           class="secondary w-full flex items-center justify-center space-x-2 h-[51px]"
@@ -92,6 +93,10 @@ export default class SocialMedia {
       client_id: '152138799418-rdah02vercon3q3p9ubkh4jqa5vflpcr.apps.googleusercontent.com',
       callback: this.handleCredentialResponse
     })
+    google.accounts.id.renderButton(
+      document.getElementById('google-login-button-2'),
+      { theme: 'outline', size: 'large' }
+    )
   }
 
   fbInit = () => {
