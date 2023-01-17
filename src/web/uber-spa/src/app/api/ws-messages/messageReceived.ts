@@ -6,11 +6,11 @@ export default async (message: {
   conversationId: string
   message: any
 }) => {
-  if(message.message.sender) {
-    message.message.sender.profilePicture = 
-    scheme + 
-    baseUrl + 
-    message.message.sender.profilePicture
+  if (message.message.sender && !message.message.sender.profilePicture.startsWith('http')) {
+    message.message.sender.profilePicture =
+      scheme +
+      baseUrl +
+      message.message.sender.profilePicture
   }
   await chatStore.onMessage(message)
   window.detector.detectChanges()
