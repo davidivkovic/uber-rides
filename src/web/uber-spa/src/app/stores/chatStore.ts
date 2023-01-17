@@ -5,6 +5,9 @@ import { OutboundMessages } from '@app/api/ws-messages/messages'
 import { userStore } from './userStore'
 
 class ChatStore {
+
+  @state notifications = 0
+
   @state
   currentConversation: any
 
@@ -31,6 +34,11 @@ class ChatStore {
   }
 
   @action
+  clearNotifications() {
+    this.notifications = 0
+  }
+
+  @action
   addConversation(conversation: any) {
     this.allConversations.push(conversation)
     // this.setCurrentConversation(this.currentConversation.id)
@@ -39,9 +47,8 @@ class ChatStore {
   @action
   addMessageToConversation(id: string, message: any) {
     if (userStore.isAdmin) {
-      console.log(this.allConversations?.find(convo => convo.id == id));
       this.allConversations?.find(convo => convo.id == id).messages.push(message)
-      if(this.currentConversation.id == id) {
+      if (this.currentConversation.id == id) {
         this.addMessageToCurrentConversation(message)
       }
     } else {
@@ -73,6 +80,11 @@ class ChatStore {
   closeConversation() {
     this.currentConversation.closed = true
     this.currentConversation.closedAt = new Date()
+    if (this.allConversations) {
+      const conversation = this.allConversations.find(convo => convo.id == this.currentConversation.id)
+      if (conversation) conversation.closed = true
+    }
+    window.detector.detectChanges()
   }
 
   fetchAllConversations = async () => {
@@ -84,7 +96,7 @@ class ChatStore {
     let conversation: any
     if (id !== null) {
       conversation = await getChat(id)
-    } else if(!userStore.isAdmin) {
+    } else if (!userStore.isAdmin) {
       try {
         conversation = await getClientChat()
       } catch (err) {
@@ -108,7 +120,6 @@ class ChatStore {
     }
     if (closeConversation) {
       this.closeConversation()
-      window.detector.detectChanges()
       return
     }
     this.addMessageToConversation(this.currentConversation?.id, newMessage)
@@ -116,7 +127,7 @@ class ChatStore {
   }
 
   onMessage = async ({ message, conversationId, conversationEnd }) => {
-    if(conversationId == null) {
+    if (conversationId == null) {
       this.setFailedConnection(true)
       return window.router.navigate(['/live-support'])
     }
@@ -127,15 +138,14 @@ class ChatStore {
       return this.closeConversation()
     }
 
+    this.notifications++
+
     if (userStore.isAdmin) {
-      console.log(conversationId);
       const existing = this.allConversations.slice().filter(convo => convo.id === conversationId)
-      console.log(existing);
       if (existing.length !== 0) {
         this.addMessageToConversation(conversationId, { ...message })
       } else {
         const newChat = await getChat(conversationId)
-        console.log(newChat);
         this.addConversation(newChat)
       }
     } else {
