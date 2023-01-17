@@ -51,10 +51,10 @@ dayjs.extend(relativeTime)
                   <tr *ngFor="let request of updateRequests">
                     <td class="pl-6"><img [src]="request.profilePicture" class="rounded-full object-cover h-9 w-9" /></td>
                     <td class="whitespace-nowrap pr-3 text-sm text-gray-900 sm:pl-6">{{ request.firstName }}</td>
-                    <td class="whitespace-nowrap px-3 text-sm text-gray-500">{{ request.lastName }}</td>
-                    <td class="whitespace-nowrap px-3 text-sm text-gray-500">{{ request.phoneNumber }}</td>
-                    <td class="whitespace-nowrap px-3 text-sm text-gray-500">{{ request.city }}</td>
-                    <td class="whitespace-nowrap px-3 text-sm text-gray-500">{{ dayjs(request.requestedAt).fromNow() }}</td>
+                    <td class="whitespace-nowrap px-3 text-sm text-gray-900">{{ request.lastName }}</td>
+                    <td class="whitespace-nowrap px-3 text-sm text-gray-900">{{ request.phoneNumber }}</td>
+                    <td class="whitespace-nowrap px-3 text-sm text-gray-900">{{ request.city }}</td>
+                    <td class="whitespace-nowrap px-3 text-sm text-gray-900">{{ dayjs(request.requestedAt).fromNow() }}</td>
                     <td class="relative whitespace-nowrap py-3 pl-3 pr-4 text-right text-sm sm:pr-6">
                       <button 
                         (click)="resolveUpdateRequest(request.id, 'REJECT')"

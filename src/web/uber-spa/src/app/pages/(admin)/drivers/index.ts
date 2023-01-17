@@ -1,19 +1,19 @@
-import { dialogStore } from '@app/stores';
-import { NgFor } from '@angular/common'
+import { NgClass, NgFor } from '@angular/common'
 import { Component } from '@angular/core'
 import { FormsModule } from '@angular/forms'
-import users from '@app/api/users'
+import { dialogStore } from '@app/stores'
 import Dropdown from '@app/components/ui/base/dropdown'
+import users from '@app/api/users'
 
 @Component({
   standalone: true,
-  imports: [FormsModule, NgFor, Dropdown],
+  imports: [FormsModule, NgFor, NgClass, Dropdown],
   template: `
     <div class="px-1">
       <div class="sm:flex sm:items-center">
         <div class="sm:flex-auto">
-          <h1 class="text-3xl text-gray-900">Riders</h1>
-          <p class="mt-1 text-gray-500">Search for riders, view their rides or block them</p>
+          <h1 class="text-3xl text-gray-900">Drivers</h1>
+          <p class="mt-1 text-gray-500">Search for drivers, view their rides or block them</p>
         </div>
       </div>
       <input 
@@ -23,7 +23,7 @@ import Dropdown from '@app/components/ui/base/dropdown'
         spellcheck="false"
         class="w-64 mt-3"
         [(ngModel)]="query" 
-        (input)="getRiders()"
+        (input)="getDrivers()"
       />
       <div class="mt-3 flex flex-col">
         <div class="-my-2">
@@ -49,19 +49,28 @@ import Dropdown from '@app/components/ui/base/dropdown'
                   <th scope="col" class="px-3 py-3 text-left text-sm tracking-wide">
                     <h3>City</h3>
                   </th>
+                  <th scope="col" class="px-3 py-3 text-left text-sm tracking-wide">
+                    <h3>Online</h3>
+                  </th>
                   <th scope="col" class="py-3 pr-10 text-right text-sm tracking-wide">
                     <h3>Actions</h3>
                   </th>
                 </tr>
               </thead>
               <tbody class="divide-y divide-gray-200">
-                <tr *ngFor="let rider of riders; index as index">
-                  <td class="pl-6"><img [src]="rider.profilePicture" class="rounded-full object-cover h-9 w-9" /></td>
-                  <td class="whitespace-nowrap pr-3 text-sm sm:pl-6">{{ rider.firstName }}</td>
-                  <td class="whitespace-nowrap px-3 text-sm">{{ rider.lastName }}</td>
-                  <td class="whitespace-nowrap px-3 text-sm">{{ rider.email }}</td>
-                  <td class="whitespace-nowrap px-3 text-sm">{{ rider.phoneNumber }}</td>
-                  <td class="whitespace-nowrap px-3 text-sm">{{ rider.city }}</td>
+                <tr *ngFor="let driver of drivers; index as index">
+                  <td class="pl-6"><img [src]="driver.profilePicture" class="rounded-full object-cover h-9 w-9" /></td>
+                  <td class="whitespace-nowrap pr-3 text-sm sm:pl-6">{{ driver.firstName }}</td>
+                  <td class="whitespace-nowrap px-3 text-sm">{{ driver.lastName }}</td>
+                  <td class="whitespace-nowrap px-3 text-sm">{{ driver.email }}</td>
+                  <td class="whitespace-nowrap px-3 text-sm">{{ driver.phoneNumber }}</td>
+                  <td class="whitespace-nowrap px-3 text-sm">{{ driver.city }}</td>
+                  <td class="whitespace-nowrap text-sm">
+                    <div 
+                      class="w-2 h-2 mx-auto rounded-full"
+                      [ngClass]="{ 'bg-green-500': driver.online, 'bg-red-500': !driver.online }"
+                    ></div>
+                  </td>
                   <td class="relative whitespace-nowrap py-3 pl-3 pr-4 text-right text-sm sm:pr-6">
                     <Dropdown [items]="options[index]"></Dropdown>
                   </td>
@@ -77,11 +86,12 @@ import Dropdown from '@app/components/ui/base/dropdown'
 export default class Riders {
 
   query = ''
-  riders = []
+  criteria = 'ALL'
+  drivers = []
   options = []
 
   constructor() {
-    this.getRiders()
+    this.getDrivers()
   }
 
   getOptions(user: any) {
@@ -92,7 +102,7 @@ export default class Riders {
           dialogStore.openDialog(
             await import('../components/blockDialog').then(m => m.default),
             { user },
-            () => { this.getRiders() }
+            () => { this.getDrivers() }
           )
         },
         icon: `
@@ -114,9 +124,9 @@ export default class Riders {
     ]
   }
 
-  async getRiders() {
-    this.riders = await users.getRiders(0, this.query)
-    this.options = this.riders.map(rider => this.getOptions(rider))
+  async getDrivers() {
+    this.drivers = await users.getDrivers(0, this.criteria as any, this.query)
+    this.options = this.drivers.map(driver => this.getOptions(driver))
   }
 
 }

@@ -1,4 +1,4 @@
-import { NgFor, NgStyle } from '@angular/common'
+import { NgFor, NgIf, NgStyle } from '@angular/common'
 import { Component } from '@angular/core'
 import { ActivatedRoute } from '@angular/router'
 import { FormsModule } from '@angular/forms'
@@ -7,7 +7,7 @@ import TripDetails from '@app/components/common/tripDetails'
 
 @Component({
   standalone: true,
-  imports: [FormsModule, NgFor, TripDetails, NgStyle],
+  imports: [FormsModule, NgIf, NgFor, TripDetails, NgStyle],
   template: `
     <div class="max-w-[800px]">
       <div class="flex items-center justify-between">
@@ -27,6 +27,14 @@ import TripDetails from '@app/components/common/tripDetails'
         [style.height]="window.shellHeight() - 108 + 'px'"
         class="mt-6 overflow-auto no-scrollbar overscroll-contain pb-16"
       >
+        <div *ngIf="currentTrip" class="mb-4">
+          <TripDetails 
+            [trip]="currentTrip" 
+            [canSaveRoute]="false"
+            [canRideAgain]="false"
+          >
+          </TripDetails>
+        </div>
         <div *ngFor="let trip of trips; trackBy: ngForIdentity;" class="mb-4">
           <TripDetails 
             [trip]="trip" 
@@ -45,6 +53,7 @@ export default class Rides {
 
   order = 'START_DESC'
   trips = []
+  currentTrip: any
   savedRoutes = {}
   userId: any
   userFirstName: any
