@@ -4,13 +4,13 @@ import { Dialog } from '@app/components/ui/dialog'
 import { Component } from '@angular/core'
 
 export default (message: {}) => {
+  removeAllElements()
+  ridesStore.setMapElements()
   dialogStore.openDialog(TripEndedDialog, {}, () => {
-    removeAllElements()
     ridesStore.setState(store => {
       store.data = {}
       store.locationPicked = null
       store.favoriteRoutePicked = null
-      store.setMapElements()
     })
     if (userStore.user.role === 'ROLE_DRIVER') {
       window.router.navigate(['/roam'])
