@@ -7,7 +7,8 @@ type Location = {
   secondaryAddress: string,
   longitude: number,
   latitude: number,
-  order?: number
+  order?: number,
+  formattedAddress: string
 }
 
 class RidesStore {
