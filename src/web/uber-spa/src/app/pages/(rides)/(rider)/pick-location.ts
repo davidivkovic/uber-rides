@@ -34,7 +34,8 @@ export default class PickLocation {
     address: string,
     secondaryAddress: string,
     longitude: number,
-    latitude: number
+    latitude: number,
+    formattedAddress: string
   } = {} as any
   title: string
   confirmationText: string
@@ -109,6 +110,7 @@ export default class PickLocation {
         this.location.placeId = result.place_id
         this.location.longitude = result.geometry.location.lng()
         this.location.latitude = result.geometry.location.lat()
+        this.location.formattedAddress = result.formatted_address
       }
       catch {
         this.location.address = previousAddress

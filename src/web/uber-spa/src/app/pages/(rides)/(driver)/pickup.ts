@@ -6,9 +6,13 @@ import PassengersStatus from '@app/components/rides/passengersStatus'
 import RouteDetails from '@app/components/rides/routeDetails'
 import StatusBar from './components/statusBar'
 import Navigation from './components/navigation'
-import { map, polylines, refreshAllElements, subscribe } from '@app/api/google-maps'
+import { map, polylines, refreshAllElements, removeAllElements, subscribe } from '@app/api/google-maps'
 import trips from '@app/api/trips'
 import { Router } from '@angular/router'
+import { dialogStore, userStore } from '@app/stores'
+import CancelTripDialog from './components/cancelTripDialog'
+import { send } from '@app/api/ws'
+import { OutboundMessages } from '@app/api/ws-messages/messages'
 
 @Component({
   standalone: true,
@@ -55,7 +59,7 @@ import { Router } from '@angular/router'
         >
           Start Ride
         </button>
-        <button class="secondary">Cancel Ride</button>
+        <button (click)="cancelTrip()" class="secondary">Cancel Ride</button>
       </div>
     </div>
   `
@@ -76,6 +80,19 @@ export default class Pickup {
     catch (e) {
       console.error(e.message)
     }
+  }
+
+  cancelTrip() {
+    dialogStore.openDialog(CancelTripDialog, {}, result => {
+      if (result === 'ok') {
+        ridesStore.setState(store => store.data = {})
+        removeAllElements()
+        this.router.navigate(['/roam'])
+        send(OutboundMessages.ONLINE, { isOnline: false })
+        userStore.setIsOnline(false)
+        window.detector.detectChanges()
+      }
+    })
   }
 
   formatAddress(address: string) {

@@ -1,4 +1,12 @@
 import { Routes } from '@angular/router'
+import { userStore, ridesStore } from '@app/stores'
+
+const isAuthenticated = () => {
+  if (userStore.isAuthenticated) return true
+  window.router.navigate(['/404'])
+  window.detector.detectChanges()
+  return false
+}
 
 const routes: Routes = [
   {
@@ -9,7 +17,21 @@ const routes: Routes = [
       {
         path: '',
         pathMatch: 'full',
-        redirectTo: 'looking'
+        canActivate: [() => {
+          if (ridesStore.data.pickup || ridesStore.data.tripInProgress) {
+            window.router.navigate(['/passengers'])
+          }
+          else if (location.pathname === '/looking/choose-ride') {
+            // ridesStore.setState(store => store.data = {})
+            window.router.navigate(['/looking'])
+          }
+          else if (ridesStore.data.directions && ridesStore.data.choosingRide) {
+            window.router.navigate(['/looking/choose-ride'])
+          }
+          else window.router.navigate(['/looking'])
+          return true
+        }],
+        loadChildren: () => []
       },
       {
         path: 'looking',
@@ -22,6 +44,7 @@ const routes: Routes = [
           {
             path: 'favorite-routes',
             data: { reuseRoute: true },
+            canActivate: [isAuthenticated],
             loadComponent: () => import('./favorite-routes')
           },
           {
@@ -37,6 +60,7 @@ const routes: Routes = [
           {
             path: 'add-passengers',
             data: { reuseRoute: true },
+            canActivate: [isAuthenticated],
             loadComponent: () => import('./add-passengers')
           },
           {
@@ -49,11 +73,8 @@ const routes: Routes = [
       {
         path: 'passengers',
         data: { reuseRoute: true },
+        canActivate: [isAuthenticated],
         loadComponent: () => import('./passengers')
-      },
-      {
-        path: 'riding',
-        loadComponent: () => import('./riding') // Probably not needed
       }
     ]
   }

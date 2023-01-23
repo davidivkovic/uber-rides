@@ -3,7 +3,7 @@ import { Location, NgFor, NgIf, NgClass, CurrencyPipe } from '@angular/common'
 import { Router } from '@angular/router'
 import { subscribe, watch } from 'usm-mobx'
 import { ridesStore } from '@app/stores/ridesStore'
-import { dialogStore, notificationStore } from '@app/stores'
+import { dialogStore, notificationStore, userStore } from '@app/stores'
 import trips from '@app/api/trips'
 import { OutboundMessages } from '@app/api/ws-messages/messages'
 import { send } from '@app/api/ws'
@@ -82,7 +82,7 @@ import { PayDialog } from '@app/pages/(business)/profile/components/choosePaymen
       >
       </PassengersStatus>
       <div 
-        *ngIf="!lookingForRide" 
+        *ngIf="!lookingForRide && userStore.isAuthenticated" 
         class="h-10 w-full mt-auto" 
         (click)="changePaymentMethod()"
       >
@@ -104,7 +104,7 @@ import { PayDialog } from '@app/pages/(business)/profile/components/choosePaymen
         </div>
       </div>
       <button 
-        *ngIf="!lookingForRide"
+        *ngIf="!lookingForRide && userStore.isAuthenticated"
         (click)="router.navigate(['looking/add-passengers'])" 
         class="secondary mx-4 !py-2.5 !text-base mt-4"
       >
@@ -115,6 +115,7 @@ import { PayDialog } from '@app/pages/(business)/profile/components/choosePaymen
         [disabled]="!passengersReady"
         (click)="pollOrder()"
         class="primary mx-4 !text-base mt-1"
+        [ngClass]="{ 'mt-auto': !userStore.isAuthenticated }"
       >
         {{ passengersReady ? 'Request an ' + this.selectedCarType?.name : 'Watiting for passengers...' }}
       </button>
@@ -170,6 +171,7 @@ export default class ChooseRide {
 
   selectedCarType: any = {}
   ridesStore = ridesStore
+  userStore = userStore
   passengersReady = true
   anyPassengerReady = false
   lookingForRide = false
@@ -184,7 +186,11 @@ export default class ChooseRide {
     if (!ridesStore.data?.directions) {
       router.navigate(['/looking'])
     }
-    ridesStore.setState(store => store.pages.chooseRidesPage = this)
+    ridesStore.setState(store => {
+      store.data.looking = false
+      store.data.choosingRide = true
+      store.pages.chooseRidesPage = this
+    })
     subscribe(ridesStore, () => detector?.detectChanges())
     watch(
       ridesStore,
@@ -197,14 +203,14 @@ export default class ChooseRide {
       (curr, old) => {
         if (!curr) return
         setTimeout(() => this.uberFoundText = 'Processing payment...', 1500)
-        setTimeout(() => this.router.navigate(['/passengers']), 3000)
+        // setTimeout(() => this.router.navigate(['/passengers']), 3000)
       }
     )
     this.selectFirstCarType()
   }
 
   async ngOnInit() {
-    this.fetchDefaultMethod()
+    this.userStore.isAuthenticated && this.fetchDefaultMethod()
   }
 
   async fetchDefaultMethod() {
@@ -238,6 +244,10 @@ export default class ChooseRide {
   }
 
   async pollOrder() {
+    if (!this.userStore.isAuthenticated) {
+      this.router.navigate(['/auth/login'])
+      return
+    }
     this.lookingForRide = true
     this.lookingDuration = 1
     if (!ridesStore.data.rideChosen) {
@@ -285,6 +295,10 @@ export default class ChooseRide {
   }
 
   async onActivated(navigatedFrom: string) {
+    ridesStore.setState(store => {
+      store.data.looking = false
+      store.data.choosingRide = true
+    })
     if (!this.selectedCarType?.carType) this.selectFirstCarType()
     if (navigatedFrom === 'add-passengers') {
       try {

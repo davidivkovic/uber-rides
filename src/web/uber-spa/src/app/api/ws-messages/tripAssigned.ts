@@ -1,26 +1,73 @@
-import { createInfoWindow, createMarker, createPolyline } from '@app/api/google-maps'
-import { userStore } from '@app/stores'
+import dayjs from 'dayjs'
+import utc from 'dayjs/plugin/utc'
+
+import { createInfoWindow, createMarker, createPolyline, removeAllElements } from '@app/api/google-maps'
+import { notificationStore, userStore } from '@app/stores'
 import { ridesStore } from '@app/stores/ridesStore'
 
+dayjs.extend(utc)
+
+const tripAssignedAudio = new Audio('/assets/sounds/trip_assigned.m4r')
+const tripNotificationAudio = new Audio('/assets/sounds/payment_success.mp4')
+
 export default async (message: { trip: any, directions: any, driverDuration: number, driverDistance: number } | any) => {
+  if (message.trip.scheduled) {
+    userStore.isDriver && tripNotificationAudio.play()
+    if (message.trip.status === 'PAID') {
+      removeAllElements()
+      ridesStore.setMapElements()
+      ridesStore.pages?.lookingPage?.cleanUp?.()
+      await window.router.navigate(['/'])
+      const scheduledAt = dayjs.utc(message.trip.scheduledAt)
+      if (userStore.isDriver) {
+        notificationStore.show(
+          'You have been assigned a scheduled ride for '
+          + (dayjs().isSame(scheduledAt, 'day') ? 'today' : 'tomorrow')
+          + ' at '
+          + scheduledAt.format('HH:mm')
+          + '.'
+        )
+      }
+      else {
+        ridesStore.setState(store => store.data = {})
+        notificationStore.show('ok at ' + scheduledAt.format('HH:mm'))// TODO: Replace with a dialog for rider
+      }
+      return
+    }
+    if (message.trip.status === 'SCHEDULED') {
+      notificationStore.show('The driver is finishing his current ride and will be picking you up shortly.')
+      return
+    }
+    else if (message.trip.status === 'AWAITING_PICKUP') {
+      notificationStore.show('The driver is now on his way to pick you up.')
+    } // All good, the driver is on his way
+  }
+
   const points = google.maps.geometry.encoding.decodePath(message.directions.routes[0].overviewPolyline.encodedPath)
   const desintaion = points[points.length - 1]
   const pickupMarker = userStore.user.role === 'ROLE_DRIVER'
     ? createMarker(desintaion.lat(), desintaion.lng(), true, 'pickup')
     : null
   const pickupPolyline = createPolyline(points, '#000', 'pickup')
+
   message.distance = message.directions.routes[0].legs.reduce((a: any, b: any) => a + b.distance.inMeters, 0)
   message.duration = message.directions.routes[0].legs.reduce((a: any, b: any) => a + b.duration.inSeconds, 0)
   message.trip.riders.forEach((passenger: any) => passenger.accepted = true)
+
   ridesStore.setState(store => {
     store.data.trip = message.trip
     store.data.pickup = message
     store.mapElements.pickupPolyline = pickupPolyline
     if (pickupMarker !== null) store.mapElements.pickupMarkers = [pickupMarker]
   })
-  if (userStore.user.role === 'ROLE_DRIVER') {
+
+  if (userStore.isDriver) {
+    tripAssignedAudio.play()
     await window.router.navigate(['/pickup'])
   }
+  else if (userStore.isRider) {
+    // if (message.trip.scheduled) tripAssignedAudio.play()
+    window.router.navigate(['/passengers'])
+  }
   window.detector.detectChanges()
-  new Audio('/assets/sounds/trip_assigned.m4r').play()
 }

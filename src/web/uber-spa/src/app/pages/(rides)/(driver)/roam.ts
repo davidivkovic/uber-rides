@@ -1,9 +1,10 @@
 import { Component } from '@angular/core'
 import { NgClass, NgFor, NgIf } from '@angular/common'
-import { userStore } from '@app/stores'
+import { dialogStore, userStore } from '@app/stores'
 import { OutboundMessages } from '@app/api/ws-messages/messages'
 import { send } from '@app/api/ws'
 import StatusBar from './components/statusBar'
+import CancelTripDialog from './components/cancelTripDialog'
 
 @Component({
   standalone: true,
@@ -27,7 +28,7 @@ import StatusBar from './components/statusBar'
             <div class="flex justify-center items-center gap-x-2">
               <h3 class="text-xl">You are offline</h3>
               <span class="flex h-2 w-2 relative mt-0.5 -mr-2">
-                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-orange-400 opacity-75"></span>
+                <!-- <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-orange-400 opacity-75"></span> -->
                 <span class="relative inline-flex rounded-full h-2 w-2 bg-orange-500"></span>
               </span>
             </div>
@@ -53,6 +54,10 @@ import StatusBar from './components/statusBar'
   `
 })
 export default class Roam {
+
+  constructor() {
+    // dialogStore.openDialog(CancelTripDialog, {}, () => { })
+  }
 
   userStore = userStore
 

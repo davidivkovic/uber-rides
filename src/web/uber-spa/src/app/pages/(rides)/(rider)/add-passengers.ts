@@ -34,7 +34,7 @@ import { OutboundMessages } from '@app/api/ws-messages/messages'
           />
           <ul 
             role="listbox"
-            class="w-full max-h-[400px] mt-2 bg-white border border-zinc-300 shadow-lg overflow-y-auto rounded-md" 
+            class="w-full max-h-[400px] z-50 mt-2 bg-white border border-zinc-300 shadow-lg overflow-y-auto rounded-md" 
             [ngClass]="inputFocused && users.length ? 'absolute' : 'hidden'"
           >
             <li 

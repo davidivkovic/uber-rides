@@ -1,12 +1,43 @@
 import { carMarkers, map, serializableState, serializeState } from '@app/api/google-maps'
 import { userStore, ridesStore } from '@app/stores'
 
+type Message = {
+  registration: string
+  type: string
+  latitude: number
+  longitude: number
+  driverDuration: number
+  driverDistance: number
+  heading: number
+  driverId: number
+}
+
 const blackCarThumbnail = 'https://i.imgur.com/CZ8ufVo.png'
 const whiteCarThumbnail = 'https://i.imgur.com/4eo1JxA.png'
 
+const carTypes = {
+  UBER_BLACK: 'Uber Black',
+  UBER_GREEN: 'Uber Green',
+  UBER_X: 'UberX',
+}
+
 const getMarkerDom = (id: string): HTMLImageElement => document.querySelector(`img[src*="id=${id}"]`)
 
-const findMarker = (id: string) => carMarkers.find(m => m.getTitle() === id)
+const markerTitle = (registration: string, type: string) => `${registration} (${carTypes[type]})`
+
+const findMarker = (title: string) => carMarkers.find(m => m.getTitle() === title)
+
+const centerOnMarker = (marker: google.maps.Marker) => {
+  map.panTo(marker.getPosition())
+  map.setZoom(17)
+  map.panBy(-180, 0)
+}
+
+const centerOnDriver = (driver: any) => {
+  map.panTo(findMarker(markerTitle(driver.car.registration, driver.car.type.carType)).getPosition())
+  map.setZoom(17)
+  map.panBy(-180, 0)
+}
 
 const rotateMarker = (id: string, heading: number) => {
   const markerDom = getMarkerDom(id)
@@ -15,15 +46,7 @@ const rotateMarker = (id: string, heading: number) => {
   }
 }
 
-export default (message: {
-  registration: string
-  type: string
-  latitude: number
-  longitude: number
-  driverDuration: number
-  driverDistance: number
-  heading: number
-}) => {
+export default (message: Message) => {
   if ((window as any)?.google?.maps === undefined) return
 
   const position = new google.maps.LatLng(message.latitude, message.longitude)
@@ -31,14 +54,14 @@ export default (message: {
   const isSelf =
     userStore.user?.car?.registration === message.registration ||
     ridesStore.data.trip?.car?.registration === message.registration
-  let marker = findMarker(message.registration)
+  let marker = findMarker(markerTitle(message.registration, message.type))
 
   if (carRemoved) {
     return marker && marker.setMap(null)
   }
   else if (!marker) {
     marker = new google.maps.Marker({
-      title: message.registration,
+      title: markerTitle(message.registration, message.type),
       position,
       map: map,
       visible: false,
@@ -55,6 +78,14 @@ export default (message: {
         marker.setOpacity(1)
       }, 500)
     })
+    userStore.isAdmin && marker.addListener('click', () => {
+      ridesStore.setState(store => {
+        if (map.getZoom() !== 17) store.data.previousZoom = map.getZoom()
+        store.data.followCarRegistration = message.registration
+        store.data.followDriverId = message.driverId
+      })
+      centerOnMarker(marker)
+    })
     marker.setVisible(true)
     carMarkers.push(marker)
   }
@@ -64,8 +95,8 @@ export default (message: {
     rotateMarker(message.registration, message.heading)
   }
 
-  if (isSelf) {
-    if (ridesStore.data.trip || ridesStore.data.pickup) {
+  if (isSelf || ridesStore.data.followCarRegistration === message.registration) {
+    if (ridesStore.mapElements.pickupPolyline) {
       let idx = 0
       let path = ridesStore.mapElements.pickupPolyline.getPath().getArray() as google.maps.LatLng[]
       for (let i = 0; i < path.length - 1; i++) {
@@ -107,4 +138,8 @@ export default (message: {
     map.panTo(position)
     map.panBy(-180, 0)
   }
+}
+
+export {
+  centerOnDriver
 }

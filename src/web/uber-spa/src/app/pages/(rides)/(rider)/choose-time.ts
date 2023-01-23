@@ -109,7 +109,7 @@ export default class ChooseTime {
     this.allowedTimes.length = 0
     const roundedTime = this.now.set('minutes', Math.floor(this.now.minute() / 5) * 5)
     for (let i = 0; i <= 30; i++) { /* 5h * 10min intervals */
-      const time = roundedTime.add(i * 10, 'minutes')
+      const time = roundedTime.add(i * 1, 'minutes')
       if (
         this.selectedDay === 'Today' && time.isSame(this.now, 'day') ||
         this.selectedDay === 'Tomorrow' && !time.isSame(this.now, 'day')

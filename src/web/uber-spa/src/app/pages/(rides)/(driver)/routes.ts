@@ -1,4 +1,5 @@
 import { Routes } from '@angular/router'
+import { ridesStore } from '@app/stores'
 
 const routes: Routes = [
   {
@@ -9,7 +10,13 @@ const routes: Routes = [
       {
         path: '',
         pathMatch: 'full',
-        redirectTo: 'roam'
+        canActivate: [() => {
+          if (ridesStore.data.tripInProgress) window.router.navigate(['/drive'])
+          else if (ridesStore.data.pickup) window.router.navigate(['/pickup'])
+          else window.router.navigate(['/roam'])
+          return true
+        }],
+        loadChildren: () => []
       },
       {
         path: 'roam',

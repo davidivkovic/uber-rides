@@ -2,9 +2,9 @@ import { Component } from '@angular/core'
 import { NgClass, NgFor, NgIf } from '@angular/common'
 import { ActivatedRoute, Router } from '@angular/router'
 import { FormsModule } from '@angular/forms'
-import { autocomplete, geocoder, icons, map, createMarker, createPolyline, createInfoWindow, removeAllElements, directions } from '@app/api/google-maps'
+import { autocomplete, geocoder, icons, map, createMarker, createPolyline, createInfoWindow, removeAllElements } from '@app/api/google-maps'
 import { computed, formatDistance, formatDuration, InnerHtml, swap } from '@app/utils'
-import { ridesStore } from '@app/stores/ridesStore'
+import { ridesStore, userStore } from '@app/stores'
 import dayjs from 'dayjs'
 import routes from '@app/api/routes'
 
@@ -22,11 +22,16 @@ type AutocompleteLocation = {
   template: `
     <div class="flex flex-col h-[700px] w-[400px] bg-white pointer-events-auto rounded-xl overflow-y-clip">
       <div class="p-4 pb-3.5">
-        <h1 class="text-4xl leading-[44px] transition">{{ cardTitles[focusedStopoverType()] }}</h1>
-        <div [ngClass]="{ 'mr-5' : stopoverInputs.length > 2 }">
+        <h1 
+          class="text-4xl leading-[44px] transition"
+          [ngClass]="{ 'mb-4': !userStore.isAuthenticated }"
+        >
+          {{ cardTitles[focusedStopoverType()] }}
+        </h1>
+        <div *ngIf="userStore.isAuthenticated" class="mt-3 mb-3.5" [ngClass]="{ 'mr-5' : stopoverInputs.length > 2 }">
           <button 
             (click)="router.navigate(['looking/favorite-routes'])"
-            class="secondary flex w-full justify-between space-x-2 items-center rounded-md px-3 py-2 mt-3 mb-3.5"
+            class="secondary flex w-full justify-between space-x-2 items-center rounded-md px-3 py-2"
           >
             <svg width="18" height="18" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
               <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
@@ -197,6 +202,8 @@ type AutocompleteLocation = {
 })
 export default class Looking {
 
+  userStore = userStore
+
   makeEmptyStopover = () => ({ placeId: '', address: '', secondaryAddress: '', longitude: 0, latitude: 0, marker: null })
 
   icons = icons
@@ -234,6 +241,10 @@ export default class Looking {
   }
 
   async onActivated(navigatedFrom: string) {
+    ridesStore.setState(store => {
+      store.data.looking = true
+      store.data.choosingRide = false
+    })
     if (ridesStore.favoriteRoutePicked) {
       const route = ridesStore.favoriteRoutePicked
       this.autocompleteLocations = []
@@ -266,7 +277,9 @@ export default class Looking {
         this.focusStopoverInputElement(this.focusedStopover)
       }
 
-      await this.query(index, location.address + ', ' + location.secondaryAddress)
+      // await this.query(index, location.address + ', ' + location.secondaryAddress)
+      await this.query(index, location.formattedAddress)
+      this.stopoverInputs[index].address = location.address + ', ' + location.secondaryAddress
       let locationToSelect =
         this.autocompleteLocations[index].find(l => l.id === ridesStore.locationPicked.placeId)
         ?? this.autocompleteLocations[index][0]
@@ -302,6 +315,7 @@ export default class Looking {
     this.autocompleteLocations = []
     this.focusedStopover = -2
     this.locationsCompleted = false
+    this.departureTime = 'Depart now'
   }
 
   async getDirections() {

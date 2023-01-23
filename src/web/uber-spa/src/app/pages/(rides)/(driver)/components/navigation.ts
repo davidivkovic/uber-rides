@@ -2,14 +2,18 @@ import { Component } from '@angular/core'
 import { ridesStore } from '@app/stores'
 import { InnerHtml } from '@app/utils'
 import { NgIf } from '@angular/common'
-import { watch } from 'usm-mobx'
+import { Unsubscribe, watch } from 'usm-mobx'
 
 const voiceover = new window.SpeechSynthesisUtterance()
 let canSpeak = false
+let initialized = false
 
 window.speechSynthesis.onvoiceschanged = e => {
   if (!voiceover.voice || voiceover.voice.lang !== 'en-US') {
-    voiceover.voice = window.speechSynthesis.getVoices().find(voice => voice.name === 'Google US English')
+    voiceover.voice = window.speechSynthesis.getVoices().find(voice =>
+      voice.name === 'Google US English' ||
+      voice.name === 'Microsoft Aria Online (Natural) - English (United States)'
+    )
     canSpeak = true
   }
 }
@@ -52,12 +56,15 @@ export default class Navigation {
   opacity = 0
   direction = ''
   sound = new Audio('/assets/sounds/navigation.wav')
+  unsubscribe: Unsubscribe
+
   constructor() {
+    if (initialized) return
     watch(
       ridesStore,
       () => ridesStore.data?.instructions,
       (curr, prev) => {
-        if (!curr) return
+        if (!curr || !ridesStore.data.trip) return
         this.opacity = 0
         if (curr.includes('right') || curr.includes('east')) this.direction = 'right'
         else if (curr.includes('left') || curr.includes('west')) this.direction = 'left'
@@ -77,5 +84,10 @@ export default class Navigation {
         }, 15000)
       }
     )
+    initialized = true
+  }
+
+  ngOnDestroy() {
+    this.unsubscribe?.()
   }
 }

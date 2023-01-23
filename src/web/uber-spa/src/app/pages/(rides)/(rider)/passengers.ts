@@ -8,6 +8,7 @@ import { computed, formatDistance, formatDuration } from '@app/utils'
 import PassengersStatus from '@app/components/rides/passengersStatus'
 import RouteDetails from '@app/components/rides/routeDetails'
 import DriverDetails from '@app/components/common/driverDetails'
+import { userStore } from '@app/stores'
 
 @Component({
   standalone: true,
@@ -29,10 +30,10 @@ import DriverDetails from '@app/components/common/driverDetails'
         <!-- <h3 class="mt-3 tracking-wide">Ride Details</h3> -->
         <div class="flex items-center bg-[#f6f6f6] rounded-md mt-3 py-2.5 mb-1 pr-3.5">
           <div class="relative -ml-1 ">
-            <img [src]="ridesStore.data.trip.car.type.image" class="w-[100px] h-[100px] -mt-7" />
+            <img [src]="ridesStore.data.trip.car.type.image" class="w-[90px] h-[90px] -mt-5" />
             <h3 
               *ngIf="ridesStore.data.trip.car.registration"
-              class="absolute -bottom-2 left-3 text-[13px] tracking-wide px-1.5 py-[0.5px] rounded-sm ring-[1.35px] ring-black"
+              class="absolute -bottom-[3px] left-[15px] w-fit text-[12px] tracking-wide rounded whitespace-nowrap"
             >
               {{ ridesStore.data.trip.car.registration.replace('-', ' • ') }}
             </h3>
@@ -74,22 +75,26 @@ import DriverDetails from '@app/components/common/driverDetails'
         </PassengersStatus>
       
         <div *ngIf="pickupPending || ridesStore.data.tripInProgress">
-          <DriverDetails [driver]="ridesStore.data.trip.driver"></DriverDetails>
-          <div *ngIf="!ridesStore.data.trip.canStart && !ridesStore.data.trip.canFinish">
-            <h3 class="text-xl leading-5">{{ formatDistance(ridesStore.data?.pickup?.driverDistance) }}</h3>
-            <p class="text-[15px] text-zinc-700">approx. {{ formatDuration(ridesStore.data?.pickup?.driverDuration) }}</p>
-          </div>
-          <div *ngIf="ridesStore.data?.pickup?.canStart && !ridesStore.data.tripInProgress">
+          <div *ngIf="ridesStore.data?.pickup?.canStart && !ridesStore.data.tripInProgress; else otherContent" class="mt-1 mb-2">
             <h1 class="text-xl transition">The driver is at the pickup location</h1>
             <p class="text-zinc-500 text-[15px] -mt-0.5">Make yourself comfortable in the vehicle</p>
           </div>
-          <div *ngIf="ridesStore.data.trip.canFinish">
-
+          <ng-template #otherContent>
+            <h3 class="mb-1 mt-1">Driver</h3>
+          </ng-template>
+          <div class="flex justify-between">
+            <DriverDetails [driver]="ridesStore.data.trip.driver"></DriverDetails>
+            <div *ngIf="!ridesStore.data.trip.canStart && !ridesStore.data.trip.canFinish" class="text-right">
+              <h3 class="text-lg leading-5">{{ formatDistance(ridesStore.data?.pickup?.driverDistance) }}</h3>
+              <p class="text-sm text-zinc-700">approx. {{ formatDuration(ridesStore.data?.pickup?.driverDuration) }}</p>
+            </div>
           </div>
+
+          <div *ngIf="ridesStore.data.trip.canFinish"></div>
         </div>
 
         <button 
-          *ngIf="(!ridesStore.data?.uberStatus || ridesStore.data?.uberStatus === 'NOT_LOOKING') && !pickupPending"
+          *ngIf="(!ridesStore.data?.uberStatus || ridesStore.data?.uberStatus === 'NOT_LOOKING') && !pickupPending && !ridesStore.data.tripInProgress"
           class="secondary mt-auto pointer-events-none"
         >
           <div class="flex justify-center items-center">
@@ -153,7 +158,8 @@ export default class Passengers {
   pickupPending = false
 
   ngAfterViewInit() {
-    if (polylines.length === 0 || ridesStore.mapElements?.pickupPolyline?.getMap() !== map) refreshAllElements()
+    if (!ridesStore.mapElements.pickupPolyline) refreshAllElements()
+    // if (polylines.length === 0 || ridesStore.mapElements?.pickupPolyline?.getMap() !== map) refreshAllElements()
   }
 
   constructor(public router: Router) {
@@ -167,7 +173,7 @@ export default class Passengers {
         }
       }
     )
-    const isMyTrip = ridesStore.data.directions != null
+    const isMyTrip = ridesStore.data?.trip?.ownerId === userStore.user.id
     if (isMyTrip) {
       this.pickupPending = true
       return
@@ -202,13 +208,13 @@ export default class Passengers {
     () => ridesStore.data.trip,
     () => {
       const stops = [ridesStore.data.trip.route.start, ...ridesStore.data.trip.route.stops]
-      const isMyTrip = ridesStore.data.directions != null
-      if (!isMyTrip) {
+      const isMyTrip = ridesStore.data?.trip?.ownerId === userStore.user.id
+      if ((!isMyTrip || ridesStore.data.trip.scheduled) && !ridesStore.data.tripInProgress) {
         if (map) {
-          this.drawPolyline(stops)
+          this.drawPolyline(stops, !ridesStore.data.trip.scheduled && !isMyTrip)
         }
         else {
-          subscribe(() => this.drawPolyline(stops))
+          // subscribe(() => this.drawPolyline(stops, !ridesStore.data.trip.scheduled && !isMyTrip)) // wtf scheduled trip ne radi sa ovim???
         }
       }
       return stops ?? []
@@ -228,6 +234,7 @@ export default class Passengers {
   }
 
   drawPolyline(stops: any[], removeElements = true) {
+    console.log('removeElements', removeElements)
     removeElements && removeAllElements()
     createPolyline(ridesStore.data.trip.route.encodedPolyline)
     stops.forEach((stop, index) => {
