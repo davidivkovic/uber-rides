@@ -1,22 +1,21 @@
 package com.uber.rides.controller;
 
-import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
-import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import javax.validation.constraints.Min;
 import javax.validation.constraints.Size;
-import javax.websocket.server.PathParam;
 
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -55,6 +54,7 @@ import com.uber.rides.ws.Store;
 import com.uber.rides.ws.WS;
 import com.uber.rides.ws.driver.DriverData;
 import com.uber.rides.ws.driver.messages.out.TripAssigned;
+import com.uber.rides.ws.driver.messages.out.TripCancelled;
 import com.uber.rides.ws.driver.messages.out.TripStarted;
 import com.uber.rides.ws.rider.messages.out.TripInvite;
 import com.uber.rides.ws.rider.messages.out.UberUpdate;
@@ -67,6 +67,7 @@ import static com.uber.rides.util.GeoUtils.*;
 public class Trips extends Controller {
 
     static final long PAGE_SIZE = 8;
+    static final String NOT_LOOKING = "You are currenly not looking for a ride. Please start by choosing a route.";
 
     @Autowired DbContext context;
     @Autowired Store store;
@@ -76,14 +77,28 @@ public class Trips extends Controller {
     @Autowired ThreadPoolTaskScheduler scheduler;
     @Autowired DriverSimulator simulator;
 
-    @Autowired Trip.Service tripService;
-    @Autowired Route.Service routeService;
+    @Autowired Trip.Service trips;
+    @Autowired Route.Service routes;
+
+    @PostMapping("/cancel")
+    @Secured({ Roles.DRIVER })
+    @Transactional
+    public Object cancelTrip(@RequestParam String reason) {
+        var driverData = store.drivers.get(authenticatedUserId());
+        if (driverData == null) return badRequest(CONNECTION_ENDED);
+
+        var trip = driverData.getUser().getCurrentTrip();
+        if (trip == null) return badRequest("You are currently not on a trip.");
+
+        trips.cancelTrip(driverData, trip, reason);
+
+        return ok();
+    }
 
     @PostMapping("/start")
     @Secured({ Roles.DRIVER })
     @Transactional
     public Object startTrip() {
-
         var driverData = store.drivers.get(authenticatedUserId());
         if (driverData == null) {
             return badRequest(CONNECTION_ENDED);
@@ -94,27 +109,8 @@ public class Trips extends Controller {
             return badRequest("You are currently not on a trip. Please start by choosing a route.");
         }
 
-        var start = trip.getRoute().getStart();
-        var distance = distance(
-            driverData.getLatitude(),
-            driverData.getLongitude(),
-            start.getLatitude(),
-            start.getLongitude()
-        );
-
-        if (distance > 50) {
-            return badRequest("You are not in the right location to start the trip. Please move closer to the pickup location.");
-        }
-
-        var tripStarted = new TripStarted(mapper.map(trip, TripDTO.class));
-        ws.sendMessageToUser(driverData.getUser().getId(), tripStarted);
-        trip.getRiders().forEach(rider -> ws.sendMessageToUser(rider.getId(), tripStarted));
-        
-        simulator.runTask(driverData.getUser(), trip.getDirections(), true);
-        trip.setStatus(Trip.Status.IN_PROGRESS);
-        trip.setStartedAt(LocalDateTime.now());
-        context.db().merge(trip);
-
+        var result = trips.startTrip(driverData, trip);
+        if (!result.success()) return badRequest(result.error());
         return ok();
     }
 
@@ -123,106 +119,13 @@ public class Trips extends Controller {
     @Transactional
     public Object orderRide() {
         var riderData = store.riders.get(authenticatedUserId());
-        if (riderData == null) {
-            return badRequest(CONNECTION_ENDED);
-        }
+        if (riderData == null) return badRequest(CONNECTION_ENDED);
 
         var trip = riderData.getUser().getCurrentTrip();
-        if (trip == null || trip.getRoute() == null) {
-            return badRequest("You are currenly not looking for a ride. Please start by choosing a route.");
-        }
+        if (trip == null || trip.getRoute() == null) return badRequest(NOT_LOOKING);
 
-        trip.getRiders().forEach(r -> ws.sendMessageToUser(r.getId(), new UberUpdate(UberUpdate.Status.LOOKING)));
-
-        var start = trip.getRoute().getStart();
-        var driver = store
-            .drivers
-            .values()
-            .stream()
-            .filter(DriverData::isOnline)
-            .filter(DriverData::isAvailable)
-            .filter(d -> d.getUser().getCurrentTrip() == null)
-            .filter(d -> d.getUser().getCar().getType().getCarType().equals(trip.getCar().getType().getCarType()))
-            // also check if driver is scheduled in the future
-            .min(Comparator.comparing(
-                d -> distance(
-                    d.getLatitude(), d.getLongitude(),
-                    start.getLatitude(), start.getLongitude()
-                )
-            ))
-            .orElse(null);
-
-        if (driver == null) {
-            return badRequest("No drivers available currently. Please try again later.");
-        }
-
-        synchronized (driver) {
-            if (!driver.isAvailable()) {
-                return badRequest("No drivers available currently. Please try again later.");
-            }
-            driver.setAvailable(false);
-        }
-
-        trip.setStatus(Trip.Status.CREATED);
-
-        var pickupDirections = maps.getDirections(
-            driver.latitude, 
-            driver.longitude,  
-            start.getLatitude(),
-            start.getLongitude()
-        );
-
-        if (pickupDirections == null) {
-            driver.setAvailable(true);
-            // trip.getRiders().forEach(r -> ws.sendMessageToUser(r.getId(), new UberUpdate(UberUpdate.Status.NO_ROUTE)));
-            return badRequest("Could not find a route to the start of the trip.");
-        }
-
-        trip.setDriver(driver.getUser());
-        trip.setCar(driver.getUser().getCar());
-
-        context.db().persist(trip);
-
-        trip.getRiders().forEach(r -> ws.sendMessageToUser(r.getId(), new UberUpdate(UberUpdate.Status.FOUND)));
-
-        //send a websoket message to the riders that a driver has been found
-        // Do the actual payment here   
-
-        var riderIds = trip.getRiders().stream().map(User::getId).toList();
-        var payments = context.readonlyQuery()
-            .stream(of(User.class).joining(User$.defaultPaymentMethod))
-            .filter(User$.id.in(riderIds))
-            .map(User::getDefaultPaymentMethod)
-            .parallel()
-            .map(m -> {
-                if (m == null) return null;
-                return m.authorize(trip.getTotalPrice() / riderIds.size(), "USD");
-            })
-            .toList();
-
-        if (payments.stream().anyMatch(Objects::isNull)) {
-            driver.setAvailable(true);
-            payments.parallelStream().filter(Objects::nonNull).forEach(Payment::refund);
-            trip.setStatus(Trip.Status.CANCELLED);
-            trip.getRiders().forEach(r -> ws.sendMessageToUser(r.getId(), new UberUpdate(UberUpdate.Status.PAYMENT_FAILED)));
-            return badRequest("Payment failed. Please try again later.");
-        }
-
-        driver.getUser().setCurrentTrip(trip);
-        driver.setDirections(pickupDirections);
-        trip.setPayments(payments);
-        trip.setStatus(Trip.Status.PAID);
-
-        var tripAssigned = new TripAssigned(trip, pickupDirections);
-        scheduler.schedule(
-            () -> trip.getRiders().forEach(r -> ws.sendMessageToUser(r.getId(), tripAssigned)),
-            Instant.now().plusSeconds(3)
-        );
-        ws.sendMessageToUser(driver.getUser().getId(), tripAssigned);
-
-        trip.setStatus(Status.AWAITING_PICKUP);
-        simulator.runTask(driver.getUser(), pickupDirections.routes[0], false);
-
+        var result = trips.orderRide(trip);
+        if (!result.success()) return badRequest(result.error());
         return ok();
     }
 
@@ -237,7 +140,7 @@ public class Trips extends Controller {
 
         var trip = riderData.getUser().getCurrentTrip();
         if (trip == null) {
-            return badRequest("You are currenly not looking for a ride. Please start by choosing a route.");
+            return badRequest(NOT_LOOKING);
         }
 
         var invitedPassegers = riderData.getInvitedPassengerIds();
@@ -250,9 +153,8 @@ public class Trips extends Controller {
         var inviter = mapper.map(riderData.user, UserDTO.class);
         var tripDTO = mapper.map(trip, TripDTO.class);
         for (var id : newPassengers) {
-            if (trip.getRiders().stream().noneMatch(r -> r.getId().equals(id))) {
-                ws.sendMessageToUser(id, new TripInvite(inviter, tripDTO));
-            }
+            if (trip.getRiders().stream().anyMatch(r -> r.getId().equals(id))) continue;
+            ws.sendMessageToUser(id, new TripInvite(inviter, tripDTO));
         }
 
         return ok(tripDTO);
@@ -262,83 +164,16 @@ public class Trips extends Controller {
     @PostMapping("/choose-ride")
     @Secured({ Roles.RIDER })
     public Object chooseRide(@Validated @RequestParam Car.Types rideType) {
-
         var riderData = store.riders.get(authenticatedUserId());
-        if (riderData == null) {
-            return badRequest(CONNECTION_ENDED);
-        }
+        if (riderData == null) return badRequest(CONNECTION_ENDED);
 
         var trip = riderData.getUser().getCurrentTrip();
-        if (trip == null) {
-            return badRequest("You are currenly not looking for a ride. Please start by choosing a route.");
-        } 
-        
-        var tripCarChosen = trip.getCar() != null;
-        trip.setTotalPrice(riderData.getCarPricesInUsd().get(rideType));
-        trip.setCar(Car.builder().type(Car.getByType(rideType)).build());
+        if (trip == null) return badRequest(NOT_LOOKING);
 
-        if (tripCarChosen) {
-            return ok(mapper.map(trip, TripDTO.class));
-        }
+        var result = trips.chooseRide(riderData, trip, rideType);
 
-        var directionsRoute = riderData.getDirections().routes[0];
-        var thumbnail = maps.getRouteThumbnail(directionsRoute);
-
-        if (thumbnail.length == 0) {
-            return badRequest("Could not get route thumbnail at this time. Please try again later.");
-        }
-
-        var thumbnailUrl = images.persist(thumbnail, ".png");
-
-        var distance = Stream
-            .of(directionsRoute.legs)
-            .mapToLong(leg -> leg.distance.inMeters)
-            .sum();
-
-        var leg = directionsRoute.legs[0];
-        var routeBuilder = Route
-            .builder()
-            .start(new Location(leg.startAddress, leg.startLocation.lng, leg.startLocation.lat, 0))
-            .distance(distance)
-            .encodedPolyline(directionsRoute.overviewPolyline.getEncodedPath())
-            .neBounds(Location
-                .builder()
-                .longitude(directionsRoute.bounds.northeast.lng)
-                .latitude(directionsRoute.bounds.northeast.lat)
-                .build()
-            )
-            .swBounds(Location
-                .builder()
-                .longitude(directionsRoute.bounds.southwest.lng)
-                .latitude(directionsRoute.bounds.southwest.lat)
-                .build()
-            )
-            .thumbnail(thumbnailUrl);
-
-        if (directionsRoute.legs.length == 1) { // Only origin and destination
-            routeBuilder = routeBuilder.stops(
-                List.of(new Location(leg.endAddress, leg.endLocation.lng, leg.endLocation.lat, 1))
-            );
-        }
-        else {
-            routeBuilder = routeBuilder.stops(
-                IntStream
-                .range(0, directionsRoute.legs.length)
-                .mapToObj(i -> new Location(
-                    directionsRoute.legs[i].endAddress, 
-                    directionsRoute.legs[i].endLocation.lng, 
-                    directionsRoute.legs[i].endLocation.lat, 
-                    i
-                ))
-                .toList()
-            );
-        }
-
-        trip.setRoute(routeBuilder.build());
-        trip.setDirections(directionsRoute);
-        var tripDTO = mapper.map(trip, TripDTO.class);
-
-        return ok(tripDTO);
+        if (!result.success()) return badRequest(result.error());
+        return ok(mapper.map(result.result(), TripDTO.class));
     }
 
     @Transactional
@@ -361,25 +196,49 @@ public class Trips extends Controller {
 
     }
 
-
     @Transactional
+    @GetMapping("/current")
+    @Secured({ Roles.ADMIN })
+    public Object getCurrentTrip(@RequestParam Long userId) {
+
+        var user = context.query().stream(
+            of(User.class)
+            .joining(User$.car)
+        )
+        .filter(User$.id.equal(userId))
+        .findFirst()
+        .orElse(null);
+
+        if (user == null) {
+            return badRequest(USER_NOT_EXIST);
+        }
+
+        var trip = ws.getCurrentTrip(user);
+        if (trip == null) {
+            trip = new Trip();
+            trip.setDriver(user);
+            trip.setCar(user.getCar());
+        }
+
+        return ok(mapper.map(trip, TripDTO.class));
+
+    }
+
+    @Transactional(readOnly = true)
     @GetMapping("")
     @Secured({ Roles.DRIVER, Roles.RIDER, Roles.ADMIN })
     public Object getTrips(@RequestParam Long userId, @RequestParam @Min(0) int page, @RequestParam String order) {
 
-        var userRole = authenticatedUserRole();
-        var isAdmin = Roles.ADMIN.equals(userRole);
-        var isDriver = Roles.DRIVER.equals(userRole);
-        if (
-            !userId.equals(authenticatedUserId()) &&
-            !isAdmin
-        ) {
-            return badRequest("Cannot view other users' trips.");
+        var user = context.db().find(User.class, userId);
+        if (user == null) {
+            return badRequest(USER_NOT_EXIST);
         }
-
-        if (!isAdmin) {
-            userId = authenticatedUserId();
-        }
+        var isDriver = user.getRole().equals(Roles.DRIVER);
+        var currentTrip = ws.getCurrentTrip(user);
+        var addCurrentTrip = currentTrip != null && (
+            currentTrip.getStatus() == Trip.Status.AWAITING_PICKUP || 
+            currentTrip.getStatus() == Trip.Status.IN_PROGRESS      
+        );
 
         Comparator<Trip> comparator;
         
@@ -397,38 +256,48 @@ public class Trips extends Controller {
         }
 
         Stream<List<Trip>> stream;
-        var user = context.query().stream(User.class)
+        var userQuery = context.query().stream(User.class)
             .filter(User$.id.equal(userId));
 
         if (isDriver) {
-            stream = user.map(User::getTripsAsDriver);
+            stream = userQuery.map(User::getTripsAsDriver);
         }
         else {
-            stream = user.map(User::getTripsAsRider);
+            stream = userQuery.map(User::getTripsAsRider);
         }
 
         var trips = stream
             .flatMap(Collection::stream)
-            .filter(Trip$.status.equal(Trip.Status.COMPLETED))
+            .filter(
+                Trip$.status.equal(Trip.Status.COMPLETED)
+                .or(Trip$.status.equal(Trip.Status.SCHEDULED))
+                .or(
+                    Trip$.status.equal(Trip.Status.PAID)
+                    .and(Trip$.scheduled)
+                    .and(Trip$.scheduledAt.greaterThan(LocalDateTime.now()))
+                )
+            )
             .toList()
             .stream()
             .sorted(comparator)
             .skip(page * PAGE_SIZE)
             .limit(PAGE_SIZE)
-            .toList();
+            .collect(Collectors.toList());
+
+        if (addCurrentTrip) trips.add(0, currentTrip);
         
         var routes = context.query().stream(
                 of(Route.class)
                 .joining(Route$.stops)
             )
             .filter(Route$.id.in(trips.stream().map(Trip::getRouteId).toList()))
-            .collect(Collectors.toMap(Route::getId, Function.identity()));
+            .collect(Collectors.toMap(Route::getId, Function.identity(), (rId1, rId2) -> rId1));
         
         return context.query().stream(
                 of(Trip.class)
                 .joining(Trip$.driver)
                 .joining(Trip$.riders)
-                .joining(Trip$.payments)
+                // .joining(Trip$.payments)
                 .joining(Trip$.ratings)
                 .joining(Trip$.car)
             )
@@ -439,6 +308,5 @@ public class Trips extends Controller {
                 return mapper.map(trip, TripDTO.class);
             })
             .toList();
-
     }
 }

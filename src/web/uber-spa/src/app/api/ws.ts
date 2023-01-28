@@ -13,20 +13,23 @@ const handlers = {
   [InboundMessages.TRIP_STARTED]: () => import('./ws-messages/tripStarted'),
   [InboundMessages.UBER_UPDATE]: () => import('./ws-messages/uberUpdate'),
   [InboundMessages.TRIP_ENDED]: () => import('./ws-messages/tripEnded'),
+  [InboundMessages.TRIP_CANCELLED]: () => import('./ws-messages/tripCancelled'),
   [InboundMessages.MESSAGE_RECEIVED]: () => import('./ws-messages/messageReceived'),
-
+  [InboundMessages.TRIP_REMINDER]: () => import('./ws-messages/tripReminder'),
+  [InboundMessages.SYNC_STATUS]: () => import('./ws-messages/syncStatus')
 }
 
 const isConnected = () => ws?.OPEN
 
 const connect = (accessToken: string) => {
+  if (isConnected()) return
   ws = new WebSocket(`${url}?token=${accessToken}`)
   isConnected() && console.debug('[Connected to WS at ' + url + ']')
 
   ws.onmessage = async (message: MessageEvent<any>) => {
     const tokens = message.data.split('\n')
     const header = InboundMessages[tokens[0]]
-    
+
     const body = JSON.parse(tokens[1])
 
     let handler: { default: (body: any) => void }

@@ -53,6 +53,7 @@ public class Routes extends Controller {
     @Autowired ImageStore images;
     @Autowired GoogleMaps maps;
     @Autowired Store store;
+    @Autowired Route.Service routes;
 
     @PostMapping("/preview")
     @Secured({ Roles.ANONYMOUS, Roles.RIDER })
@@ -63,86 +64,22 @@ public class Routes extends Controller {
             return badRequest("Your connection has ended. Please refresh the page to connect again.");
         }
 
-        var optimizeWaypoints = !"respect-waypoints".equals(request.getRoutingPreference());
-        var directions = maps.getDirections(
+        var result = routes.previewRoute(
+            riderData,
             request.getOriginPlaceId(),
             request.getDestinationPlaceId(),
-            request.getWaypointPlaceIds(),
-            request.getScheduledAt(),
-            optimizeWaypoints
+            request.getWaypointPlaceIds(), 
+            !"respect-waypoints".equals(request.getRoutingPreference()), 
+            "cheapest-route".equals(request.getRoutingPreference()),
+            request.getScheduledAt()
         );
 
-        if (directions == null || directions.routes.length == 0) {
-            return badRequest("Could not get directions for specified route. Please try again later.");
-        }
-
-        if (optimizeWaypoints) {
-            ToLongFunction<DirectionsLeg> extractor = "cheapest-route"
-                .equals(request.getRoutingPreference()) 
-                ? leg -> leg.distance.inMeters
-                : leg -> leg.duration.inSeconds;
-
-            directions.routes = new DirectionsRoute[] { 
-                Stream
-                .of(directions.routes)
-                .min(Comparator
-                    .comparingLong(r -> Stream
-                        .of(r.legs)
-                        .mapToLong(extractor)
-                        .sum()
-                    )
-                )
-                .orElse(directions.routes[0])
-            };
-        }
-        else {
-            directions.routes = new DirectionsRoute[] { directions.routes[0] }; 
-        }
-
-        var distance = Stream
-            .of(directions.routes[0].legs)
-            .mapToLong(leg -> leg.distance.inMeters)
-            .sum();
-
-        var duration = Stream
-            .of(directions.routes[0].legs)
-            .mapToLong(leg -> leg.duration.inSeconds)
-            .sum();
-
-        var pricesInUsd = Car.getAvailableTypes()
-           .stream()
-           .collect(Collectors.toMap(
-                Car.Type::getCarType,
-                t -> (double) Math.round(t.getPaymentMultiplier() * distance / 1000 * 2.4 * 10) / 10
-            ));
-
-        if (riderData != null) {
-            var trip = Trip.builder()
-                .status(Status.BUILDING)
-                .durationInSeconds(duration)
-                .distanceInMeters(distance)
-                .riders(new HashSet<>(Arrays.asList(riderData.user)))
-                .build();
-
-            if (request.getScheduledAt() != null) {
-                trip.setScheduled(true);
-                trip.setScheduledAt(request.getScheduledAt());
-            }
-            riderData.setDirections(directions);
-            riderData.setCarPricesInUsd(pricesInUsd);
-            riderData.getUser().setCurrentTrip(trip);
-        }
-        
-        return new PreviewRouteResponse(
-            Car.getAvailableTypes(), 
-            directions.routes, 
-            pricesInUsd, 
-            distance, 
-            duration
-        );
+        if (!result.success()) return badRequest(result.error());
+        return ok(result.result());
         
     }
 
+    // I don't think this is used anywhere
     @Transactional
     @PostMapping("")
     @Secured({ Roles.RIDER })

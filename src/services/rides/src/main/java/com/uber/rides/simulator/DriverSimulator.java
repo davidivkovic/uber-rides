@@ -152,7 +152,7 @@ public class DriverSimulator {
         runTask(driver, getDirections(coordinates), true);
     }
 
-    void runTask(User driver) {
+    public void runTask(User driver) {
         var coordinates = getRandomCoordinates(this.areaOfInterest, 6);
         runTask(driver, getDirections(coordinates), true);
     }
@@ -221,36 +221,38 @@ public class DriverSimulator {
     ) {
         try {
             var sim = sims.get(driver.getId());
-            if (!locations.hasNext()) {
-                if (driver.getCurrentTrip() != null && rerunOnEnd) {
-                    sim.session.sendMessage(new TextMessage("END_TRIP\n{}"));
+            synchronized (sim) {
+                if (!locations.hasNext()) {
+                    if (driver.getCurrentTrip() != null && rerunOnEnd) {
+                        sim.session.sendMessage(new TextMessage("END_TRIP\n{}"));
+                    }
+                    cancelTask(driver);
+                    if (rerunOnEnd) {
+                        scheduler.schedule(
+                            () -> runTask(driver, locations.previous().location), 
+                            Instant.now().plusSeconds(15)
+                        );
+                    }
+                    return;
                 }
-                cancelTask(driver);
-                if (rerunOnEnd) {
-                    scheduler.schedule(
-                        () -> runTask(driver, locations.previous().location), 
-                        Instant.now().plusSeconds(15)
-                    );
-                }
-                return;
-            }
-            var index = locations.nextIndex() + 1;
-            var location = locations.next();
-            sim.distance -= location.distance;
-            var updateLocation = new TextMessage(
-                "UPDATE_LOCATION\n{\"latitude\":" 
-                + location.location.lat 
-                + ",\"longitude\":" 
-                + location.location.lng 
-                + ",\"duration\":" 
-                + (duration - (index + 1) * durationStep)
-                + ",\"distance\":"
-                + sim.distance
-                + "}"
-            );
-            ws.sendMessageToUser(driver.getId(), "INSTRUCTIONS\n[\"" + location.instructions + "\"]");
-            sim.session.sendMessage(updateLocation);
-        } 
+                var index = locations.nextIndex() + 1;
+                var location = locations.next();
+                sim.distance -= location.distance;
+                var updateLocation = new TextMessage(
+                    "UPDATE_LOCATION\n{\"latitude\":" 
+                    + location.location.lat 
+                    + ",\"longitude\":" 
+                    + location.location.lng 
+                    + ",\"duration\":" 
+                    + (duration - (index + 1) * durationStep)
+                    + ",\"distance\":"
+                    + sim.distance
+                    + "}"
+                );
+                ws.sendMessageToUser(driver.getId(), "INSTRUCTIONS\n[\"" + location.instructions + "\"]");
+                sim.session.sendMessage(updateLocation);
+            } 
+        }
         catch (Exception e) { 
             cancelTask(driver);
             connectToWs(driver);
