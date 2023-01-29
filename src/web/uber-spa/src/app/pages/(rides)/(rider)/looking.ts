@@ -288,7 +288,8 @@ export default class Looking {
       if (this.stopoverInputs[index].marker) {
         this.stopoverInputs[index].marker.setMap(null)
       }
-      const marker = createMarker(geometry.lat(), geometry.lng(), index === this.stopoverInputs.length - 1)
+      // const marker = createMarker(geometry.lat(), geometry.lng(), index === this.stopoverInputs.length - 1)
+      const marker = createMarker(geometry.lat, geometry.lng, index === this.stopoverInputs.length - 1)
       this.stopoverInputs[index].marker = marker
 
       this.checkLocationsCompleted()
@@ -408,12 +409,15 @@ export default class Looking {
     }
     this.clearSelectedLocations()
     location.selected = true
-    const response = await geocoder.geocode({ placeId: location.id })
+    // const response = await geocoder.geocode({ placeId: location.id })
+    const response = await routes.geocode({ placeId: location.id })
     // if (status !== 'OK') return
     // if (!results[0]) return
     const geometry = response.results[0].geometry.location
-    this.stopoverInputs[index].longitude = geometry.lng()
-    this.stopoverInputs[index].latitude = geometry.lat()
+    // this.stopoverInputs[index].longitude = geometry.lng()
+    // this.stopoverInputs[index].latitude = geometry.lat()
+    this.stopoverInputs[index].longitude = geometry.lng
+    this.stopoverInputs[index].latitude = geometry.lat
 
 
     if (!skipCompleteCheck && !this.checkLocationsCompleted()) {

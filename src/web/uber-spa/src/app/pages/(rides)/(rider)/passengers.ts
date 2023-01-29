@@ -81,20 +81,26 @@ import { userStore } from '@app/stores'
           </div>
           <ng-template #otherContent>
             <h3 class="mb-1 mt-1">Driver</h3>
-          </ng-template>
-          <div class="flex justify-between">
-            <DriverDetails [driver]="ridesStore.data.trip.driver"></DriverDetails>
-            <div *ngIf="!ridesStore.data.trip.canStart && !ridesStore.data.trip.canFinish" class="text-right">
-              <h3 class="text-lg leading-5">{{ formatDistance(ridesStore.data?.pickup?.driverDistance) }}</h3>
-              <p class="text-sm text-zinc-700">approx. {{ formatDuration(ridesStore.data?.pickup?.driverDuration) }}</p>
+            <div class="flex justify-between">
+              <DriverDetails [driver]="ridesStore.data.trip.driver"></DriverDetails>
+              <div *ngIf="!ridesStore.data.trip.canStart && !ridesStore.data.trip.canFinish" class="text-right">
+                <h3 class="text-lg leading-5">{{ formatDistance(ridesStore.data?.pickup?.driverDistance) }}</h3>
+                <p class="text-sm text-zinc-700">approx. {{ formatDuration(ridesStore.data?.pickup?.driverDuration) }}</p>
+              </div>
             </div>
-          </div>
+          </ng-template>
+
 
           <div *ngIf="ridesStore.data.trip.canFinish"></div>
         </div>
 
         <button 
-          *ngIf="(!ridesStore.data?.uberStatus || ridesStore.data?.uberStatus === 'NOT_LOOKING') && !pickupPending && !ridesStore.data.tripInProgress"
+          *ngIf="
+            (!ridesStore.data?.uberStatus || ridesStore.data?.uberStatus === 'NOT_LOOKING') 
+            && !pickupPending 
+            && !ridesStore.data.tripInProgress;
+            else otherContent1
+          "
           class="secondary mt-auto pointer-events-none"
         >
           <div class="flex justify-center items-center">
@@ -105,46 +111,48 @@ import { userStore } from '@app/stores'
             <p class="text-base">Waiting for ride owner</p>
           </div>
         </button>
-
-        <button 
-          *ngIf="ridesStore.data?.uberStatus === 'LOOKING' && !pickupPending"
-          class="secondary !text-base mt-auto pointer-events-none"
-        >
-        <div 
-          class="flex items-center"
-          [ngClass]="{ 
-            'justify-center': ridesStore.data.uberFound
-          }"
-        >
-          <svg 
-            *ngIf="!ridesStore.data.uberFound"
-            class="animate-spin -ml-2 mr-2.5 h-4 w-4 text-white" 
-            fill="none" 
-            viewBox="0 0 24 24"
+  
+        <ng-template #otherContent1>
+          <button 
+            *ngIf="!pickupPending"
+            class="secondary !text-base mt-auto pointer-events-none"
           >
-            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-          </svg>
-          <span *ngIf="!ridesStore.data.uberFound">
-            Looking for an {{ ridesStore.data.trip.car.type.name }}
-          </span>
-          <span *ngIf="ridesStore.data.uberFound">
-            {{ uberFoundText }}
-          </span>
-          <svg 
-            *ngIf="ridesStore.data.uberFound"
-            class="animate-spin ml-2 -mr-2 h-4 w-4 text-white" 
-            fill="none" 
-            viewBox="0 0 24 24"
-          >
-            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-          </svg>
-          <span *ngIf="!ridesStore.data.uberFound" class="ml-auto -mr-1.5">
-            {{ lookingDuration }}s
-          </span>
-        </div>
-      </button>
+            <div 
+              class="flex items-center"
+              [ngClass]="{ 
+                'justify-center': ridesStore.data.uberFound
+              }"
+            >
+              <svg 
+                *ngIf="!ridesStore.data.uberFound"
+                class="animate-spin -ml-2 mr-2.5 h-4 w-4 text-white" 
+                fill="none" 
+                viewBox="0 0 24 24"
+              >
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              <span *ngIf="!ridesStore.data.uberFound">
+                Looking for an {{ ridesStore.data.trip.car.type.name }}
+              </span>
+              <span *ngIf="ridesStore.data.uberFound">
+                {{ uberFoundText }}
+              </span>
+              <svg 
+                *ngIf="ridesStore.data.uberFound"
+                class="animate-spin ml-2 -mr-2 h-4 w-4 text-white" 
+                fill="none" 
+                viewBox="0 0 24 24"
+              >
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              <span *ngIf="!ridesStore.data.uberFound" class="ml-auto -mr-1.5">
+                {{ lookingDuration }}s
+              </span>
+            </div>
+          </button>
+        </ng-template>
       </div>
     </div>
   `
@@ -174,7 +182,7 @@ export default class Passengers {
       }
     )
     const isMyTrip = ridesStore.data?.trip?.ownerId === userStore.user.id
-    if (isMyTrip) {
+    if (isMyTrip || ridesStore.data.pickup) {
       this.pickupPending = true
       return
     }
@@ -234,8 +242,7 @@ export default class Passengers {
   }
 
   drawPolyline(stops: any[], removeElements = true) {
-    console.log('removeElements', removeElements)
-    removeElements && removeAllElements()
+    // removeElements && removeAllElements()
     createPolyline(ridesStore.data.trip.route.encodedPolyline)
     stops.forEach((stop, index) => {
       createMarker(stop.latitude, stop.longitude, index == stops.length - 1)

@@ -3,7 +3,7 @@ import { removeAllElements } from '../google-maps'
 
 export default (message: { trip: any, isOnline: boolean }) => {
   userStore.setIsOnline(message.isOnline)
-  if (!message?.trip?.id) {
+  if (!message?.trip?.ownerId) {
     removeAllElements()
     ridesStore.setState(store => {
       store.data = {}

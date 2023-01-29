@@ -26,6 +26,7 @@ public abstract class UserData {
     public WebSocketSession session;
     public LocalDateTime connectedAt;
     public boolean isOnline = true;
+    public boolean isSim = false;
 
     @Autowired public WS ws;
 
@@ -44,6 +45,7 @@ public abstract class UserData {
             : null;
         if (session != null) {
             this.connectedAt = LocalDateTime.now();
+            this.isSim = ((boolean) session.getAttributes().get("IS_SIM"));
         }
     }
 
@@ -58,6 +60,7 @@ public abstract class UserData {
 
     public void onDisconnected() {
         this.isOnline = false;
+        this.isSim = true;
     }
 
 }

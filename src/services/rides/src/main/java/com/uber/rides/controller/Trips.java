@@ -15,6 +15,7 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import javax.validation.constraints.Min;
+import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 
 import org.springframework.web.bind.annotation.RestController;
@@ -199,28 +200,23 @@ public class Trips extends Controller {
     @Transactional
     @GetMapping("/current")
     @Secured({ Roles.ADMIN })
-    public Object getCurrentTrip(@RequestParam Long userId) {
+    public Object getCurrentTrip(@RequestParam @NotNull Long userId) {
 
-        var user = context.query().stream(
-            of(User.class)
-            .joining(User$.car)
-        )
-        .filter(User$.id.equal(userId))
-        .findFirst()
-        .orElse(null);
+        var driver = store.drivers.get(userId);
+        if (driver == null) return badRequest(USER_NOT_EXIST);
 
-        if (user == null) {
-            return badRequest(USER_NOT_EXIST);
-        }
-
-        var trip = ws.getCurrentTrip(user);
+        var trip = ws.getCurrentTrip(driver.getUser());
         if (trip == null) {
             trip = new Trip();
-            trip.setDriver(user);
-            trip.setCar(user.getCar());
+            trip.setDriver(driver.getUser());
+            trip.setCar(driver.getUser().getCar());
+        }
+        var dto = mapper.map(trip, TripDTO.class);
+        if (trip.getStatus() == Trip.Status.AWAITING_PICKUP) {
+            dto.setPickupDirections(driver.getDirections());
         }
 
-        return ok(mapper.map(trip, TripDTO.class));
+        return ok(dto);
 
     }
 
@@ -280,8 +276,8 @@ public class Trips extends Controller {
             .toList()
             .stream()
             .sorted(comparator)
-            .skip(page * PAGE_SIZE)
-            .limit(PAGE_SIZE)
+            .skip(page * 4)
+            .limit(4)
             .collect(Collectors.toList());
 
         if (addCurrentTrip) trips.add(0, currentTrip);

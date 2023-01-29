@@ -148,7 +148,6 @@ public class Trip {
                 .toList();
         }
 
-
         public Result<List<Payment>> processPayments(Trip trip) {
             var payingRiderIds = trip.getRiders()
                 .stream()

@@ -14,6 +14,7 @@ import java.util.function.Function;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import java.awt.image.BufferedImage;
+import java.io.IOException;
 
 import javax.imageio.ImageIO;
 import javax.persistence.EntityManagerFactory;
@@ -97,6 +98,7 @@ public class DriverSimulator {
     static final int ZOOM = 13;
     static final int WIDTH = 640;
     static final int HEIGHT = 620;
+    static final int SIM_SPEED = 4;
 
     static final String CALLBACK = "google_dogs";
     static final String CALLBACK_PREFIX = "/**/" + CALLBACK + " && " + CALLBACK + "(";
@@ -178,7 +180,7 @@ public class DriverSimulator {
                 .flatMap(leg -> Stream.of(leg.steps))
                 .map(s -> {
                     var polyline = s.polyline.decodePath();
-                    var step = Math.ceilDiv(polyline.size(), Math.max(1, Math.ceilDiv(s.duration.inSeconds, 5)));
+                    var step = Math.ceilDiv(polyline.size(), Math.max(1, Math.ceilDiv(s.duration.inSeconds, 5 / SIM_SPEED)));
                     var locations = new ArrayList<Directions>();
                     for (int i = 0; i < polyline.size(); i+=step) {
                         locations.add(
@@ -198,7 +200,7 @@ public class DriverSimulator {
             var pointsIterator = points.listIterator();    
             var task = scheduler.scheduleAtFixedRate(
                 () -> updateLocation(pointsIterator, duration, durationStep, driver, rerunOnEnd),
-                java.time.Duration.ofSeconds(5)
+                java.time.Duration.ofSeconds(5 / SIM_SPEED)
             );
             tasks.put(driver.getId(), task);
         }
@@ -221,10 +223,20 @@ public class DriverSimulator {
     ) {
         try {
             var sim = sims.get(driver.getId());
-            synchronized (sim) {
+            if (sim == null || sim.session == null) return;
+            synchronized (sim.session) {
                 if (!locations.hasNext()) {
                     if (driver.getCurrentTrip() != null && rerunOnEnd) {
                         sim.session.sendMessage(new TextMessage("END_TRIP\n{}"));
+                    }
+                    else if (driver.getCurrentTrip() != null && !rerunOnEnd) {
+                        scheduler.schedule(
+                            () -> { 
+                                try { sim.session.sendMessage(new TextMessage("START_TRIP\n{}")); } 
+                                catch (IOException e) { e.printStackTrace(); }
+                            },
+                            Instant.now().plusSeconds(10)
+                        );
                     }
                     cancelTask(driver);
                     if (rerunOnEnd) {
@@ -250,13 +262,13 @@ public class DriverSimulator {
                     + "}"
                 );
                 ws.sendMessageToUser(driver.getId(), "INSTRUCTIONS\n[\"" + location.instructions + "\"]");
-                sim.session.sendMessage(updateLocation);
+                if (sim.session.isOpen()) sim.session.sendMessage(updateLocation);
             } 
         }
         catch (Exception e) { 
             cancelTask(driver);
-            connectToWs(driver);
-            runTask(driver);
+            if (connectToWs(driver) != null) runTask(driver);
+            else logger.error("Cannot connect to simulation websocket for driver: {}", driver.getEmail()); 
         }
     }
 
@@ -268,6 +280,7 @@ public class DriverSimulator {
                 new WebSocketHttpHeaders(),
                 new URIBuilder("ws://localhost:8000/ws")
                 .addParameter("token", JWT.getJWT(driver))
+                .addParameter("sim", "true")
                 .build()
             )
             .get();
@@ -276,8 +289,9 @@ public class DriverSimulator {
             }
             logger.info("Started simulation for driver: {}", driver.getEmail());
             return session;
-        } catch (Exception e) { 
-            return null; 
+        } catch (Exception e) {
+            logger.error("Failed to start simulation for driver: {}", driver.getEmail()); 
+            return null;
         }
     }
 
@@ -348,6 +362,8 @@ public class DriverSimulator {
         return allDrivers;
     }
 
+    /* The follwing methods are used so we jailbreak and don't pay for google maps lmao */
+
     public BufferedImage getAreaOfInterest() {
         try {
             var style = "style";
@@ -394,7 +410,8 @@ public class DriverSimulator {
     public DirectionsRoute getDirections(List<LatLng> coordinates) {
         var path = "/maps/api/js/DirectionsService.Route?"
             + buildProtobuf(coordinates)
-            + "6e0&12sen&23e1&callback=" + CALLBACK
+            + "6e0&12sen&13e0&23e1&callback=" + CALLBACK
+            + "&units=metric"
             + "&key=" + GoogleMaps.STATIC_KEY;
 
         path = "https://maps.googleapis.com" + path + "&token=" + hashURL(path);
@@ -409,6 +426,30 @@ public class DriverSimulator {
             return directions.routes[0];
         } 
         catch (Exception e) { return null; }
+    }
+
+    public String geocode(String placeId, String address, double lat, double lng) {
+        var path = "/maps/api/js/GeocodeService.Search?"
+        + buildGeocodeProtobuf(placeId, address, lat, lng)
+        + "&callback=" + CALLBACK
+        + "&key=" + GoogleMaps.STATIC_KEY;
+
+        path = "https://maps.googleapis.com" + path + "&token=" + hashURL(path);
+
+        try (var httpClient = HttpClients.createDefault()) {
+            var response = EntityUtils.toString(httpClient.execute(new HttpGet(path)).getEntity());
+            return response.substring(
+                response.indexOf(CALLBACK_PREFIX) + CALLBACK_PREFIX.length(),
+                response.length() - 1
+            );
+        } 
+        catch (Exception e) { return "{}"; }
+    }
+
+    public String buildGeocodeProtobuf(String placeId, String address, double lat, double lng) {
+        if (placeId != null) return "9sen&14s" + placeId; 
+        if (address != null) return "4s" + address;
+        return "5m2&1d" + lat + "&2d" + lng + "&9sen";
     }
     
     public String buildProtobuf(List<LatLng> coordinates) {

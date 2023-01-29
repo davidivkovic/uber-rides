@@ -31,6 +31,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.google.maps.model.DirectionsLeg;
 import com.google.maps.model.DirectionsRoute;
 import com.uber.rides.database.DbContext;
+import com.uber.rides.dto.route.GeocodeRequest;
 import com.uber.rides.dto.route.PreviewRouteRequest;
 import com.uber.rides.dto.route.PreviewRouteResponse;
 import com.uber.rides.dto.user.CreateRouteRequest;
@@ -43,6 +44,7 @@ import com.uber.rides.model.Trip.Status;
 import com.uber.rides.model.User.Roles;
 import com.uber.rides.service.GoogleMaps;
 import com.uber.rides.service.ImageStore;
+import com.uber.rides.simulator.DriverSimulator;
 import com.uber.rides.ws.Store;
 
 @RestController
@@ -54,6 +56,12 @@ public class Routes extends Controller {
     @Autowired GoogleMaps maps;
     @Autowired Store store;
     @Autowired Route.Service routes;
+    @Autowired DriverSimulator simulator;
+
+    @PostMapping("/geocode")
+    public Object geocode(@RequestBody GeocodeRequest request) {
+        return ok(simulator.geocode(request.placeId, request.address, request.lat, request.lng));
+    }
 
     @PostMapping("/preview")
     @Secured({ Roles.ANONYMOUS, Roles.RIDER })

@@ -18,7 +18,7 @@ const routes: Routes = [
         path: '',
         pathMatch: 'full',
         canActivate: [() => {
-          if (ridesStore.data.pickup || ridesStore.data.tripInProgress) {
+          if (ridesStore.data.trip || ridesStore.data.pickup || ridesStore.data.tripInProgress) {
             window.router.navigate(['/passengers'])
           }
           else if (location.pathname === '/looking/choose-ride') {

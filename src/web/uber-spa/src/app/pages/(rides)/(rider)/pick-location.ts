@@ -3,6 +3,7 @@ import { Location, NgClass } from '@angular/common'
 import { ActivatedRoute } from '@angular/router'
 import { geocoder, map } from '@app/api/google-maps'
 import { ridesStore } from '@app/stores/ridesStore'
+import routes from '@app/api/routes'
 
 @Component({
   standalone: true,
@@ -103,16 +104,20 @@ export default class PickLocation {
       this.detector.detectChanges()
 
       try {
-        const response = await geocoder.geocode({ location: map.getCenter() })
+        // const response = await geocoder.geocode({ location: map.getCenter() })
+        const response = await routes.geocode({ location: map.getCenter() })
         const result = response.results[0];
 
         [this.location.address, this.location.secondaryAddress] = result?.formatted_address.split(',').slice(0, 2)
         this.location.placeId = result.place_id
-        this.location.longitude = result.geometry.location.lng()
-        this.location.latitude = result.geometry.location.lat()
+        // this.location.longitude = result.geometry.location.lng()
+        // this.location.latitude = result.geometry.location.lat()
+        this.location.longitude = result.geometry.location.lng
+        this.location.latitude = result.geometry.location.lat
         this.location.formattedAddress = result.formatted_address
       }
-      catch {
+      catch (error) {
+        console.log(error)
         this.location.address = previousAddress
         this.location.secondaryAddress = previousSecondaryAddress
       }

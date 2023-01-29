@@ -89,9 +89,11 @@ export default class ReviewDriverDialog extends Dialog {
 
   setRating = (index: number, value: number) => {
     this.ratings[index].value = value
+    window.detector.detectChanges()
   }
 
   async submit() {
+    window.detector.detectChanges()
     try {
       await trips.reviewTrip(
         this.props.trip.id,

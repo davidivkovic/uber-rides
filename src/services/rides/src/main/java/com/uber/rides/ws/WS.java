@@ -66,8 +66,11 @@ class WSConfig implements WebSocketConfigurer {
                     Claims jwt = JWT.parseJWT(token);
                     if (jwt.getSubject() == null) return false;
 
+                    var isSim = request.getServletRequest().getParameter("sim");
+
                     attributes.put(USER_ID, Long.parseLong(jwt.getSubject()));
                     attributes.put(USER_ROLE, jwt.get(JWT.ROLE_CLAIM, String.class));
+                    attributes.put("IS_SIM", isSim != null && isSim.equals("true"));
                     
                     return true;
                 }
@@ -181,14 +184,16 @@ public class WS extends TextWebSocketHandler {
         var userData = store.get((Long) session.getAttributes().get(USER_ID));
         if (userData != null && userData.session.isOpen()) {
             try { userData.session.sendMessage(message); }
-            catch (IOException e) { /* Nothing special */ }
+            catch (IOException e) { 
+                logger.warn("Could not send message to user {}", userData.getUser().getId());
+            }
         }
     }
 
     public void sendMessageToUser(Long userId, OutboundMessage message) {
         var data = store.get(userId);
-        if (data == null) return;
-        try { synchronized (data) { sendMessage(data.session, message.serialize()); } }
+        if (data == null || data.session == null) return;
+        try { synchronized (data.session) { sendMessage(data.session, message.serialize()); } }
         catch (JsonProcessingException e) { 
             logger.error("Could not serialize message of type {}", message.getClass()); 
         }
@@ -196,8 +201,8 @@ public class WS extends TextWebSocketHandler {
 
     public void sendMessageToUser(Long userId, String message) {
         var data = store.get(userId);
-        if (data != null) {
-            synchronized (data) { sendMessage(data.session, message); }
+        if (data != null && data.session != null) {
+            synchronized (data.session) { sendMessage(data.session, message); }
         }
     }
 

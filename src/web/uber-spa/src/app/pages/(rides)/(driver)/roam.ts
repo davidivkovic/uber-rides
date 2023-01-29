@@ -55,9 +55,7 @@ import CancelTripDialog from './components/cancelTripDialog'
 })
 export default class Roam {
 
-  constructor() {
-    // dialogStore.openDialog(CancelTripDialog, {}, () => { })
-  }
+  constructor() { }
 
   userStore = userStore
 

@@ -57,9 +57,33 @@ const preview = async (data: {
   throw new Error(await response.text())
 }
 
+const geocode = async (data: {
+  placeId?: string
+  address?: string
+  location?: google.maps.LatLng
+}) => {
+  const lat = data.location?.lat()
+  const lng = data.location?.lng()
+  const response = await fetch(
+    basePath + '/geocode',
+    {
+      method: 'POST',
+      body: JSON.stringify({
+        placeId: data.placeId,
+        address: data.address,
+        lat,
+        lng
+      })
+    }
+  )
+  if (response.ok) return await response.json()
+  throw new Error(await response.text())
+}
+
 export default {
   favorites,
   createFavorite,
   removeFavorite,
-  preview
+  preview,
+  geocode
 }

@@ -32,10 +32,10 @@ class RidesStore {
   }
 
   @action
-  setMapElements() {
+  setMapElements(name = 'pickup') {
     this.mapElements = {
-      pickupPolyline: polylines.find((p: any) => p.name === 'pickup'),
-      pickupMarkers: markers.filter((m: any) => m.name === 'pickup'),
+      pickupPolyline: polylines.find((p: any) => p.name === name),
+      pickupMarkers: markers.filter((m: any) => m.name === name),
       pickupInfoWindows: []
     }
   }

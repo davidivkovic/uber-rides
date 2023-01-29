@@ -1,5 +1,6 @@
 package com.uber.rides.ws.rider;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -10,10 +11,13 @@ import com.google.maps.model.DirectionsResult;
 
 import org.springframework.web.socket.WebSocketSession;
 
+import com.uber.rides.model.Trip;
+import com.uber.rides.dto.user.UserDTO;
 import com.uber.rides.model.Car;
 import com.uber.rides.model.User;
 import com.uber.rides.model.User.Roles;
 import com.uber.rides.ws.UserData;
+import com.uber.rides.ws.rider.messages.out.TripInviteUpdate;
 
 @Getter
 @Setter
@@ -30,6 +34,28 @@ public class RiderData extends UserData {
     @Override
     public String getRole() {
         return Roles.RIDER;
+    }
+
+    @Override
+    public void onDisconnected() {
+        if (user.getCurrentTrip() != null 
+            && (user.getCurrentTrip().getStatus() == Trip.Status.BUILDING || 
+                user.getCurrentTrip().getStatus() == Trip.Status.CANCELLED 
+            )) {
+            user.getCurrentTrip().getRiders().forEach(rider -> {
+                ws.sendMessageToUser(
+                    rider.getId(),
+                    new TripInviteUpdate(
+                        UserDTO.builder().id(rider.getId()).build(),
+                        TripInviteUpdate.Status.REMOVED,
+                        new HashMap<>()
+                    )
+                );
+                rider.setCurrentTrip(null);
+            });
+            user.setCurrentTrip(null);
+        }
+        super.onDisconnected();
     }
     
 }

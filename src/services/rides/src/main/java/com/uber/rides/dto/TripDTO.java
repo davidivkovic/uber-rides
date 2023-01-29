@@ -6,6 +6,8 @@ import java.util.List;
 import lombok.Getter;
 import lombok.Setter;
 
+import com.google.maps.model.DirectionsResult;
+
 import com.uber.rides.model.Car;
 import com.uber.rides.model.Route;
 import com.uber.rides.model.Trip.Status;
@@ -42,5 +44,7 @@ public class TripDTO {
     
     double distanceInMeters;
     double durationInSeconds;
+
+    DirectionsResult pickupDirections;
     
 }

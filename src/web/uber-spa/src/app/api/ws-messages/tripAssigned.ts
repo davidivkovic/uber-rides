@@ -1,11 +1,13 @@
 import dayjs from 'dayjs'
 import utc from 'dayjs/plugin/utc'
+import tz from 'dayjs/plugin/timezone'
 
 import { createInfoWindow, createMarker, createPolyline, removeAllElements } from '@app/api/google-maps'
 import { notificationStore, userStore } from '@app/stores'
 import { ridesStore } from '@app/stores/ridesStore'
 
 dayjs.extend(utc)
+dayjs.extend(tz)
 
 const tripAssignedAudio = new Audio('/assets/sounds/trip_assigned.m4r')
 const tripNotificationAudio = new Audio('/assets/sounds/payment_success.mp4')
@@ -18,7 +20,7 @@ export default async (message: { trip: any, directions: any, driverDuration: num
       ridesStore.setMapElements()
       ridesStore.pages?.lookingPage?.cleanUp?.()
       await window.router.navigate(['/'])
-      const scheduledAt = dayjs.utc(message.trip.scheduledAt)
+      const scheduledAt = dayjs.utc(message.trip.scheduledAt).tz('Europe/Belgrade')
       if (userStore.isDriver) {
         notificationStore.show(
           'You have been assigned a scheduled ride for '

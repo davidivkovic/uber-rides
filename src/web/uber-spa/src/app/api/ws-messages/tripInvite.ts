@@ -1,12 +1,17 @@
+import dayjs from 'dayjs'
+import utc from 'dayjs/plugin/utc'
+import tz from 'dayjs/plugin/timezone'
 import { Component } from '@angular/core'
 import { CurrencyPipe, NgIf } from '@angular/common'
-import dayjs from 'dayjs'
 import { Dialog } from '@app/components/ui/dialog'
 import { computed, formatDistance, formatDuration } from '@app/utils'
 import { dialogStore, ridesStore } from '@app/stores'
 import { OutboundMessages } from './messages'
 import { send } from '../ws'
 import { createInfoWindow, createMarker, createPolyline, removeAllElements } from '../google-maps'
+
+dayjs.extend(utc)
+dayjs.extend(tz)
 
 export default (message: { inviter: any, trip: any }) => {
   dialogStore.openDialog(
@@ -23,7 +28,7 @@ export default (message: { inviter: any, trip: any }) => {
         message.trip.riders.forEach((passenger: any) => passenger.accepted = true)
         const stops = [message.trip.route.start, ...message.trip.route.stops]
         removeAllElements()
-        createPolyline(message.trip.route.encodedPolyline, '#000')
+        // createPolyline(message.trip.route.encodedPolyline, '#000')
         stops.map((stop, index) => {
           return createMarker(stop.latitude, stop.longitude, index === stops.length - 1)
         })
@@ -133,7 +138,7 @@ export class TripInviteDialog extends Dialog {
     () => this.props.trip.scheduled,
     () => {
       if (this.props.trip?.scheduledAt) {
-        return dayjs(this.props.trip.scheduledAt).format('HH:mm')
+        return dayjs.utc(this.props.trip.scheduledAt).tz('Europe/Belgrade').format('HH:mm')
       }
       return dayjs().format('HH:mm')
     }

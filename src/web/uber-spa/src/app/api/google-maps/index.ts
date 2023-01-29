@@ -55,6 +55,12 @@ const initMap = () => {
   geocoder = new google.maps.Geocoder()
   directions = new google.maps.DirectionsService()
 
+  // geocoder.geocode({ location: { lat: 40.7459, lng: -73.99999 } }, (results, status) => {
+  //   if (status === 'OK') {
+  //     console.log(results)
+  //   }
+  // })
+
   subscribers.forEach((fn: any) => fn())
   subscribers = []
 }
@@ -71,6 +77,7 @@ const createMarker = (
       lat: latitude,
       lng: longitude
     },
+    zIndex: 1,
     icon: {
       url: '/assets/images/' + (!isTerminal
         ? 'map-marker-location.png'
@@ -112,6 +119,7 @@ const createPolyline = (
     strokeOpacity: 0.7,
     strokeWeight: 4,
     clickable: false,
+    zIndex: 1
   });
   (polyline as any).name = name
   polylines.push(polyline)
@@ -121,11 +129,7 @@ const createPolyline = (
       path,
       color,
       name,
-      canSerialize: () => {
-        const res = polyline.getMap() != null && polyline.getMap() === map
-        console.log(res, polyline.getMap(), map, polyline.getMap() === map, name)
-        return res
-      }
+      canSerialize: () => polyline.getMap() != null && polyline.getMap() === map
     })
     serializeState()
   }
@@ -147,6 +151,8 @@ const createInfoWindow = (
       lat: latitude,
       lng: longitude
     },
+    disableAutoPan: true,
+    zIndex: 1,
     content: /*html*/`
       <div id="gm-iw-c-${index}" class="flex items-center px-3 py-2 space-x-2 cursor-pointer rounded">
         <span class="text-[15px] select-none">${verb}: ${formatAddress(address)}</span>
