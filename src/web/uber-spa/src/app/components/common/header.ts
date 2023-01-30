@@ -72,8 +72,7 @@ export default class Header {
 
   logout = async () => {
     await window.router.navigate(['/auth/login'])
-    userStore.removeUser()
-    ridesStore.setState(store => store.data = {})
+    localStorage.clear()
     location.reload()
   }
 

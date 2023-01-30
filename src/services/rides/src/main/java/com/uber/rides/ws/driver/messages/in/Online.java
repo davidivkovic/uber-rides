@@ -16,4 +16,5 @@ public class Online implements InboundMessage<DriverData> {
     public void handle(DriverData sender) {
         sender.setOnline(isOnline);
     }
+    
 }

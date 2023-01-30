@@ -182,6 +182,15 @@ export default class ChooseRide {
   defaultPaymentMethod = null
   methodLogos = methodLogos
 
+  cleanUp() {
+    this.lookingForRide = false
+    clearInterval(this.lookingInterval)
+    this.lookingInterval = null
+    this.lookingDuration = 1
+    this.lookingLoading = false
+    this.uberFoundText = 'Uber found. Please wait...'
+  }
+
   constructor(public location: Location, public router: Router, public detector: ChangeDetectorRef) {
     if (!ridesStore.data?.directions) {
       router.navigate(['/looking'])

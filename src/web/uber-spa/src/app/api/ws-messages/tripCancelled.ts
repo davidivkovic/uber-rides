@@ -15,6 +15,7 @@ export default async (message: {
     })
     removeAllElements()
     ridesStore.pages?.lookingPage?.cleanUp?.()
+    ridesStore.pages?.chooseRidesPage?.cleanUp?.()
     window.router.navigate(['/looking'])
     window.detector.detectChanges()
   })
@@ -35,7 +36,7 @@ export default async (message: {
         <h3 class="text-2xl text-center">{{ props.refundAmount | currency:'USD' }}</h3>
       </div>
       <p class="text-sm text-neutral-600 text-center">
-        The driver has cited {{ props.reason }} as the reason for the cancellation
+        The driver has cited <span class="italic">"{{ props.reason }}"</span> as the reason for the cancellation
       </p>
       <button (click)="close()" class="primary w-full mt-4">Continue</button>
     </div>

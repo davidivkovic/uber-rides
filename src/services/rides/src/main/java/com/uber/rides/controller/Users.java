@@ -204,6 +204,12 @@ public class Users extends Controller {
         user.setBlocked(blocked);
         user.setBlockReason(blocked ? blockReason : null);
 
+        var userData = store.get(userId);
+        if (userData != null && userData.getUser() != null) {
+            userData.getUser().setBlocked(blocked);
+            userData.getUser().setBlockReason(blocked ? blockReason : null);
+        }
+
         return ok();
     }
 

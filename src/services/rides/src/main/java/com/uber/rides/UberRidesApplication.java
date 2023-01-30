@@ -15,6 +15,7 @@ import org.springframework.scheduling.annotation.EnableAsync;
 public class UberRidesApplication {
 
     public static void main(String[] args) {
+        System.setProperty("org.apache.tomcat.websocket.DEFAULT_BUFFER_SIZE", "65536");
         SpringApplication.run(UberRidesApplication.class, args);
     }
 

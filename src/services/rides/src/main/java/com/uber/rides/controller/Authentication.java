@@ -104,6 +104,9 @@ public class Authentication extends Controller {
             if (!user.isEmailConfirmed()) {
                 return badRequest("This email address has not been confirmed yet.");
             }
+            if (user.isBlocked()){
+                return badRequest(BLOCKED);
+            }
 
             return new SignInResponse(
                 mapper.map(user, UserDTO.class),
@@ -136,6 +139,9 @@ public class Authentication extends Controller {
                     .role(Roles.RIDER)
                     .build();
                 db.persist(user);
+            }
+            else if (user.isBlocked()){
+                return badRequest(BLOCKED);
             }
             return new SignInResponse(
                 mapper.map(user, UserDTO.class),
@@ -184,6 +190,9 @@ public class Authentication extends Controller {
                     .role(Roles.RIDER)
                     .build();
                 db.persist(user);
+            }
+            else if (user.isBlocked()){
+                return badRequest(BLOCKED);
             }
 
             return new SignInResponse(

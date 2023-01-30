@@ -156,6 +156,7 @@ public class WS extends TextWebSocketHandler {
     }
 
     @Override
+    @Transactional
     public void afterConnectionClosed(WebSocketSession session, CloseStatus status) {
         var userData = store.get((Long) session.getAttributes().get(USER_ID));
         if (userData != null) {
@@ -169,8 +170,6 @@ public class WS extends TextWebSocketHandler {
             //     Instant.now().plusSeconds(300)
             // );
         }
-        // try { session.close(); } 
-        // catch (IOException e) { /* Ignore */}
         try { super.afterConnectionClosed(session, status); }
         catch (Exception e) { /* Ignore */ }
     }

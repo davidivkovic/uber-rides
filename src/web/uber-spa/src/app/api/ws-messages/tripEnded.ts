@@ -26,6 +26,7 @@ export default (message: {}) => {
           store.favoriteRoutePicked = null
         })
         ridesStore.pages?.lookingPage?.cleanUp?.()
+        ridesStore.pages?.chooseRidesPage?.cleanUp?.()
         window.router.navigate(['/looking'])
       })
   }

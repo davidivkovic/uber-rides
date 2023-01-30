@@ -19,8 +19,8 @@ import static com.uber.rides.util.Utils.*;
 @Setter
 public abstract class UserData {
 
-    static int waitForMilliseconds = 2000;
-    static int bufferSizeBytes = 4096;
+    static int waitForMilliseconds = 5000;
+    static int bufferSizeBytes = 65536;
 
     public User user;
     public WebSocketSession session;
@@ -50,16 +50,20 @@ public abstract class UserData {
     }
 
     public void onConnected() {
-        this.isOnline = true;
         var trip = user.getCurrentTrip();
         ws.sendMessageToUser(
             user.getId(), 
-            new SyncStatus(trip != null ? mapper.map(trip, TripDTO.class) : null, isOnline)
+            new SyncStatus(
+                trip != null ? mapper.map(trip, TripDTO.class) : null, 
+                isOnline
+            )
         );
     }
 
     public void onDisconnected() {
-        this.isOnline = false;
+        if (!user.getRole().equals(User.Roles.DRIVER)) {
+            this.isOnline = false;
+        }
         this.isSim = true;
     }
 

@@ -28,7 +28,7 @@ const markerTitle = (registration: string, type: string) => `${registration} (${
 const findMarker = (title: string) => carMarkers.find(m => m.getTitle() === title)
 
 const findDriverLocation = (driver: any) => {
-  return findMarker(markerTitle(driver.car.registration, driver.car.type.carType)).getPosition()
+  return findMarker(markerTitle(driver.car.registration, driver.car.type.carType))?.getPosition()
 }
 
 const centerOnMarker = (marker: google.maps.Marker) => {
@@ -38,6 +38,8 @@ const centerOnMarker = (marker: google.maps.Marker) => {
 }
 
 const centerOnDriver = (driver: any) => {
+  const location = findDriverLocation(driver)
+  if (!location) return
   map.panTo(findDriverLocation(driver))
   map.setZoom(17)
   map.panBy(-180, 0)
@@ -157,8 +159,8 @@ export default (message: Message) => {
     shortenPickupPolyline(position, message.driverDistance, message.driverDuration)
     // getMarkerDom(message.registration)?.classList?.add
     ridesStore.setState(store => store.data.currentLocation = position)
-    map.panTo(position)
-    map.panBy(-180, 0)
+    map?.panTo(position)
+    map?.panBy(-180, 0)
   }
 }
 

@@ -192,6 +192,7 @@ public class Trips extends Controller {
         context.db().persist(review);
 
         trip.getRatings().add(review);
+        trip.getDriver().rate(review.getRating());
 
         return ok();
 

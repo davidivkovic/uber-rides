@@ -21,5 +21,11 @@ public class AdminData extends UserData {
     public String getRole() {
         return Roles.ADMIN;
     }
+
+    @Override
+    public void onConnected() {
+        setOnline(true);
+        super.onConnected();
+    }
     
 }

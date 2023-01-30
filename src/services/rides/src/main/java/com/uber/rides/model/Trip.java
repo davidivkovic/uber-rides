@@ -215,12 +215,14 @@ public class Trip {
         }
 
 
+        // TODO: Add database call for cheduled trips, load scheduled trips from db to driver
         public DriverData getMatchingDriver(Trip trip) {
             return store
                 .drivers
                 .values()
                 .stream()
                 .filter(DriverData::isOnline)
+                .filter(d -> !d.getUser().isFatigued())
                 .filter(d -> d.getUser().getCar().getType().getCarType().equals(trip.getCar().getType().getCarType()))
                 .filter(driverData -> {
                     if (trip.isScheduled()) {
@@ -293,6 +295,10 @@ public class Trip {
     
             if (trip.isScheduled()) {
                 driver.getUser().getScheduledTrips().add(trip);
+                trip.getRiders().forEach(r -> {
+                    r.setCurrentTrip(null);
+                    r.getScheduledTrips().add(trip);
+                });
                 scheduler.schedule(() -> scheduleRide(trip, driver), trip.getScheduledAt().toInstant(ZoneOffset.UTC));
                 var reminder = new TripReminder(
                     trip.getScheduledAt(), 

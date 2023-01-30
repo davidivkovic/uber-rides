@@ -126,6 +126,7 @@ public class Payments extends Controller {
         user.addPaymentMethod(paypal);
         if(user.getDefaultPaymentMethod() == null || setDefault) {
             user.setDefaultPaymentMethod(paypal);
+            user.setDefaultPmt(PaymentMethod.Type.PAYPAL);
         }
         
         context.db().persist(paypal);
@@ -162,9 +163,11 @@ public class Payments extends Controller {
         if (user.getDefaultPaymentMethod() != null && user.getDefaultPaymentMethod().getId().equals(methodId)) {
             if (user.getPaymentMethods().isEmpty()) {
                 user.setDefaultPaymentMethod(null);
+                user.setDefaultPmt(PaymentMethod.Type.NONE);
             }
             else {
                 user.setDefaultPaymentMethod(user.getPaymentMethods().get(0));
+                user.setDefaultPmt(user.getPaymentMethods().get(0).getType());
             }
         }
 
@@ -216,6 +219,7 @@ public class Payments extends Controller {
         user.getPaymentMethods().add(card);
         if(user.getDefaultPaymentMethod() == null || request.isSetDefault()) {
             user.setDefaultPaymentMethod(card);
+            user.setDefaultPmt(PaymentMethod.Type.CARD);
         }
 
         context.db().persist(card);
@@ -251,6 +255,7 @@ public class Payments extends Controller {
         }
 
         user.setDefaultPaymentMethod(newDefault);
+        user.setDefaultPmt(newDefault.getType());
         context.db().merge(user);
         return ok();
     }

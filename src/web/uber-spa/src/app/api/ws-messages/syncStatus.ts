@@ -3,6 +3,12 @@ import { removeAllElements } from '../google-maps'
 
 export default (message: { trip: any, isOnline: boolean }) => {
   userStore.setIsOnline(message.isOnline)
+  if (
+    userStore.isAdmin
+    || location.pathname.startsWith('/profile')
+    || location.pathname.startsWith('/live-support')
+    || location.pathname.startsWith('/chat')
+  ) return
   if (!message?.trip?.ownerId) {
     removeAllElements()
     ridesStore.setState(store => {
@@ -15,8 +21,7 @@ export default (message: { trip: any, isOnline: boolean }) => {
       store.data.trip = message.trip
     })
   }
-  // setTimeout(() => {
-  //   window.router.navigate(['/'])
-  //   window.detector.detectChanges()
-  // }, 500)
+  setTimeout(() => {
+    window.router.navigate(['/']).then(() => window.detector.detectChanges())
+  }, 500)
 }

@@ -11,7 +11,6 @@ import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledFuture;
 import java.util.function.Function;
-import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
@@ -54,6 +53,7 @@ import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketHttpHeaders;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.client.standard.StandardWebSocketClient;
+import org.springframework.web.socket.handler.ConcurrentWebSocketSessionDecorator;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 
 import com.uber.rides.model.*;
@@ -138,7 +138,7 @@ public class DriverSimulator {
             
             for (int i = 0; i < numberOfDrivers; i++) {
                 var driver = drivers.get(i);
-                var session = connectToWs(driver);
+                var session = connectToWs(driver); // TODO: Insert a newly registered driver into the sim
                 if (session != null) runTask(driver);
             }
             return true;
@@ -199,7 +199,9 @@ public class DriverSimulator {
             var durationStep = duration / points.size();
             var pointsIterator = points.listIterator();    
             var task = scheduler.scheduleAtFixedRate(
-                () -> updateLocation(pointsIterator, duration, durationStep, driver, rerunOnEnd),
+                () -> {
+                    updateLocation(pointsIterator, duration, durationStep, driver, rerunOnEnd);
+                },
                 java.time.Duration.ofSeconds(5 / SIM_SPEED)
             );
             tasks.put(driver.getId(), task);
@@ -223,7 +225,10 @@ public class DriverSimulator {
     ) {
         try {
             var sim = sims.get(driver.getId());
-            if (sim == null || sim.session == null) return;
+            if (sim == null || sim.session == null || !sim.session.isOpen()) {
+                logger.warn("Simulator can't move driver {} because the session is closed.", driver.getEmail());
+                return;
+            }
             synchronized (sim.session) {
                 if (!locations.hasNext()) {
                     if (driver.getCurrentTrip() != null && rerunOnEnd) {
@@ -285,9 +290,13 @@ public class DriverSimulator {
             )
             .get();
             if (session != null) {
-                sims.put(driver.getId(), new Sim(session, 0));
+                var concurrentSession = new ConcurrentWebSocketSessionDecorator(session, 5000, 65536);
+                sims.put(driver.getId(), new Sim(concurrentSession, 0));
+                logger.info("Started simulation for driver: {}", driver.getEmail());
             }
-            logger.info("Started simulation for driver: {}", driver.getEmail());
+            else {
+                logger.error("Failed to start simulation for driver: {}. Handshake failed", driver.getEmail());
+            }
             return session;
         } catch (Exception e) {
             logger.error("Failed to start simulation for driver: {}", driver.getEmail()); 

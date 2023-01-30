@@ -83,14 +83,17 @@ import PassengersStatus from '@app/components/rides/passengersStatus'
                 <div>
                   <div class="flex items-end gap-x-2">
                     <div class="h-8 w-3 mb-px bg-[#eeeeee] rounded flex flex-col overflow-clip">
-                      <div class="h-[55%] w-full mt-auto rounded bg-green-500 flex items-center justify-center relative">
+                      <div 
+                        [style.height]="driveTimeHeight" 
+                        class="w-full mt-auto rounded bg-green-500 flex items-center justify-center relative"
+                      >
                         <svg viewBox="0 0 20 20" fill="currentColor" class="absolute w-2 h-2 text-white">
                           <path d="M11.983 1.907a.75.75 0 00-1.292-.657l-8.5 9.5A.75.75 0 002.75 12h6.572l-1.305 6.093a.75.75 0 001.292.657l8.5-9.5A.75.75 0 0017.25 8h-6.572l1.305-6.093z" />
                         </svg>
                       </div>
                     </div>
                     <div>
-                      <h3 class="text-[15px] leading-4 tracking-wide">2 Hours</h3>
+                      <h3 class="text-[15px] leading-4 tracking-wide">{{ driveTime }} {{ driveTime === 1 ? 'Hour' : 'Hours' }}</h3>
                       <p class="text-[13px] text-zinc-500 -mb-0.5">Drive time left</p>
                     </div>
                   </div>
@@ -135,6 +138,8 @@ export default class Index {
   drivers = []
   inputFocused = false
   loading = false
+  driveTime = 0
+  driveTimeHeight = '0%'
 
   constructor() {
     cars.pollLiveLocations()
@@ -181,6 +186,8 @@ export default class Index {
     if (!driverId) return
     try {
       const trip = await trips.getCurrentTrip(driverId)
+      this.driveTime = Math.round((480 - trip.driver.minutesFatigue) / 60)
+      this.driveTimeHeight = (480 - trip.driver.minutesFatigue) / 480 * 100 + '%'
       ridesStore.setState(store => {
         store.data.trip = trip
         if (trip.route) store.data.trip.stops = [trip.route.start, ...trip.route.stops]

@@ -80,10 +80,12 @@ public class User implements UserDetails {
     boolean blocked;
     boolean completedRegistration;
     double rating;
+    int numberOfRatings;
     OTP confirmationCode;
     String customerId;
-    int minutesFatigue;
+    double minutesFatigue;
     LocalDateTime fatigueStart;
+    PaymentMethod.Type defaultPmt;
 
     @OneToOne(fetch = FetchType.LAZY) 
     @OnDelete(action = OnDeleteAction.NO_ACTION) UserUpdateRequest updateRequest;
@@ -99,6 +101,35 @@ public class User implements UserDetails {
 
     @Transient Trip currentTrip;
     @Transient @Builder.Default List<Trip> scheduledTrips = new ArrayList<>();
+
+    public void rate(double rating) {
+        this.rating = (this.rating * numberOfRatings + rating) / ++numberOfRatings;
+    }
+
+    public boolean isFatigued() {
+        return minutesFatigue >= 480;
+    }
+
+    public void addFatigue(double seconds) {
+        if (isFatigued()) fatigueStart = LocalDateTime.now();
+        minutesFatigue += seconds / 60;
+    }
+
+    public LocalDateTime getFatigueEnd() {
+        return fatigueStart == null 
+        ? LocalDateTime.now()
+        : fatigueStart.plusMinutes(960);
+    }
+
+    public boolean hasFatigueEnded() {
+        return fatigueStart == null
+        ? true 
+        : getFatigueEnd().isBefore(LocalDateTime.now());
+    }
+
+    public void resetFatigue() {
+        minutesFatigue = 0;
+    }
 
     public void addPaymentMethod(PaymentMethod method) {
         paymentMethods.add(method);
@@ -129,28 +160,10 @@ public class User implements UserDetails {
         return List.of(new SimpleGrantedAuthority(role));
     }
 
-    @Override
-    public String getUsername() {
-        return email;
-    }
+    @Override public String getUsername() { return email; }
+    @Override public boolean isAccountNonExpired() { return true; }
+    @Override public boolean isAccountNonLocked() { return true; }
+    @Override public boolean isCredentialsNonExpired() { return true; }
+    @Override public boolean isEnabled() { return true; }
 
-    @Override
-    public boolean isAccountNonExpired() {
-        return true;
-    }
-
-    @Override
-    public boolean isAccountNonLocked() {
-        return true;
-    }
-
-    @Override
-    public boolean isCredentialsNonExpired() {
-        return true;
-    }
-
-    @Override
-    public boolean isEnabled() {
-        return true;
-    }
 }

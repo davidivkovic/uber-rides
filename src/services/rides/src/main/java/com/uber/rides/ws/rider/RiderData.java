@@ -37,6 +37,12 @@ public class RiderData extends UserData {
     }
 
     @Override
+    public void onConnected() {
+        setOnline(true);
+        super.onConnected();
+    }
+
+    @Override
     public void onDisconnected() {
         if (user.getCurrentTrip() != null 
             && (user.getCurrentTrip().getStatus() == Trip.Status.BUILDING || 

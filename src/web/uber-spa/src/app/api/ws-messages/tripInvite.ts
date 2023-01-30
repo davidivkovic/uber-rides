@@ -9,6 +9,7 @@ import { dialogStore, ridesStore } from '@app/stores'
 import { OutboundMessages } from './messages'
 import { send } from '../ws'
 import { createInfoWindow, createMarker, createPolyline, removeAllElements } from '../google-maps'
+import { PFP } from '@app/utils'
 
 dayjs.extend(utc)
 dayjs.extend(tz)
@@ -50,14 +51,15 @@ export default (message: { inviter: any, trip: any }) => {
 @Component({
   standalone: true,
   selector: 'TripInviteDialog',
-  imports: [NgIf, CurrencyPipe],
+  imports: [NgIf, CurrencyPipe, PFP],
   template: `
     <div class="bg-white w-[360px] pointer-events-auto space-y-2 max-w-md">
       <div class="flex items-center space-x-3 mb-4">
-        <img [src]="props.inviter.profilePicture" class="w-10 h-10 mt-1.5 rounded-full object-cover"/>
+        <img [src]="props.inviter.profilePicture | PFP" class="w-10 h-10 mt-1.5 rounded-full object-cover"/>
         <div>
           <h3 class="tracking-wide text-lg">{{ props.inviter.firstName }} {{ props.inviter.lastName }}</h3>
-          <p class="leading-3 text-[15px] text-zinc-900">Invited you on a ride</p>
+          <p *ngIf="props.scheduleSuccess" class="leading-3 text-[15px] text-zinc-900">Trip succesfully scheduled</p>
+          <p *ngIf="!props.scheduleSuccess" class="leading-3 text-[15px] text-zinc-900">Invited you on a ride</p>
         </div>
         <h3 class="flex-1 text-right text-lg text-zinc-700 tracking-wide">{{ formattedTime() }}</h3>
       </div>
@@ -114,8 +116,30 @@ export default (message: { inviter: any, trip: any }) => {
         </div>
       </div>
       <form method="dialog" class="">
-        <button type="button" (click)="close('accept')" class="primary block w-full mt-4">Accept</button>
-        <button type="button" (click)="close('decline')" class="secondary block w-full py-2.5 mt-1">Decline</button>
+        <button 
+          type="button" 
+          *ngIf="props.scheduleSuccess" 
+          (click)="close()" 
+          class="primary block w-full mt-4"
+        >
+          Finish
+        </button>
+        <button 
+          type="button" 
+          *ngIf="!props.scheduleSuccess" 
+          (click)="close('accept')" 
+          class="primary block w-full mt-4"
+        >
+          Accept
+        </button>
+        <button 
+          type="button" 
+          *ngIf="!props.scheduleSuccess" 
+          (click)="close('decline')" 
+          class="secondary block w-full py-2.5 mt-1"
+        >
+          Decline
+        </button>
       </form>
     </div>
   `
@@ -140,7 +164,8 @@ export class TripInviteDialog extends Dialog {
       if (this.props.trip?.scheduledAt) {
         return dayjs.utc(this.props.trip.scheduledAt).tz('Europe/Belgrade').format('HH:mm')
       }
-      return dayjs().format('HH:mm')
+      // return dayjs().format('HH:mm')
+      return 'Just Now'
     }
   )
 }

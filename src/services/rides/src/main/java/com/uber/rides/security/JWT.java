@@ -10,6 +10,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.springframework.stereotype.Component;
 import org.springframework.web.method.HandlerMethod;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.annotation.Secured;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -25,6 +26,7 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtParser;
 
 import com.uber.rides.model.User;
+import com.uber.rides.ws.Store;
 
 @Component
 public class JWT {
@@ -65,6 +67,7 @@ public class JWT {
     @Component
     public class Interceptor implements HandlerInterceptor {
 
+        @Autowired Store store;
         Logger log = LoggerFactory.getLogger(JWT.Interceptor.class);
 
         @Override
@@ -109,6 +112,11 @@ public class JWT {
 
             var jwt = parseJWT(token);
             if (jwt.getSubject() == null) return false;
+
+            var userData = store.get(Long.parseLong(jwt.getSubject()));
+            if (userData != null && userData.getUser() != null && userData.getUser().isBlocked()) {
+                return false;
+            } 
             
             SecurityContextHolder
                 .getContext()

@@ -33,13 +33,14 @@ import static com.uber.rides.util.Utils.gateway;
 public class PaymentMethod {
 
     public enum Type {
-        CARD, PAYPAL;
+        NONE, CARD, PAYPAL;
 
         @Override
         public String toString() {
             switch(this) {
                 case CARD: return "Credit or debit card";
                 case PAYPAL: return "PayPal";
+                case NONE: return "None";
                 default: return "";
               }
         }

@@ -207,7 +207,7 @@ export default class Passengers {
       (curr, old) => {
         if (!curr) return
         setTimeout(() => this.uberFoundText = 'Processing payment...', 1500)
-        setTimeout(() => this.pickupPending = true, 3000)
+        // setTimeout(() => this.pickupPending = true, 3000)
       }
     )
   }

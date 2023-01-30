@@ -16,7 +16,8 @@ const handlers = {
   [InboundMessages.TRIP_CANCELLED]: () => import('./ws-messages/tripCancelled'),
   [InboundMessages.MESSAGE_RECEIVED]: () => import('./ws-messages/messageReceived'),
   [InboundMessages.TRIP_REMINDER]: () => import('./ws-messages/tripReminder'),
-  [InboundMessages.SYNC_STATUS]: () => import('./ws-messages/syncStatus')
+  [InboundMessages.SYNC_STATUS]: () => import('./ws-messages/syncStatus'),
+  [InboundMessages.FATIGUE]: () => import('./ws-messages/fatigue')
 }
 
 const isConnected = () => ws?.OPEN

@@ -3,8 +3,9 @@ import utc from 'dayjs/plugin/utc'
 import tz from 'dayjs/plugin/timezone'
 
 import { createInfoWindow, createMarker, createPolyline, removeAllElements } from '@app/api/google-maps'
-import { notificationStore, userStore } from '@app/stores'
+import { dialogStore, notificationStore, userStore } from '@app/stores'
 import { ridesStore } from '@app/stores/ridesStore'
+import { TripInviteDialog } from './tripInvite'
 
 dayjs.extend(utc)
 dayjs.extend(tz)
@@ -19,9 +20,10 @@ export default async (message: { trip: any, directions: any, driverDuration: num
       removeAllElements()
       ridesStore.setMapElements()
       ridesStore.pages?.lookingPage?.cleanUp?.()
-      await window.router.navigate(['/'])
+      ridesStore.pages?.chooseRidesPage?.cleanUp?.()
       const scheduledAt = dayjs.utc(message.trip.scheduledAt).tz('Europe/Belgrade')
       if (userStore.isDriver) {
+        await window.router.navigate(['/'])
         notificationStore.show(
           'You have been assigned a scheduled ride for '
           + (dayjs().isSame(scheduledAt, 'day') ? 'today' : 'tomorrow')
@@ -32,7 +34,19 @@ export default async (message: { trip: any, directions: any, driverDuration: num
       }
       else {
         ridesStore.setState(store => store.data = {})
-        notificationStore.show('ok at ' + scheduledAt.format('HH:mm'))// TODO: Replace with a dialog for rider
+        await window.router.navigate(['/'])
+        dialogStore.openDialog(
+          TripInviteDialog,
+          {
+            noCloseButton: true,
+            trip: message.trip,
+            inviter: message.trip.riders.find((rider: any) => rider.id === message.trip.ownerId),
+            scheduleSuccess: true
+          },
+          async status => { }
+        )
+        window.detector.detectChanges()
+        // notificationStore.show('ok at ' + scheduledAt.format('HH:mm'))// TODO: Replace with a dialog for rider
       }
       return
     }

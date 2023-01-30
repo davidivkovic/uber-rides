@@ -22,6 +22,12 @@ public class UpdateLocation implements InboundMessage<DriverData> {
 
     @Override
     public void handle(DriverData sender) {
+
+        if (!sender.isOnline()) {
+            setLatitude(0);
+            setLongitude(0);
+            return;
+        }
         
         var car = sender.getUser().getCar();
         if (car == null) return;
@@ -36,6 +42,8 @@ public class UpdateLocation implements InboundMessage<DriverData> {
         sender.setHeading(heading);
         sender.setDuration(getDuration());
         sender.setDistance(getDistance());
+
+        sender.updateFatigue();
 
     }
 

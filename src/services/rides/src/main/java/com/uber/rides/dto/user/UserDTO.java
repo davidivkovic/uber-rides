@@ -9,9 +9,9 @@ import lombok.Setter;
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.*;
 
 import com.uber.rides.model.Car;
+import com.uber.rides.model.PaymentMethod;
 import com.uber.rides.model.User;
 import com.uber.rides.controller.Users;
-import com.uber.rides.dto.TripDTO;
 
 import static com.uber.rides.util.Utils.mapper;
 
@@ -49,9 +49,10 @@ public class UserDTO {
     boolean blocked;
     String blockReason;
     boolean completedRegistration;
+    PaymentMethod.Type defaultPmt;
     Car car;
     double rating;
     boolean online;
-    // TripDTO currentTrip;
+    double minutesFatigue;
 
 }

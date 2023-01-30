@@ -48,6 +48,7 @@ public class Drivers extends Controller {
             return store.drivers
                 .values()
                 .stream()
+                .filter(DriverData::isOnline)
                 .map(DriverData::getUser)
                 .filter(u -> 
                     hasText &&
