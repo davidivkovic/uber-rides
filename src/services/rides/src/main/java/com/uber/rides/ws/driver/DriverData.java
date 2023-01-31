@@ -6,6 +6,7 @@ import javax.persistence.EntityManagerFactory;
 import javax.transaction.Transactional;
 
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import com.google.maps.model.DirectionsResult;
@@ -23,6 +24,7 @@ import com.uber.rides.ws.driver.messages.out.Fatigue;
 
 @Getter
 @Setter
+@NoArgsConstructor
 public class DriverData extends UserData {
 
     public double latitude;

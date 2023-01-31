@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import com.google.maps.model.DirectionsResult;
@@ -21,6 +22,7 @@ import com.uber.rides.ws.rider.messages.out.TripInviteUpdate;
 
 @Getter
 @Setter
+@NoArgsConstructor
 public class RiderData extends UserData {
 
     DirectionsResult directions;

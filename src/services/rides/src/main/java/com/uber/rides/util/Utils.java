@@ -115,7 +115,7 @@ public class Utils {
 
     /* Payment processor */
 
-    public static final BraintreeGateway gateway = new BraintreeGateway(
+    public static BraintreeGateway gateway = new BraintreeGateway(
         Environment.SANDBOX,
         TOKEN,
         PU_KEY,
