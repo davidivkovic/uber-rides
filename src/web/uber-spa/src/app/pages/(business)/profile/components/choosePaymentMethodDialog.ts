@@ -104,11 +104,13 @@ export class PayDialog extends Dialog {
   }
 
   addMethod() {
-    setTimeout(() => this.close(), 1)
     dialogStore.openDialog(
       PaymentMethodDialog,
       { setDefault: true },
-      () => this.props.refetchDefaultMethod()
+      async () => {
+        await Promise.all([this.fetchData(), this.props.refetchDefaultMethod()])
+        window.detector.detectChanges()
+      }
     )
   }
 }

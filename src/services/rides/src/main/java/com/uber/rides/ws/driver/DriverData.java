@@ -10,10 +10,13 @@ import lombok.Setter;
 
 import com.google.maps.model.DirectionsResult;
 
+import com.speedment.jpastreamer.application.JPAStreamer;
+import static com.speedment.jpastreamer.streamconfiguration.StreamConfiguration.*;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.socket.WebSocketSession;
 
-import com.uber.rides.model.User;
+import com.uber.rides.model.*;
 import com.uber.rides.model.User.Roles;
 import com.uber.rides.ws.UserData;
 import com.uber.rides.ws.driver.messages.out.Fatigue;
@@ -33,9 +36,27 @@ public class DriverData extends UserData {
     public DirectionsResult directions;
 
     @Autowired EntityManagerFactory dbFactory;
+    @Autowired JPAStreamer query;
 
     public DriverData(User user, WebSocketSession session) {
         super(user, session);
+    }
+
+    public void loadScheduledTrips() {
+        query.stream(
+            of(User.class)
+            .joining(User$.tripsAsDriver)
+        )
+        .filter(User$.id.equal(user.getId()))
+        .map(User::getTripsAsDriver)
+        .flatMap(t -> t.stream())
+        .filter(Trip$.status.notEqual(Trip.Status.CANCELLED))
+        .filter(Trip$.scheduled.and(Trip$.scheduledAt.greaterOrEqual(LocalDateTime.now())))
+        .forEach(t -> {
+            if (user.getScheduledTrips().stream().noneMatch(st -> st.getId().equals(t.getId()))) {
+                user.getScheduledTrips().add(t);
+            }
+        });
     }
 
     @Override
@@ -43,6 +64,7 @@ public class DriverData extends UserData {
         if (user.isFatigued()) {
             super.setOnline(false);
         }
+        loadScheduledTrips();
         super.onConnected();
         if (user.isFatigued() && user.hasFatigueEnded()) {
             user.resetFatigue();

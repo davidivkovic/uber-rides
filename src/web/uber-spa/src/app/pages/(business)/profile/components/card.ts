@@ -172,7 +172,7 @@ export class NewCard {
         nonce,
         setDefault: this.setDefault
       })
-     
+
       notificationStore.show('New card successfully added.')
       this.onsuccess.emit()
     } catch (error) {

@@ -16,9 +16,11 @@ export default (message: { trip: any, isOnline: boolean }) => {
       store.setMapElements()
     })
   }
-  else {
+  else if (!ridesStore.data.trip) {
     ridesStore.setState(store => {
       store.data.trip = message.trip
+      store.data.pickup.trip = message.trip
+      store.data.tripInProgress = true
     })
   }
   setTimeout(() => {

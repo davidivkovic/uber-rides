@@ -50,11 +50,11 @@ export default async (message: { trip: any, directions: any, driverDuration: num
       }
       return
     }
-    if (message.trip.status === 'SCHEDULED') {
+    if (message.trip.status === 'SCHEDULED' && userStore.isRider) {
       notificationStore.show('The driver is finishing his current ride and will be picking you up shortly.')
       return
     }
-    else if (message.trip.status === 'AWAITING_PICKUP') {
+    else if (message.trip.status === 'AWAITING_PICKUP' && userStore.isRider) {
       notificationStore.show('The driver is now on his way to pick you up.')
     } // All good, the driver is on his way
   }

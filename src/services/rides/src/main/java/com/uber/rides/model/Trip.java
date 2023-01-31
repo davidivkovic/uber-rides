@@ -196,6 +196,9 @@ public class Trip {
             if (driver.getUser().getCurrentTrip() == null) {
                 trip.setStatus(Status.AWAITING_PICKUP);
                 driver.getUser().setCurrentTrip(trip);
+                trip.getRiders().forEach(rider -> {
+                    rider.setCurrentTrip(trip);
+                });
                 var start = trip.getRoute().getStart();
                 pickupDirections = maps.getDirections(
                     driver.latitude, 
@@ -210,8 +213,8 @@ public class Trip {
                 trip.setStatus(Status.SCHEDULED);
             }
             var tripAssigned = new TripAssigned(trip, pickupDirections);
-            trip.getRiders().forEach(r -> ws.sendMessageToUser(r.getId(), tripAssigned)); // SEND, CHECK TRIP_STATUS ON FRONT
-            ws.sendMessageToUser(driver.getUser().getId(), tripAssigned); // SEND, CHECK TRIP_STATUS ON FRONT
+            trip.getRiders().forEach(r -> ws.sendMessageToUser(r.getId(), tripAssigned));
+            ws.sendMessageToUser(driver.getUser().getId(), tripAssigned);
         }
 
 
@@ -292,7 +295,6 @@ public class Trip {
             trip.setPayments(payments.result());
             trip.setStatus(Trip.Status.PAID);
 
-    
             if (trip.isScheduled()) {
                 driver.getUser().getScheduledTrips().add(trip);
                 trip.getRiders().forEach(r -> {
@@ -323,8 +325,8 @@ public class Trip {
             }
     
             var tripAssigned = new TripAssigned(trip, pickupDirections);
-            trip.getRiders().forEach(r -> ws.sendMessageToUser(r.getId(), tripAssigned)); // SEND, CHECK TRIP_STATUS ON FRONT
-            ws.sendMessageToUser(driver.getUser().getId(), tripAssigned); // SEND, CHECK TRIP_STATUS ON FRONT
+            trip.getRiders().forEach(r -> ws.sendMessageToUser(r.getId(), tripAssigned));
+            ws.sendMessageToUser(driver.getUser().getId(), tripAssigned);
             
             return Result.empty();
 

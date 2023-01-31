@@ -65,6 +65,7 @@ public class Routes extends Controller {
 
     @PostMapping("/preview")
     @Secured({ Roles.ANONYMOUS, Roles.RIDER })
+    @Transactional
     public Object previewRoute(@Validated @RequestBody PreviewRouteRequest request) {
 
         var riderData = store.riders.get(authenticatedUserId());

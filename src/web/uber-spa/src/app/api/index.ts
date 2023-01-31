@@ -4,7 +4,7 @@ const scheme = 'http://'
 const baseUrl = 'localhost:8000'
 // const baseUrl = '192.168.0.12:8000'
 
-const fetch = (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
+const fetch = async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
   if (typeof input === 'string' && !input.startsWith('http') && input.startsWith('/')) {
     input = scheme + baseUrl + input
   }
@@ -20,12 +20,18 @@ const fetch = (input: RequestInfo | URL, init?: RequestInit): Promise<Response> 
     init.headers = { ...init?.headers, Authorization: `Bearer ${userStore.accessToken()}` }
   }
 
-  return window.fetch(input, {
+  const result = await window.fetch(input, {
     headers: {
       ...init?.headers,
     },
     ...init
   })
+  if (!result.ok && result.status === 401) {
+    await window.router.navigate(['/auth/login'])
+    localStorage.clear()
+    location.reload()
+  }
+  return result
 }
 
 export { fetch, scheme, baseUrl }

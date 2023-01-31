@@ -105,6 +105,8 @@ import { PayDialog } from '@app/pages/(business)/profile/components/choosePaymen
       </div>
       <button 
         *ngIf="!lookingForRide && userStore.isAuthenticated"
+        [disabled]="!defaultPaymentMethod"
+        [title]="!defaultPaymentMethod ? 'Please add a payment method' : ''"
         (click)="router.navigate(['looking/add-passengers'])" 
         class="secondary mx-4 !py-2.5 !text-base mt-4"
       >
@@ -112,9 +114,10 @@ import { PayDialog } from '@app/pages/(business)/profile/components/choosePaymen
       </button>
       <button 
         *ngIf="!lookingForRide"
-        [disabled]="!passengersReady"
+        [disabled]="!passengersReady || (userStore.isAuthenticated && !defaultPaymentMethod)"
+        [title]="!defaultPaymentMethod ? 'Please add a payment method' : ''"
         (click)="pollOrder()"
-        class="primary mx-4 !text-base mt-1"
+        class="primary mx-4 !py-2.5 !text-base mt-1"
         [ngClass]="{ 'mt-auto': !userStore.isAuthenticated }"
       >
         {{ passengersReady ? 'Request an ' + this.selectedCarType?.name : 'Watiting for passengers...' }}

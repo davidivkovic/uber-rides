@@ -170,8 +170,9 @@ type AutocompleteLocation = {
           </div>
         </div>
       </div>
+      <p *ngIf="error" class="px-4">{{ error }}</p>
       <div 
-        *ngIf="locationsCompleted" 
+        *ngIf="locationsCompleted && !error" 
         class="px-4 pb-4 flex flex-col h-full"
       >
         <h3 class="pl-1 pb-1.5 mt-auto">Routing preference</h3>
@@ -234,6 +235,7 @@ export default class Looking {
   departureTime = 'Depart now'
   distance: string
   duration: string
+  error: string = ''
 
   constructor(public router: Router, public route: ActivatedRoute) {
     ridesStore.setState(store => store.data = {})
@@ -317,6 +319,7 @@ export default class Looking {
     this.focusedStopover = -2
     this.locationsCompleted = false
     this.departureTime = 'Depart now'
+    ridesStore.setState(store => store.data.sceduledAt = null)
   }
 
   async getDirections() {
@@ -326,32 +329,39 @@ export default class Looking {
     if (this.routingPreference === 'respect-waypoints' && this.stopoverInputs.length == 2) {
       this.routingPreference = 'fastest-route'
     }
-    const directions = await routes.preview({
-      originPlaceId: this.stopoverInputs[0].placeId,
-      destinationPlaceId: this.stopoverInputs[this.stopoverInputs.length - 1].placeId,
-      waypointPlaceIds: this.stopoverInputs.slice(1, -1).map(s => s.placeId),
-      routingPreference: this.routingPreference,
-      scheduledAt: ridesStore.data.scheduledAt
-    })
 
-    ridesStore.setState(store => store.data.directions = directions)
+    try {
+      this.error = ''
+      const directions = await routes.preview({
+        originPlaceId: this.stopoverInputs[0].placeId,
+        destinationPlaceId: this.stopoverInputs[this.stopoverInputs.length - 1].placeId,
+        waypointPlaceIds: this.stopoverInputs.slice(1, -1).map(s => s.placeId),
+        routingPreference: this.routingPreference,
+        scheduledAt: ridesStore.data.scheduledAt
+      })
 
-    this.distance = formatDistance(directions.distanceInMeters)
-    this.duration = formatDuration(directions.durationInSeconds)
+      ridesStore.setState(store => store.data.directions = directions)
 
-    const route = directions.routes[0]
+      this.distance = formatDistance(directions.distanceInMeters)
+      this.duration = formatDuration(directions.durationInSeconds)
 
-    removeAllElements()
+      const route = directions.routes[0]
 
-    map.fitBounds(new google.maps.LatLngBounds(route.bounds.southwest, route.bounds.northeast))
-    // map.setZoom(map.getZoom() - 1)
-    map.panBy(-180, 0)
+      removeAllElements()
 
-    createPolyline(route.overviewPolyline.encodedPath)
-    this.stopoverInputs.map((stopover, index) => {
-      createMarker(stopover.latitude, stopover.longitude, index === this.stopoverInputs.length - 1)
-      createInfoWindow(stopover.latitude, stopover.longitude, stopover.address, index, this.stopoverInputs.length)
-    })
+      map.fitBounds(new google.maps.LatLngBounds(route.bounds.southwest, route.bounds.northeast))
+      // map.setZoom(map.getZoom() - 1)
+      map.panBy(-180, 0)
+
+      createPolyline(route.overviewPolyline.encodedPath)
+      this.stopoverInputs.map((stopover, index) => {
+        createMarker(stopover.latitude, stopover.longitude, index === this.stopoverInputs.length - 1)
+        createInfoWindow(stopover.latitude, stopover.longitude, stopover.address, index, this.stopoverInputs.length)
+      })
+    }
+    catch (error) {
+      this.error = error.message
+    }
   }
 
   checkLocationsCompleted() {

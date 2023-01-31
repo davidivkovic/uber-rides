@@ -107,7 +107,7 @@ export default (message: { inviter: any, trip: any }) => {
         </div>
         <div class="ml-auto text-right">
           <h3 class="text-[22px]">
-            {{ props.trip.totalPrice / (props.trip.riders.length + 1) | currency:'USD' }}
+            {{  props.trip.totalPrice / (props.trip.riders.length + (props.scheduleSuccess ? 0 : 1)) | currency:'USD' }}
           </h3>
           <p class="text-[13px] ml-0.5 -mt-1 mb-0.5 text-zinc-500">
             Per person

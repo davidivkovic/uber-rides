@@ -1,17 +1,12 @@
 package com.uber.rides.controller;
 
-import java.time.Instant;
 import java.time.LocalDateTime;
-import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Objects;
 import java.util.function.Function;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import javax.validation.constraints.Min;
@@ -37,8 +32,6 @@ import com.uber.rides.database.DbContext;
 import com.uber.rides.dto.TripDTO;
 import com.uber.rides.dto.user.UserDTO;
 import com.uber.rides.model.Car;
-import com.uber.rides.model.Location;
-import com.uber.rides.model.Payment;
 import com.uber.rides.model.Rating;
 import com.uber.rides.model.Route;
 import com.uber.rides.model.Route$;
@@ -46,22 +39,15 @@ import com.uber.rides.model.Trip;
 import com.uber.rides.model.Trip$;
 import com.uber.rides.model.User;
 import com.uber.rides.model.User$;
-import com.uber.rides.model.Trip.Status;
 import com.uber.rides.model.User.Roles;
 import com.uber.rides.service.GoogleMaps;
 import com.uber.rides.service.ImageStore;
 import com.uber.rides.simulator.DriverSimulator;
 import com.uber.rides.ws.Store;
 import com.uber.rides.ws.WS;
-import com.uber.rides.ws.driver.DriverData;
-import com.uber.rides.ws.driver.messages.out.TripAssigned;
-import com.uber.rides.ws.driver.messages.out.TripCancelled;
-import com.uber.rides.ws.driver.messages.out.TripStarted;
 import com.uber.rides.ws.rider.messages.out.TripInvite;
-import com.uber.rides.ws.rider.messages.out.UberUpdate;
 
 import static com.uber.rides.util.Utils.*;
-import static com.uber.rides.util.GeoUtils.*;
 
 @RestController
 @RequestMapping("/trips")
@@ -294,7 +280,6 @@ public class Trips extends Controller {
                 of(Trip.class)
                 .joining(Trip$.driver)
                 .joining(Trip$.riders)
-                // .joining(Trip$.payments)
                 .joining(Trip$.ratings)
                 .joining(Trip$.car)
             )
@@ -302,6 +287,9 @@ public class Trips extends Controller {
             .sorted(comparator)
             .map(trip -> {
                 trip.setRoute(routes.get(trip.getRouteId()));
+                if (currentTrip != null && trip.getId().equals(currentTrip.getId())) {
+                    trip.setStatus(currentTrip.getStatus());
+                }
                 return mapper.map(trip, TripDTO.class);
             })
             .toList();

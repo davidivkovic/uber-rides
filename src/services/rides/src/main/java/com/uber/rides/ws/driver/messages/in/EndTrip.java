@@ -60,7 +60,7 @@ public class EndTrip implements InboundMessage<DriverData> {
         
         if (nextTrip != null) {
             trips.scheduleRide(nextTrip, sender);
-            context.db().merge(nextTrip);
+            // context.db().merge(nextTrip);
         }
 
     }

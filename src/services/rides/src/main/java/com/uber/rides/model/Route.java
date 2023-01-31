@@ -1,7 +1,9 @@
 package com.uber.rides.model;
 
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
@@ -25,17 +27,17 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.*;
 
 import com.google.maps.model.DirectionsLeg;
 import com.google.maps.model.DirectionsRoute;
 import com.uber.rides.controller.Routes;
+import com.uber.rides.database.DbContext;
 import com.uber.rides.dto.route.PreviewRouteResponse;
 import com.uber.rides.model.Trip.Status;
 import com.uber.rides.service.GoogleMaps;
 import com.uber.rides.util.Utils.Result;
 import com.uber.rides.ws.rider.RiderData;
-
-import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.*;
 
 @Getter
 @Setter
@@ -62,7 +64,21 @@ public class Route {
     @org.springframework.stereotype.Service
     public static class Service {
 
+        @Autowired DbContext db;
         @Autowired GoogleMaps maps;
+
+        public boolean hasOverlappingScheduledTrips(Long riderId, LocalDateTime scheduledAt) {
+            var now = LocalDateTime.now(ZoneOffset.UTC);
+            return db.query()
+            .stream(User.class)
+            .filter(User$.id.equal(riderId))
+            .map(User::getTripsAsRider)
+            .flatMap(Collection::stream)
+            .filter(Trip$.status.notEqual(Trip.Status.CANCELLED))
+            .filter(Trip$.scheduled.equal(true).and(Trip$.scheduledAt.greaterOrEqual(now)))
+            .filter(Trip$.scheduledAt.lessOrEqual(scheduledAt.plusMinutes(30)))
+            .count() > 0;
+        }
 
         public Result<PreviewRouteResponse> previewRoute(
             RiderData rider,
@@ -72,7 +88,15 @@ public class Route {
             boolean optimizeWaypoints,
             boolean optimizeCost,
             LocalDateTime scheduledAt
-        ) {
+        ) { 
+
+            if (rider != null && hasOverlappingScheduledTrips(
+                rider.getUser().getId(), 
+                scheduledAt != null ? scheduledAt : LocalDateTime.now(ZoneOffset.UTC))
+            ) {
+                return Result.error("You already have a scheduled trip at this time or in 30 minutes.");
+            }
+
 
             var directions = maps.getDirections(
                 originPlaceId,
