@@ -4,8 +4,8 @@ import { Component } from '@angular/core'
   standalone: true,
   selector: "LoadingOverlay",
   template: `
-    <div class="h-full w-full bg-white/80 z-[100] flex items-center justify-center flex-col">
-    <span>Loading..</span>
+    <div id="payment-method-overlay" class="h-full w-full bg-white/80 z-[100] flex items-center justify-center flex-col">
+      <span>Loading..</span>
       <svg
         class="animate-spin -ml-1  h-10 w-10 text-black mt-2"
         xmlns="http://www.w3.org/2000/svg"
@@ -29,4 +29,4 @@ import { Component } from '@angular/core'
     </div>
   `
 })
-export class LoadingOverlay {}
+export class LoadingOverlay { }

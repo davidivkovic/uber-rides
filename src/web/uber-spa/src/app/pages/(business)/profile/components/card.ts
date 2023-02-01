@@ -20,7 +20,7 @@ declare const braintree
     <div class="h-[534px] space-y-2 w-full flex flex-col relative">
       <div class="space-y-6 flex flex-col flex-1">
         <h2 class="text-2xl font-normal">Add credit or debit card</h2>
-        <form (ngSubmit)="addCard()" ngNativeValidate class="text-gray-800 flex flex-1 flex-col">
+        <form id="new-car-form" (ngSubmit)="addCard()" ngNativeValidate class="text-gray-800 flex flex-1 flex-col">
           <div class="space-y-4">
             <div class="relative">
               <label for="card-number">Card number</label>

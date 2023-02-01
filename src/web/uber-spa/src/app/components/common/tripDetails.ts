@@ -81,7 +81,7 @@ dayjs.extend(tz)
             </button>
             <button 
               (click)="rideAgain(); $event.stopPropagation()" 
-              *ngIf="canRideAgain && trip.status === 'COMPLETED'"
+              *ngIf="canRideAgain && trip.status === 'COMPLETED' && !ridesStore.data?.trip?.id"
               class="flex w-full primary !text-sm px-7 py-2"
             >
               <svg class="mr-1.5 -ml-2" width="20" height="20" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
@@ -172,6 +172,7 @@ export default class TripDetails {
   dayjs = dayjs
   icons = icons
   userStore = userStore
+  ridesStore = ridesStore
   formatDistance = formatDistance
   formatDuration = formatDuration
 

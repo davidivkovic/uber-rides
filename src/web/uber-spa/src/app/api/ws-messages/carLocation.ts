@@ -76,6 +76,8 @@ const shortenPickupPolyline = (position: google.maps.LatLng, driverDistance: num
     store.data.pickup.driverDistance = driverDistance
   })
 
+  if (!ridesStore.data?.trip?.route) return
+
   const start = ridesStore.data.trip.route.start
   const end = ridesStore.data.trip.route.stops[ridesStore.data.trip.route.stops.length - 1]
   const canStart = google.maps.geometry.spherical.computeDistanceBetween(

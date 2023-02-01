@@ -6,7 +6,7 @@ import { Component, Input } from '@angular/core'
   standalone: true,
   imports: [NgIf, NgClass],
   template: `
-    <div *ngIf="driver" class="flex items-center">
+    <div id="driver-details" *ngIf="driver" class="flex items-center">
       <div class="relative">
         <h3 
           *ngIf="driver.rating > 0"

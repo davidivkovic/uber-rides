@@ -9,7 +9,7 @@ import DriverDetails from "./driverDetails"
   standalone: true,
   imports: [NgIf, NgFor, NgClass, FormsModule, DriverDetails],
   template: `
-    <div *ngIf="!success" class="w-[380px] h-[500px] flex flex-col p-1">
+    <div id="review-driver-dialog" *ngIf="!success" class="w-[380px] h-[500px] flex flex-col p-1">
       <h1 class="text-2xl mb-2">Review a Ride</h1>
       <div class="flex items-center">
         <DriverDetails [driver]="props.trip.driver" [large]="true" class="mb-3"></DriverDetails>

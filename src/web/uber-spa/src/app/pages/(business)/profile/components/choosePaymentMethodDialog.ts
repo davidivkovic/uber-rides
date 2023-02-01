@@ -48,6 +48,7 @@ declare const paypal
             </div>
           </div>
           <button
+            id="pay-dialog-add-payment-method"
             (click)="addMethod()"
             class="w-full !p-0 rounded-none text-left h-[72px] flex space-x-5 items-center"
           >
@@ -59,6 +60,7 @@ declare const paypal
           </button>
         </div>
         <button 
+          id="pay-dialog-save-button"
           (click)="saveDefaultMethod()" 
           class="flex items-center justify-center primary w-full !text-lg"
         >
