@@ -45,14 +45,21 @@ import { OutboundMessages } from '@app/api/ws-messages/messages'
               class="hover:bg-zinc-200 cursor-pointer p-3"
               [class]="{ 
                 '!pb-3.5' : index === users.length - 1,
-                '!pt-3.5' : index === 0 
+                '!pt-3.5' : index === 0,
+                'pointer-events-none': !user.defaultPmt || user.defaultPmt === 'NONE'
               }"
             >
-              <div class="flex items-center space-x-3">
-                <img [src]="user.profilePicture" class="w-9 h-9 rounded-full object-cover"/>
+              <div class="flex items-center">
+                <img [src]="user.profilePicture" class="w-9 h-9 rounded-full object-cover mr-3"/>
                 <div>
                   <p class="leading-4">{{ user.firstName}} {{ user.lastName }}</p>
                   <p class="text-sm text-zinc-600">{{ user.email }}</p>
+                </div>
+                <div 
+                  *ngIf="!user.defaultPmt || user.defaultPmt === 'NONE'"
+                  class="ml-auto text-[13px] bg-[#eeeeee] rounded w-fit py-1.5 px-2"
+                >
+                  No funds
                 </div>
               </div>
             </li>

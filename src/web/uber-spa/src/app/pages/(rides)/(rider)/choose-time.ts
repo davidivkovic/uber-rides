@@ -107,14 +107,14 @@ export default class ChooseTime {
     this.setCurrentTime()
     this.tomorrowAllowed = !this.now.add(5, 'hours').isSame(this.now, 'day')
     this.allowedTimes.length = 0
-    const roundedTime = this.now.set('minutes', Math.floor(this.now.minute() / 5) * 5)
+    const roundedTime = this.now.set('minutes', Math.ceil(this.now.minute() / 5) * 5)
     for (let i = 0; i <= 30; i++) { /* 5h * 10min intervals */
-      const time = roundedTime.add(i * 1, 'minutes')
+      const time = roundedTime.add(i * 5, 'minutes')
       if (
         this.selectedDay === 'Today' && time.isSame(this.now, 'day') ||
         this.selectedDay === 'Tomorrow' && !time.isSame(this.now, 'day')
       ) {
-        this.allowedTimes.push(time)
+        this.allowedTimes.push(time.startOf('minute'))
       }
     }
     if (!this.selectedTime || this.now.isAfter(this.selectedTime)) {

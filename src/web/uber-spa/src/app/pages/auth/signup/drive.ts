@@ -31,7 +31,7 @@ import { max, min } from 'rxjs'
           </option>
         </select>
         <select required #model name="model">
-          <option value="" selected disabled hidden>--Select car model--</option>
+          <option value="" selected disabled hidden>Select car model</option>
           <option *ngFor="let model of models()" [value]="model">
             {{ model }}
           </option>
@@ -39,7 +39,7 @@ import { max, min } from 'rxjs'
       </div>
       <div class="flex justify-between w-full gap-8">
         <select required #year name="year">
-          <option value="" selected disabled hidden>--Select year of manufacture--</option>
+          <option value="" selected disabled hidden>Select year of manufacture</option>
           <option *ngFor="let year of years" [value]="year">
             {{ year }}
           </option>
@@ -123,7 +123,7 @@ export default class Index {
 
   models = computed(
     () => this.selectedMaker,
-    () => carTypeJson.find(types => types.brand === this.selectedMaker).models
+    () => this.selectedMaker && carTypeJson.find(types => types.brand === this.selectedMaker).models
   )
 
   changeSelectedMaker = (select: string) => {

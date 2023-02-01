@@ -140,6 +140,7 @@ type AutocompleteLocation = {
             </svg>
           </button>
           <button 
+            id="looking-add-stop-button"
             *ngIf="stopoverInputs.length < 5 && blurred"
             (click)="addStop()"
             class="flex items-center secondary rounded-full px-4 !py-[2px] !text-sm whitespace-nowrap"
@@ -149,7 +150,7 @@ type AutocompleteLocation = {
           </button>
         </div>
       </div>
-      <div *ngIf="!locationsCompleted" class="overflow-y-auto scroll-smooth no-scrollbar">
+      <div id="locations-list" *ngIf="!locationsCompleted" class="overflow-y-auto scroll-smooth no-scrollbar">
         <div
           (click)="chooseLocationOnMap()"
           class="flex space-x-4 items-center cursor-pointer hover:bg-[#eeeeee] px-4 py-3"
@@ -170,7 +171,7 @@ type AutocompleteLocation = {
           </div>
         </div>
       </div>
-      <p *ngIf="error" class="px-4">{{ error }}</p>
+      <p id="looking-error" *ngIf="error" class="px-4">{{ error }}</p>
       <div 
         *ngIf="locationsCompleted && !error" 
         class="px-4 pb-4 flex flex-col h-full"
@@ -187,11 +188,12 @@ type AutocompleteLocation = {
           <option *ngIf="stopoverInputs.length === 2" value="cheapest-route">Shortest Route</option>
           </select>
           <div>
-            <h3 class="text-xl leading-5 mt-0.5">{{ distance }}</h3>
-            <p class="text-[15px] text-zinc-500">approx. {{ duration }}</p>
+            <h3 id="distance-info" *ngIf="distance" class="text-xl leading-5 mt-0.5">{{ distance }}</h3>
+            <p id="duration-info" *ngIf="duration" class="text-[15px] text-zinc-500">approx. {{ duration }}</p>
           </div>
         </div>
         <button 
+          id="looking-continue-button"
           (click)="chooseRide()"
           class="primary w-full !text-base mt-6"
         >

@@ -59,7 +59,7 @@ import { userStore } from '@app/stores'
           </div>
           <div class="ml-auto text-right">
             <h3 class="text-[22px]">
-              {{ ridesStore.data.trip.totalPrice / (ridesStore.data.trip.riders.length + 1) | currency:'USD' }}
+              {{ ridesStore.data.trip.totalPrice / ridesStore.data.trip.riders.length | currency:'USD' }}
             </h3>
             <p class="text-[13px] ml-0.5 -mt-1 mb-0.5 text-zinc-500">
               Per person
@@ -75,7 +75,11 @@ import { userStore } from '@app/stores'
         </PassengersStatus>
       
         <div *ngIf="pickupPending || ridesStore.data.tripInProgress">
-          <div *ngIf="ridesStore.data?.pickup?.canStart && !ridesStore.data.tripInProgress; else otherContent" class="mt-1 mb-2">
+          <div 
+            id="trip-pickup-indicator" 
+            *ngIf="ridesStore.data?.pickup?.canStart && !ridesStore.data.tripInProgress; else otherContent" 
+            class="mt-1 mb-2"
+          >
             <h1 class="text-xl transition">The driver is at the pickup location</h1>
             <p class="text-zinc-500 text-[15px] -mt-0.5">Make yourself comfortable in the vehicle</p>
           </div>

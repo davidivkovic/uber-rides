@@ -26,6 +26,7 @@ import { PayDialog } from '@app/pages/(business)/profile/components/choosePaymen
         <div
           *ngFor="let carType of ridesStore.data?.directions?.carTypes"
           (click)="selectCarType(carType)"
+          [id]="'CAR_' + carType.carType"
           class="rounded-md w-full flex items-center py-1 pr-2.5 transition"
           [ngClass]="{
             'ring-2 ring-neutral-500 ring-offset-[3px] transition-none': carType.carType === selectedCarType?.carType && !ridesStore.data.rideChosen,
@@ -82,6 +83,7 @@ import { PayDialog } from '@app/pages/(business)/profile/components/choosePaymen
       >
       </PassengersStatus>
       <div 
+        id="choose-rides-add-payment-method"
         *ngIf="!lookingForRide && userStore.isAuthenticated" 
         class="h-10 w-full mt-auto" 
         (click)="changePaymentMethod()"
@@ -116,6 +118,7 @@ import { PayDialog } from '@app/pages/(business)/profile/components/choosePaymen
         *ngIf="!lookingForRide"
         [disabled]="!passengersReady || (userStore.isAuthenticated && !defaultPaymentMethod)"
         [title]="!defaultPaymentMethod ? 'Please add a payment method' : ''"
+        id="request-ride-button"
         (click)="pollOrder()"
         class="primary mx-4 !py-2.5 !text-base mt-1"
         [ngClass]="{ 'mt-auto': !userStore.isAuthenticated }"
@@ -123,6 +126,7 @@ import { PayDialog } from '@app/pages/(business)/profile/components/choosePaymen
         {{ passengersReady ? 'Request an ' + this.selectedCarType?.name : 'Watiting for passengers...' }}
       </button>
       <button 
+        id="cancel-request-ride-button"
         *ngIf="lookingForRide"
         [disabled]="!passengersReady"
         [ngClass]="{ 
@@ -275,6 +279,10 @@ export default class ChooseRide {
       }
     }
     this.lookingInterval = setInterval(async () => {
+      if (this.lookingDuration >= 10) {
+        this.cancelOrder()
+        return
+      }
       this.lookingDuration += 1
       if (this.lookingDuration % 5 !== 0) return
       if (this.lookingLoading) return

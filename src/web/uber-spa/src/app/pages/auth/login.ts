@@ -36,11 +36,11 @@ import auth from '@app/api/auth'
           placeholder="Enter your password"
           class=""
         />
-        <p class="text-red-600 text-center text-sm">{{ error }}</p>
+        <p id="login-error" *ngIf="error" class="text-red-600 text-center text-sm">{{ error }}</p>
         <button type="submit" class="primary block w-full ">Log in</button>
       </form>
       <SocialMedia></SocialMedia>
-      <a href="/auth/password/forgotten" class="underline text-sm text-center cursor-pointer mt-2">
+      <a routerLink="/auth/password/forgotten" class="underline text-sm text-center cursor-pointer mt-2">
         Forgotten your password?
       </a>
       <small class="mt-3 ">
