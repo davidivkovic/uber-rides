@@ -7,6 +7,7 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.function.ToLongFunction;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -26,7 +27,10 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import static com.speedment.jpastreamer.streamconfiguration.StreamConfiguration.*;
+
 import org.springframework.beans.factory.annotation.Autowired;
+
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.*;
 
 import com.google.maps.model.DirectionsLeg;
@@ -64,15 +68,16 @@ public class Route {
     @org.springframework.stereotype.Service
     public static class Service {
 
-        @Autowired DbContext db;
+        @Autowired public DbContext db;
         @Autowired GoogleMaps maps;
 
         public boolean hasOverlappingScheduledTrips(Long riderId, LocalDateTime scheduledAt) {
             var now = LocalDateTime.now(ZoneOffset.UTC);
             return db.query()
-            .stream(User.class)
+            .stream(of(User.class).joining(User$.tripsAsRider))
             .filter(User$.id.equal(riderId))
             .map(User::getTripsAsRider)
+            .filter(Objects::nonNull)
             .flatMap(Collection::stream)
             .filter(Trip$.status.notEqual(Trip.Status.CANCELLED))
             .filter(Trip$.scheduled.equal(true).and(Trip$.scheduledAt.greaterOrEqual(now)))
@@ -146,7 +151,7 @@ public class Route {
                .stream()
                .collect(Collectors.toMap(
                     Car.Type::getCarType,
-                    t -> (double) Math.round(t.getPaymentMultiplier() * distance / 1000 * 2.4 * 10) / 10
+                    t -> (double) Math.round(t.getPaymentMultiplier() * distance / 1000 * 2.4 * 10) / 10 + 1
                 ));
     
             if (rider != null) {

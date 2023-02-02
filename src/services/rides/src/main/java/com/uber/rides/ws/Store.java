@@ -17,7 +17,7 @@ import com.uber.rides.ws.rider.RiderData;
 @Component
 public class Store {
 
-    @Autowired AutowireCapableBeanFactory container;
+    @Autowired public AutowireCapableBeanFactory container;
     
     public Map<Long, DriverData> drivers = new ConcurrentHashMap<>();
     public Map<Long, RiderData> riders = new ConcurrentHashMap<>();

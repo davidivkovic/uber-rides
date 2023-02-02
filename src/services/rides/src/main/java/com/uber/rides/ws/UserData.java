@@ -45,7 +45,6 @@ public abstract class UserData {
             : null;
         if (session != null) {
             this.connectedAt = LocalDateTime.now();
-            this.isSim = ((boolean) session.getAttributes().get("IS_SIM"));
         }
     }
 

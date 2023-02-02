@@ -29,7 +29,6 @@ import com.uber.rides.ws.rider.messages.in.RemoveTripPassenger;
 import static com.uber.rides.util.Utils.*;
 import static com.uber.rides.model.User.Roles.*;
 
-
 @Component
 @SuppressWarnings(UNCHECKED)
 public class MessageHandler {

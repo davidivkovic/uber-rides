@@ -1,18 +1,11 @@
 package com.uber.rides.controller;
 
-import java.util.Arrays;
 import java.util.Collection;
-import java.util.Comparator;
-import java.util.HashSet;
-import java.util.function.ToLongFunction;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 
 import static com.speedment.jpastreamer.streamconfiguration.StreamConfiguration.*;
-import static com.uber.rides.util.Utils.*;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.FileSystemResource;
@@ -28,24 +21,20 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.google.maps.model.DirectionsLeg;
-import com.google.maps.model.DirectionsRoute;
 import com.uber.rides.database.DbContext;
 import com.uber.rides.dto.route.GeocodeRequest;
 import com.uber.rides.dto.route.PreviewRouteRequest;
-import com.uber.rides.dto.route.PreviewRouteResponse;
 import com.uber.rides.dto.user.CreateRouteRequest;
-import com.uber.rides.model.Car;
 import com.uber.rides.model.Route;
-import com.uber.rides.model.Trip;
 import com.uber.rides.model.User;
 import com.uber.rides.model.User$;
-import com.uber.rides.model.Trip.Status;
 import com.uber.rides.model.User.Roles;
 import com.uber.rides.service.GoogleMaps;
 import com.uber.rides.service.ImageStore;
 import com.uber.rides.simulator.DriverSimulator;
 import com.uber.rides.ws.Store;
+
+import static com.uber.rides.util.Utils.*;
 
 @RestController
 @RequestMapping("/routes")
