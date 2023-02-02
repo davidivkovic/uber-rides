@@ -9,17 +9,23 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.google.maps.model.DirectionsResult;
 
 import com.speedment.jpastreamer.application.JPAStreamer;
+
 import static com.speedment.jpastreamer.streamconfiguration.StreamConfiguration.*;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.web.socket.WebSocketSession;
 
 import com.uber.rides.model.*;
 import com.uber.rides.model.User.Roles;
 import com.uber.rides.ws.UserData;
+import com.uber.rides.simulator.DriverSimulator;
 import com.uber.rides.ws.driver.messages.out.Fatigue;
 
 @Getter
@@ -39,6 +45,9 @@ public class DriverData extends UserData {
 
     @Autowired EntityManagerFactory dbFactory;
     @Autowired JPAStreamer query;
+    @Autowired DriverSimulator simulator;
+    @Autowired ThreadPoolTaskScheduler scheduler;
+    Logger log = LoggerFactory.getLogger(DriverData.class);
 
     public DriverData(User user, WebSocketSession session) {
         super(user, session);

@@ -96,8 +96,8 @@ public class User implements UserDetails {
 
     @ManyToMany @Builder.Default List<Route> favoriteRoutes = new ArrayList<>();
     
-    @OneToMany(mappedBy = "driver") List<Trip> tripsAsDriver;
-    @ManyToMany(mappedBy = "riders") List<Trip> tripsAsRider;
+    @OneToMany(mappedBy = "driver") @Builder.Default List<Trip> tripsAsDriver = new ArrayList<>();
+    @ManyToMany(mappedBy = "riders") @Builder.Default List<Trip> tripsAsRider = new ArrayList<>();
 
     @Transient Trip currentTrip;
     @Transient @Builder.Default List<Trip> scheduledTrips = new ArrayList<>();

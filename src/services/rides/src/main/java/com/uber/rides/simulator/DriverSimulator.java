@@ -46,6 +46,7 @@ import com.google.maps.model.LatLng;
 import com.speedment.jpastreamer.application.JPAStreamer;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.env.Environment;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
@@ -98,16 +99,13 @@ public class DriverSimulator {
     static final int ZOOM = 13;
     static final int WIDTH = 640;
     static final int HEIGHT = 620;
-    static final int SIM_SPEED = 4;
+    static final int SIM_SPEED = 3;
 
     static final String CALLBACK = "google_dogs";
     static final String CALLBACK_PREFIX = "/**/" + CALLBACK + " && " + CALLBACK + "(";
-    /* What are the coordinates of Belgrade, Serbia? */
 
     public static final LatLng BELGRADE = new LatLng(44.811609, 20.447893);
-    /* What are the coordinates of New York, USA? */
-    public static final LatLng NEW_YORK = new LatLng(40.762040, -73.980759);
-
+    public static final LatLng NEW_YORK = new LatLng(40.749120, -73.997020);
     public static final LatLng NOVI_SAD = new LatLng(45.2671, 19.8335);
 
     static final LatLng CENTER = NEW_YORK;
@@ -126,11 +124,17 @@ public class DriverSimulator {
         .build();
 
 
+    boolean override = false;
     long signatureHash;
     LocalDateTime gotHashAt;
 
     BufferedImage areaOfInterest;
 
+    @Autowired
+    public DriverSimulator(Environment env) {
+        this.override = env.getProperty("uber.rides.simulator.override") != null;
+    }
+        
     public boolean start(int numberOfDrivers) {
         try {
             var drivers = getPresetDrivers(numberOfDrivers);
@@ -138,7 +142,7 @@ public class DriverSimulator {
             
             for (int i = 0; i < numberOfDrivers; i++) {
                 var driver = drivers.get(i);
-                var session = connectToWs(driver); // TODO: Insert a newly registered driver into the sim
+                var session = connectToWs(driver);
                 if (session != null) runTask(driver);
             }
             return true;
@@ -234,7 +238,7 @@ public class DriverSimulator {
                     if (driver.getCurrentTrip() != null && rerunOnEnd) {
                         sim.session.sendMessage(new TextMessage("END_TRIP\n{}"));
                     }
-                    else if (driver.getCurrentTrip() != null && !rerunOnEnd) {
+                    if (driver.getCurrentTrip() != null && !rerunOnEnd) {
                         scheduler.schedule(
                             () -> { 
                                 try { sim.session.sendMessage(new TextMessage("START_TRIP\n{}")); } 
@@ -257,9 +261,9 @@ public class DriverSimulator {
                 sim.distance -= location.distance;
                 var updateLocation = new TextMessage(
                     "UPDATE_LOCATION\n{\"latitude\":" 
-                    + location.location.lat 
+                    + (override ? CENTER.lat : location.location.lat)
                     + ",\"longitude\":" 
-                    + location.location.lng 
+                    + (override ? CENTER.lng : location.location.lng)
                     + ",\"duration\":" 
                     + (duration - (index + 1) * durationStep)
                     + ",\"distance\":"
@@ -299,6 +303,7 @@ public class DriverSimulator {
             }
             return session;
         } catch (Exception e) {
+            e.printStackTrace();
             logger.error("Failed to start simulation for driver: {}", driver.getEmail()); 
             return null;
         }
@@ -327,7 +332,7 @@ public class DriverSimulator {
 
                 var car = Car
                     .builder()
-                    .type(Car.getAvailableTypes().get(random.nextInt(0, Car.getAvailableTypes().size())))
+                    .type(Car.getAvailableTypes().get(this.override ? (i % 2) : (i % 3)))
                     .year(faker.random().nextInt(2012, 2022).shortValue())
                     .make(vehicle.manufacturer())
                     .model(vehicle.model())

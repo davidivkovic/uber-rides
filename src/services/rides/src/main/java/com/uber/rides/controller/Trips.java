@@ -254,6 +254,7 @@ public class Trips extends Controller {
             .filter(
                 Trip$.status.equal(Trip.Status.COMPLETED)
                 .or(Trip$.status.equal(Trip.Status.SCHEDULED))
+                .or(Trip$.status.equal(Trip.Status.CANCELLED))
                 .or(
                     Trip$.status.equal(Trip.Status.PAID)
                     .and(Trip$.scheduled)

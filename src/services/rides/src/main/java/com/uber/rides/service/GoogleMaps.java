@@ -86,7 +86,7 @@ public class GoogleMaps {
     ) {
         var directionsRequest = DirectionsApi.newRequest(GoogleMaps.CONTEXT);
         
-        if (scheduledAt == null) {
+        if (scheduledAt == null || scheduledAt.isBefore(LocalDateTime.now().plusMinutes(5))) {
             directionsRequest = directionsRequest.departureTimeNow();
         }
         else {

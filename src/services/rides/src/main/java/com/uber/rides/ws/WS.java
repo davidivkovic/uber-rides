@@ -18,6 +18,7 @@ import static com.speedment.jpastreamer.streamconfiguration.StreamConfiguration.
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.event.EventListener;
 import org.springframework.http.server.ServerHttpRequest;
 import org.springframework.http.server.ServerHttpResponse;
@@ -100,6 +101,7 @@ public class WS extends TextWebSocketHandler {
     @Autowired JPAStreamer query;
     @Autowired ThreadPoolTaskScheduler scheduler;
     @Autowired Store store;
+    @Autowired @Lazy DriverSimulator simulator;
 
     Logger logger = LoggerFactory.getLogger(WS.class);
 
@@ -121,11 +123,23 @@ public class WS extends TextWebSocketHandler {
                 session.close(CloseStatus.NOT_ACCEPTABLE);
                 return;
             }
-            
-            var userData = store.get(user.getId());
 
-            if (userData == null) userData = store.put(user, session);
-            else userData.setSession(session);
+            var isSim = ((boolean) session.getAttributes().get("IS_SIM"));
+            var userData = store.get(user.getId());
+            if (userData == null) {
+                userData = store.put(user, session);
+                if (user.getRole().equals(Roles.DRIVER)) {
+                    if (isSim) userData.setSim(isSim);
+                    else if (user.getCurrentTrip() == null) {
+                        var s = simulator.connectToWs(user);
+                        if (s != null) simulator.runTask(user);
+                    }
+                }
+            }
+            else if (!isSim) {
+                userData.setSession(session);
+                userData.setSim(false);
+            }
 
             userData.onConnected();
             super.afterConnectionEstablished(session);

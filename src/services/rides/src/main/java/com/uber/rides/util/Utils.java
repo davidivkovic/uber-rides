@@ -115,11 +115,19 @@ public class Utils {
 
     /* Payment processor */
 
-    public static BraintreeGateway gateway = new BraintreeGateway(
-        Environment.SANDBOX,
-        TOKEN,
-        PU_KEY,
-        PR_KEY
-    );
+    public static BraintreeGateway gateway;
+
+    public static void setPaymentGateway () {
+        gateway = new BraintreeGateway(
+            Environment.SANDBOX,
+            TOKEN,
+            PU_KEY,
+            PR_KEY
+        );
+    }
+
+    static {
+        setPaymentGateway();
+    }
 
 }

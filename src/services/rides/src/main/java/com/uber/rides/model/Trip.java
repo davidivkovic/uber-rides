@@ -2,14 +2,12 @@ package com.uber.rides.model;
 
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
-import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
-import java.util.function.Predicate;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
@@ -65,12 +63,6 @@ import static com.uber.rides.util.Utils.*;
 @NoArgsConstructor
 @Entity
 public class Trip {
-
-    // 1. REZERVISI SLOBODNOG VOZACA INTERNO
-    // 2. PLATI U DVA KORAKA - SACUVAJ VOZNJU U BAZU - AKO DRUGI KORAK PLACANJA NE USPE OSLOBODI VOZACA
-    // 3. NAREDI VOZACU TRENUTNU VOZNJU
-    // 4. VOZAC DOLAZI NA PICKUP LOCACTION
-    // 5. VOZAC ZAPOCINJE ILI OTKAZUJE VOZNJU UZ OPRAVDANJE
 
     public enum Status {
         BUILDING, CREATED, PAID, AWAITING_PICKUP, IN_PROGRESS, CANCELLED, COMPLETED, SCHEDULED
@@ -217,8 +209,6 @@ public class Trip {
             ws.sendMessageToUser(driver.getUser().getId(), tripAssigned);
         }
 
-
-        // TODO: Add database call for cheduled trips, load scheduled trips from db to driver
         public DriverData getMatchingDriver(Trip trip) {
             return store
                 .drivers
@@ -230,7 +220,7 @@ public class Trip {
                 .filter(driverData -> {
                     if (trip.isScheduled()) {
                         return driverData.getUser().getScheduledTrips().stream().noneMatch(t -> 
-                            t.getStatus() == Trip.Status.PAID && 
+                            t.getStatus() != Trip.Status.CANCELLED && 
                             t.isScheduled() && 
                             t.getScheduledAt().compareTo(trip.getScheduledAt().plusSeconds((long)trip.getDurationInSeconds())) <= 0 &&
                             t.getScheduledAt().plusSeconds((long)t.getDurationInSeconds()).compareTo(trip.getScheduledAt()) >= 0

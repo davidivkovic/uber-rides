@@ -2,7 +2,6 @@ package com.uber.rides.model;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -127,7 +126,7 @@ public class PaymentMethod {
             .amount(BigDecimal.valueOf(amount));
       
         var result = gateway.transaction().sale(request);
-        if(!result.isSuccess()) return null;
+        if(result == null || !result.isSuccess()) return null;
 
         return Payment.builder()
             .user(user)
