@@ -1,0 +1,67 @@
+version: '3.8'
+
+services:
+
+  postgres-test:
+    image: postgres:15.1-alpine
+    restart: always
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=root
+      - POSTGRES_DB=rides-test
+    ports:
+      - 5444:5432
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+  # rides-test:
+  #   image: rides.test
+  #   build:
+  #     context: ./services/rides
+  #     dockerfile: Dockerfile.test
+  #     target: test
+  #   restart: "no"
+  #   depends_on:
+  #     postgres-test:
+  #       condition: service_healthy
+  #     uber-spa-test:
+  #       condition: service_healthy
+  #     selenium-chrome:
+  #       condition: service_started
+  #   volumes:
+  #     - m2-repo:/root/.m2
+  #     - ./services/rides/src:/app/src
+  #   environment:
+  #     spring.datasource.url: "jdbc:postgresql://postgres-test:5444/rides-test"
+  #     spring.jpa.hibernate.ddl-auto: "create-drop"
+
+  # uber-spa-test:
+  #   image: uber-spa.test
+  #   build:
+  #     context: ./web/uber-spa
+  #     dockerfile: Dockerfile.test
+  #   ports:
+  #     - 4200:4200
+  #   volumes:
+  #     - ./web/uber-spa:/src
+  #     - /src/node_modules
+  #   tty: true
+  #   stdin_open: true
+  #   healthcheck:
+  #     test: [ "CMD", "curl", "-f", "http://localhost:4200" ]
+  #     interval: 30s
+  #     timeout: 10s
+  #     retries: 5
+
+  # selenium-chrome:
+  #   image: selenium/standalone-chrome
+  #   ports:
+  #     - 4444:4444
+  #   expose:
+  #     - 4444
+
+  # volumes:
+  #   m2-repo:
+  #   src:
