@@ -4,7 +4,10 @@
   "compilerOptions": {
     "outDir": "./out-tsc/spec",
     "types": [
-      "jasmine"
+      "jasmine",
+      "facebook-js-sdk",
+      "google-one-tap",
+      "google.maps"
     ]
   },
   "files": [

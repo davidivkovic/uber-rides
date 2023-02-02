@@ -1,6 +1,6 @@
 import { NgIf } from '@angular/common'
 import { Component } from '@angular/core'
-import { NgForm, FormsModule } from '@angular/forms'
+import { FormsModule } from '@angular/forms'
 import { Router, RouterModule } from '@angular/router'
 import { userStore } from '@app/stores/userStore'
 import SocialMedia from '../auth/components/socialMedia'
@@ -14,27 +14,24 @@ import auth from '@app/api/auth'
       <div class="text-2xl ">What are your email and password?</div>
       <form
         ngNativeValidate
-        #loginForm="ngForm"
-        (ngSubmit)="login(loginForm)"
+        (submit)="login($event)"
         class="space-y-3 w-full"
       >
         <input
-          ngModel
-          #email="ngModel"
           required
           name="email"
           type="text"
           placeholder="Enter your email address"
-          class=""
+          autocomplete="username"
+          [(ngModel)]="email"
         />
         <input
-          ngModel
-          #password="ngModel"
           required
           type="password"
           name="password"
           placeholder="Enter your password"
-          class=""
+          autocomplete="current-password"
+          [(ngModel)]="password"
         />
         <p id="login-error" *ngIf="error" class="text-red-600 text-center text-sm">{{ error }}</p>
         <button type="submit" class="primary block w-full ">Log in</button>
@@ -59,15 +56,18 @@ export default class Index {
   error: string = ''
   userStore = userStore
 
-  constructor(private router: Router) { }
+  email: string = ''
+  password: string = ''
 
-  login = async (form: NgForm) => {
+  constructor(public router: Router) { }
+
+  login = async (event: Event) => {
+    event.preventDefault()
     this.error = ''
-    if (!form.valid) return
     try {
       await auth.login({
-        email: form.value.email,
-        password: form.value.password
+        email: this.email,
+        password: this.password
       })
       this.router.navigate(['/'])
     } catch (error) {

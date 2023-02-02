@@ -4,7 +4,7 @@ const scheme = 'http://'
 const baseUrl = 'localhost:8000'
 // const baseUrl = '192.168.0.12:8000'
 
-const fetch = async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
+let fetch = async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
   if (typeof input === 'string' && !input.startsWith('http') && input.startsWith('/')) {
     input = scheme + baseUrl + input
   }
