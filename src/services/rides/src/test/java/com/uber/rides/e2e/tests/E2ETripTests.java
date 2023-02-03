@@ -73,3 +73,40 @@ public class E2ETripTests {
         assertTrue(chooseRidePage.hasNotBeenRedirected());
     }
 
+    @Test
+    @Order(4)
+    public void testOrderRide_chooseCar_driverAvailable() {
+        chooseRidePage.selectCar("UBER_X");
+        chooseRidePage.orderRide();
+        assertTrue(chooseRidePage.hasBeenRedirected());
+    }
+
+    @Test
+    @Order(5)
+    public void testOrderRide_driverAssigned_awaitingPickup() {
+        var awaitingPickup = passengersPage.driverDetailsAreDisplayed();
+        assertTrue(awaitingPickup);
+    }
+
+    @Test
+    @Order(6)
+    public void testOrderRide_driverAssigned_driverAtPickupLocation() {
+        var driverAtPickupLocation = passengersPage.pickupIndicatorIsDisplayed();
+        assertTrue(driverAtPickupLocation);
+    }
+
+    @Test
+    @Order(7)
+    public void testOrderRide_driverAssigned_tripInProgress() {
+        var tripInProgress = passengersPage.driverDetailsAreDisplayed();
+        assertTrue(tripInProgress);
+    }
+
+    @Test
+    @Order(8)
+    public void testOrderRide_driverAssigned_tripCompleted() {
+        var tripCompleted = passengersPage.reviewDialogIsDisplayed();
+        assertTrue(tripCompleted);
+    }
+
+}
