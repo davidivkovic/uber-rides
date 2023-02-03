@@ -18,15 +18,15 @@ const routes: Routes = [
         path: '',
         pathMatch: 'full',
         canActivate: [() => {
-          if (ridesStore.data.trip || ridesStore.data.pickup || ridesStore.data.tripInProgress) {
-            window.router.navigate(['/passengers'])
-          }
-          else if (location.pathname === '/looking/choose-ride') {
+          if (location.pathname === '/looking/choose-ride') {
             // ridesStore.setState(store => store.data = {})
             window.router.navigate(['/looking'])
           }
           else if (ridesStore.data.directions && ridesStore.data.choosingRide) {
             window.router.navigate(['/looking/choose-ride'])
+          }
+          else if (ridesStore.data.trip || ridesStore.data.pickup || ridesStore.data.tripInProgress) {
+            window.router.navigate(['/passengers'])
           }
           else window.router.navigate(['/looking'])
           return true
