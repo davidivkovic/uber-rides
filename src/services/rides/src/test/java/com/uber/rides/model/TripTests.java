@@ -276,4 +276,244 @@ public class TripTests {
         assertFalse(driver.isAvailable());
     }
 
+    @Test
+    public void testProcessPayments_authorizationFails_returnsError() {
+        trip.setSplitPayment(false);
+        
+        var paymentMethod = mock(PaymentMethod.class);
+        rider.getUser().setDefaultPaymentMethod(paymentMethod);
+
+        when(paymentMethod.authorize(trip.getTotalPrice(), trip.getCurrency(), driver.getUser())).thenReturn(null);
+        doReturn(Arrays.asList(paymentMethod)).when(service).getPaymentMethods(any());
+
+        Result<List<Payment>> result = service.processPayments(trip);
+
+        assertFalse(result.success());
+
+        // assert correct error message was returned
+        assertEquals( "Authorization failed. Please try again later.", result.error());
+
+        // assert trip status cancelled
+        assertEquals(Status.CANCELLED, trip.getStatus());
+
+        // assert that the ws.sendMessageToUser method is called for each rider
+        trip.getRiders().forEach(rider -> verify(ws).sendMessageToUser(eq(rider.getId()), any(UberUpdate.class)));
+
+        // assert refund has been processed
+        trip.getPayments().forEach(payment -> verify(payment).refund());
+    }
+
+    @Test
+    public void testProcessPayments_noPaymentMethodsSet_returnsError() {
+        trip.setSplitPayment(false);
+        
+        rider.getUser().setDefaultPaymentMethod(null);
+
+        doReturn(Arrays.asList(rider.getUser().getDefaultPaymentMethod())).when(service).getPaymentMethods(any());
+
+        Result<List<Payment>> result = service.processPayments(trip);
+
+        assertFalse(result.success());
+
+        // assert correct error message was returned
+        assertEquals( "Authorization failed. Please try again later.", result.error());
+
+        // assert trip status cancelled
+        assertEquals(Status.CANCELLED, trip.getStatus());
+
+        // assert that the ws.sendMessageToUser method is called for each rider
+        trip.getRiders().forEach(rider -> verify(ws).sendMessageToUser(eq(rider.getId()), any(UberUpdate.class)));
+
+        // assert refund has been processed
+        trip.getPayments().forEach(payment -> verify(payment).refund());
+    }
+    
+    @Test
+    public void testProcessPayments_captureFails_returnsError() {
+        trip.setSplitPayment(false);
+        trip.setOwnerId(rider.getUser().getId());
+
+        var payment = mock(Payment.class);
+        var paymentMethod = mock(PaymentMethod.class);
+        rider.getUser().setDefaultPaymentMethod(paymentMethod);
+
+        when(paymentMethod.authorize(trip.getTotalPrice(), trip.getCurrency(), trip.getDriver())).thenReturn(payment);
+        when(payment.capture()).thenReturn(false);
+
+        doReturn(Arrays.asList(rider.getUser().getDefaultPaymentMethod())).when(service).getPaymentMethods(any());
+
+        Result<List<Payment>> result = service.processPayments(trip);
+
+        assertFalse(result.success());
+
+        // assert correct error message was returned
+        assertEquals("Payment failed. Please try again later.", result.error());
+    }
+
+    @Test
+    public void testProcessPayments_authorizationAndCapturePass_returnsPayments() {
+        trip.setSplitPayment(true);
+
+        trip.setDriver(driver.getUser());
+
+        var anotherRider = new User();
+        anotherRider.setId(3L);
+
+        var payment = mock(Payment.class);
+        var paymentMethod = mock(PaymentMethod.class);
+
+        var anotherPayment = mock(Payment.class);
+        var anotherPaymentMethod = mock(PaymentMethod.class);
+
+        rider.getUser().setDefaultPaymentMethod(paymentMethod);
+        anotherRider.setDefaultPaymentMethod(anotherPaymentMethod);
+
+        when(paymentMethod.authorize(trip.getTotalPrice() / 2, trip.getCurrency(), trip.getDriver())).thenReturn(payment);
+        when(payment.capture()).thenReturn(true);
+
+        when(anotherPaymentMethod.authorize(trip.getTotalPrice() / 2, trip.getCurrency(), trip.getDriver())).thenReturn(anotherPayment);
+        when(anotherPayment.capture()).thenReturn(true);
+
+        doReturn(Arrays.asList(rider.getUser().getDefaultPaymentMethod(), anotherRider.getDefaultPaymentMethod())).when(service).getPaymentMethods(any());
+
+        trip.setRiders(new HashSet<>(Arrays.asList(rider.getUser(), anotherRider)));
+
+        Result<List<Payment>> result = service.processPayments(trip);
+
+        assertTrue(result.success());
+
+        assertEquals(2, result.result().size());
+
+        // assert both payments captured
+        verify(payment, times(1)).capture();
+        verify(anotherPayment, times(1)).capture();
+
+        // assert no messages sent to users
+        verify(ws, never()).sendMessageToUser(any(), any(UberUpdate.class));
+    }
+
+    @Test
+    public void testGetMatchingDrivers_noDriversOnline_returnNull() {
+        driver.setOnline(false);
+
+        DriverData driver = service.getMatchingDriver(trip);
+
+        assertNull(driver);
+
+    }
+
+    @Test
+    public void testGetMatchingDrivers_noDriversHaveMatchingCarType_retrnNull() {
+        driver.setOnline(true);
+        
+        // set different car type
+        var tripCar = new Car();
+        tripCar.setType(Car.getByType(Types.UBER_GREEN));
+        trip.setCar(tripCar);
+
+        DriverData driver = service.getMatchingDriver(trip);
+
+        assertNull(driver);
+    }
+
+    @Test
+    public void testGetMatchingDrivers_onlineDriversHaveCurrentTrip_returnNull() {
+        driver.setOnline(true);
+
+        // set current trip for the driver
+        driver.getUser().setCurrentTrip(new Trip());
+
+        DriverData driver = service.getMatchingDriver(trip);
+
+        assertNull(driver);
+    }
+
+    @Test
+    public void testGetMatchingDrivers_forScheduledTripAndNoDriversFree_returnsNull() {
+        driver.setOnline(true);
+        
+        var scheduledAt = LocalDateTime.now().plusHours(1);
+        // set trip to be scheduled
+        trip.setScheduled(true);
+        trip.setScheduledAt(scheduledAt);
+
+        // set a scheduled trip for the driver at the same time
+        var driversScheduledTrip = new Trip();
+        driversScheduledTrip.setScheduled(true);
+        driversScheduledTrip.setStatus(Status.PAID);
+        driversScheduledTrip.setDurationInSeconds(1000000000);
+        driversScheduledTrip.setScheduledAt(scheduledAt);
+        driver.getUser().setScheduledTrips(new ArrayList<>());
+        driver.getUser().scheduledTrips.add(driversScheduledTrip);
+
+        DriverData foundDriver = service.getMatchingDriver(trip);
+
+        assertNull(foundDriver);
+    }
+
+    @Test
+    public void testGetMatchingDrivers_forScheduledTripAndDriverFree_returnDriver() {
+        driver.setOnline(true);
+        
+        // set trip to be scheduled
+        trip.setScheduled(true);
+        trip.setScheduledAt(LocalDateTime.now().plusHours(3));
+
+        // set a scheduled trip for the driver
+        var driversScheduledTrip = new Trip();
+        driversScheduledTrip.setScheduled(true);
+        driversScheduledTrip.setScheduledAt(LocalDateTime.now().plusHours(1));
+        driver.getUser().setScheduledTrips(new ArrayList<>());
+        driver.getUser().scheduledTrips.add(driversScheduledTrip);
+
+        DriverData driver = service.getMatchingDriver(trip);
+
+        assertNotNull(driver);
+    }
+
+    @Test
+    @SuppressWarnings(UNCHECKED)
+    public void testGetPaymentMethods_validUserIds_returnsListOfPaymentMethods() {
+        reset(service);
+
+        var paymentMethod1 = new PaymentMethod();
+        var paymentMethod2 = new PaymentMethod();
+        var paymentMethod3 = new PaymentMethod();
+
+        var user1 = new User();
+        user1.setId(1L);
+        var user2 = new User();
+        user2.setId(2L);
+        var user3 = new User();
+        user3.setId(3L);
+
+        user1.setDefaultPaymentMethod(paymentMethod1);
+        user2.setDefaultPaymentMethod(paymentMethod2);
+        user3.setDefaultPaymentMethod(paymentMethod3);
+        
+        var userIds = Arrays.asList(1L, 2L, 3L);
+
+        when(context.query().stream(any(StreamConfiguration.class))).thenReturn(Stream.of(user1, user2, user3));
+
+        List<PaymentMethod> result = service.getPaymentMethods(userIds);
+
+        // assert list size 3
+        assertEquals(3, result.size());
+    }
+
+    @Test
+    @SuppressWarnings(UNCHECKED)
+    public void testGetPaymentMethods_emptyUserIds_returnsEmptyList() {
+        reset(service);
+
+        var userIds = new ArrayList<Long>();
+
+        when(context.query().stream(any(StreamConfiguration.class))).thenReturn(Stream.empty());
+
+        List<PaymentMethod> result = service.getPaymentMethods(userIds);
+
+        // assert empty list
+        assertEquals(0, result.size());
+        
+    }
 }
