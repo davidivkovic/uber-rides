@@ -224,4 +224,26 @@ public class IntegrationTripsTests {
         assertEquals(HttpStatus.OK, response.getStatusCode());
 
     }
+
+    @Test 
+    @Order(5)
+    void testDriverCancelTrip_whenPickupNotPending_returnsError() {
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setBearerAuth(JWT.getJWT(driver));
+        var entity = new HttpEntity<>(headers);
+
+        var response = restTemplate.postForEntity(
+            "/trips/cancel?reason=The passenger did not show up", 
+            entity, 
+            Void.class
+        );
+
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+
+    }
+
+    
+
+
 }
