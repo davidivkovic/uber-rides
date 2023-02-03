@@ -1,12 +1,12 @@
 import { Component } from '@angular/core'
 import { Location, NgClass, NgFor, NgIf } from '@angular/common'
-import { formatAddress, resource } from '@app/utils'
+import { formatAddress, IMG, resource } from '@app/utils'
 import { ridesStore } from '@app/stores/ridesStore'
 import routes from '@app/api/routes'
 
 @Component({
   standalone: true,
-  imports: [NgFor, NgIf, NgClass],
+  imports: [NgFor, NgIf, NgClass, IMG],
   template: `
     <div class="h-[700px]">
       <div class="w-[400px] p-4 bg-white rounded-xl pointer-events-auto">
@@ -25,7 +25,7 @@ import routes from '@app/api/routes'
               class="w-[280px] h-[200px] rounded-md overflow-clip relative cursor-pointer"
               [ngClass]="{ 'ring-2 ring-black ring-offset-[3px]' : selectedRouteIndex === index }"
             >
-              <img [src]="route.thumbnail" class="absolute -top-2 h-[210px] object-cover"/>
+              <img [src]="route.thumbnail | IMG" class="absolute -top-2 h-[210px] object-cover"/>
               <div>
                 <div class="absolute w-full bottom-0 opacity-80 bg-gradient-to-t from-black to-transparent h-1/2"></div>
                 <div class="absolute text-white left-2.5 bottom-2.5">

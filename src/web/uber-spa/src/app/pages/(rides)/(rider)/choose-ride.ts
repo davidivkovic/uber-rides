@@ -120,8 +120,11 @@ import { PayDialog } from '@app/pages/(business)/profile/components/choosePaymen
         [title]="!defaultPaymentMethod ? 'Please add a payment method' : ''"
         id="request-ride-button"
         (click)="pollOrder()"
-        class="primary mx-4 !py-2.5 !text-base mt-1"
-        [ngClass]="{ 'mt-auto': !userStore.isAuthenticated }"
+        class="primary mx-4 !py-2.5 !text-base"
+        [ngClass]="{ 
+          'mt-auto': !userStore.isAuthenticated,
+          'mt-1': userStore.isAuthenticated
+        }"
       >
         {{ passengersReady ? 'Request an ' + this.selectedCarType?.name : 'Watiting for passengers...' }}
       </button>

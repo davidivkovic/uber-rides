@@ -34,8 +34,8 @@ public class InboundChatMessage implements InboundMessage<UserData> {
     public Long conversationId;
     public boolean closeConversation;
 
-    private User recipient;
-    private Conversation conversation;
+    User recipient;
+    Conversation conversation;
 
     @Autowired WS ws;
     @Autowired Store store;

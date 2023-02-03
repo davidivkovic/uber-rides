@@ -7,10 +7,11 @@ import riders from '@app/api/riders'
 import { ridesStore } from '@app/stores/ridesStore'
 import { send } from '@app/api/ws'
 import { OutboundMessages } from '@app/api/ws-messages/messages'
+import { PFP } from '@app/utils'
 
 @Component({
   standalone: true,
-  imports: [FormsModule, NgFor, NgIf, NgClass, CloseButton],
+  imports: [FormsModule, NgFor, NgIf, NgClass, CloseButton, PFP],
   template: `
     <div class="h-[700px]">
       <div class="w-[400px] h-[450px] flex flex-col p-4 bg-white rounded-xl pointer-events-auto">
@@ -50,7 +51,7 @@ import { OutboundMessages } from '@app/api/ws-messages/messages'
               }"
             >
               <div class="flex items-center">
-                <img [src]="user.profilePicture" class="w-9 h-9 rounded-full object-cover mr-3"/>
+                <img [src]="user.profilePicture | PFP" class="w-9 h-9 rounded-full object-cover mr-3"/>
                 <div>
                   <p class="leading-4">{{ user.firstName}} {{ user.lastName }}</p>
                   <p class="text-sm text-zinc-600">{{ user.email }}</p>
@@ -75,7 +76,7 @@ import { OutboundMessages } from '@app/api/ws-messages/messages'
             *ngFor="let passenger of passengers; trackBy: ngForIdentity"
             class="flex items-center space-x-3 p-3"
           >
-            <img [src]="passenger.profilePicture" class="w-9 h-9 rounded-full object-cover"/>
+            <img [src]="passenger.profilePicture | PFP" class="w-9 h-9 rounded-full object-cover"/>
             <div class="flex-1">
               <p class="leading-4">{{ passenger.firstName}} {{ passenger.lastName }}</p>
               <p class="text-sm text-zinc-600">{{ passenger.email }}</p>

@@ -2,13 +2,13 @@ import { Component } from '@angular/core'
 import { FormsModule, NgForm } from '@angular/forms'
 import { NgIf } from '@angular/common'
 import { notificationStore } from '@app/stores'
-import { resource } from '@app/utils'
+import { PFP, resource } from '@app/utils'
 import users from '@app/api/users'
 import auth from '@app/api/auth'
 
 @Component({
   standalone: true,
-  imports: [FormsModule, NgIf],
+  imports: [FormsModule, NgIf, PFP],
   template: `
     <form
       #form="ngForm"
@@ -19,7 +19,7 @@ import auth from '@app/api/auth'
     >
       <div class="flex space-x-3 items-center">
         <img
-          [src]="user.value.profilePicture"
+          [src]="user.value.profilePicture | PFP"
           class="h-16 w-16 rounded-full bg-zinc-100 object-cover"
         />
         <div>

@@ -6,12 +6,12 @@ import { Message } from './message'
 import { chatStore, userStore } from '@app/stores'
 import dayjs from 'dayjs'
 import { baseUrl, scheme } from '@app/api'
-import { computed } from '@app/utils'
+import { computed, PFP } from '@app/utils'
 
 @Component({
   standalone: true,
   selector: 'Conversation',
-  imports: [NgFor, NgIf, Message, RouterModule, FormsModule],
+  imports: [NgFor, NgIf, Message, RouterModule, FormsModule, PFP],
   template: `
     <div
       *ngIf="chatStore.currentConversation != null"
@@ -21,7 +21,7 @@ import { computed } from '@app/utils'
         <div class="text-xl flex items-center justify-between">
           <div class="flex space-x-5 items-center">
             <img
-              [src]="imageUrl()" 
+              [src]="imageUrl() | PFP" 
               class="h-8 w-8 rounded-full object-cover"
             />
             <h3>{{ name() }}</h3>
@@ -106,7 +106,7 @@ export class Conversation {
   scheme = scheme
 
   async sendMessage(event: Event) {
-    if(!this.message) return
+    if (!this.message) return
     event.preventDefault()
     chatStore.sendMessage(this.message)
     this.message = ''
@@ -119,8 +119,8 @@ export class Conversation {
   name = computed(
     [() => userStore.isAdmin, () => chatStore.currentConversation],
     () => {
-      if(!chatStore.currentConversation) return ''
-      const name = userStore.isAdmin 
+      if (!chatStore.currentConversation) return ''
+      const name = userStore.isAdmin
         ? chatStore.currentConversation.client.firstName + ' ' + chatStore.currentConversation.client.lastName
         : chatStore.currentConversation.admin.firstName + ' ' + chatStore.currentConversation.admin.lastName
       return name
@@ -130,12 +130,12 @@ export class Conversation {
   imageUrl = computed(
     [() => userStore.isAdmin, () => chatStore.currentConversation],
     () => {
-      if(!chatStore.currentConversation) return ''
-      const profilePic: string = userStore.isAdmin 
-        ? chatStore.currentConversation.client.profilePicture 
+      if (!chatStore.currentConversation) return ''
+      const profilePic: string = userStore.isAdmin
+        ? chatStore.currentConversation.client.profilePicture
         : chatStore.currentConversation.admin.profilePicture
-      if(profilePic?.startsWith('http')) return profilePic
-      return scheme + baseUrl  + '/users/pictures/' + profilePic
+      if (profilePic?.startsWith('http')) return profilePic
+      return scheme + baseUrl + '/users/pictures/' + profilePic
     }
   )
 }

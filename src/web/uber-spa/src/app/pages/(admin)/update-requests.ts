@@ -3,12 +3,13 @@ import { Component } from '@angular/core'
 import dayjs from 'dayjs'
 import relativeTime from 'dayjs/plugin/relativeTime'
 import users from '@app/api/users'
+import { PFP } from '@app/utils'
 
 dayjs.extend(relativeTime)
 
 @Component({
   standalone: true,
-  imports: [NgIf, NgFor],
+  imports: [NgIf, NgFor, PFP],
   template: `
     <div class="px-1">
       <div class="sm:flex sm:items-center">
@@ -49,7 +50,7 @@ dayjs.extend(relativeTime)
                 </thead>
                 <tbody class="divide-y divide-gray-200">
                   <tr *ngFor="let request of updateRequests">
-                    <td class="pl-6"><img [src]="request.profilePicture" class="rounded-full object-cover h-9 w-9" /></td>
+                    <td class="pl-6"><img [src]="request.profilePicture | PFP" class="rounded-full object-cover h-9 w-9" /></td>
                     <td class="whitespace-nowrap pr-3 text-sm text-gray-900 sm:pl-6">{{ request.firstName }}</td>
                     <td class="whitespace-nowrap px-3 text-sm text-gray-900">{{ request.lastName }}</td>
                     <td class="whitespace-nowrap px-3 text-sm text-gray-900">{{ request.phoneNumber }}</td>

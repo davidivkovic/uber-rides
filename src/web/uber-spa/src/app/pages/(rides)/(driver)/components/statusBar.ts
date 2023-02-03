@@ -5,14 +5,15 @@ import Weather from '@app/components/common/weather'
 import CurrentTime from '@app/components/common/currentTime'
 import CarRegistration from '@app/components/rides/carRegistration'
 import CurrentLocation from '@app/components/common/currentLocation'
+import { PFP } from '@app/utils'
 
 @Component({
   selector: 'StatusBar',
   standalone: true,
-  imports: [NgIf, NgClass, Weather, CurrentTime, CarRegistration, CurrentLocation],
+  imports: [NgIf, NgClass, Weather, CurrentTime, CarRegistration, CurrentLocation, PFP],
   template: `
     <div class="flex items-center gap-x-2 mb-3 mt-0.5">
-      <img [src]="userStore.user.profilePicture" class="h-14 w-14 rounded-full object-cover"/>
+      <img [src]="userStore.user.profilePicture | PFP" class="h-14 w-14 rounded-full object-cover"/>
       <div>
         <div class="flex items-center gap-x-2">
           <h1 class="text-xl leading-[26px]"> 

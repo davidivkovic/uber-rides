@@ -4,10 +4,11 @@ import { Component } from '@angular/core'
 import { FormsModule } from '@angular/forms'
 import users from '@app/api/users'
 import Dropdown from '@app/components/ui/base/dropdown'
+import { PFP } from '@app/utils'
 
 @Component({
   standalone: true,
-  imports: [FormsModule, NgFor, Dropdown],
+  imports: [FormsModule, NgFor, Dropdown, PFP],
   template: `
     <div class="px-1">
       <div class="sm:flex sm:items-center">
@@ -56,7 +57,7 @@ import Dropdown from '@app/components/ui/base/dropdown'
               </thead>
               <tbody class="divide-y divide-gray-200">
                 <tr *ngFor="let rider of riders; index as index">
-                  <td class="pl-6"><img [src]="rider.profilePicture" class="rounded-full object-cover h-9 w-9" /></td>
+                  <td class="pl-6"><img [src]="rider.profilePicture | PFP" class="rounded-full object-cover h-9 w-9" /></td>
                   <td class="whitespace-nowrap pr-3 text-sm sm:pl-6">{{ rider.firstName }}</td>
                   <td class="whitespace-nowrap px-3 text-sm">{{ rider.lastName }}</td>
                   <td class="whitespace-nowrap px-3 text-sm">{{ rider.email }}</td>

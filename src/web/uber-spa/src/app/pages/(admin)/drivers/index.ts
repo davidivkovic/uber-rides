@@ -4,10 +4,11 @@ import { FormsModule } from '@angular/forms'
 import { dialogStore } from '@app/stores'
 import Dropdown from '@app/components/ui/base/dropdown'
 import users from '@app/api/users'
+import { PFP } from '@app/utils'
 
 @Component({
   standalone: true,
-  imports: [FormsModule, NgFor, NgClass, Dropdown],
+  imports: [FormsModule, NgFor, NgClass, Dropdown, PFP],
   template: `
     <div class="px-1">
       <div class="sm:flex sm:items-center">
@@ -59,7 +60,7 @@ import users from '@app/api/users'
               </thead>
               <tbody class="divide-y divide-gray-200">
                 <tr *ngFor="let driver of drivers; index as index">
-                  <td class="pl-6"><img [src]="driver.profilePicture" class="rounded-full object-cover h-9 w-9" /></td>
+                  <td class="pl-6"><img [src]="driver.profilePicture | PFP" class="rounded-full object-cover h-9 w-9" /></td>
                   <td class="whitespace-nowrap pr-3 text-sm sm:pl-6">{{ driver.firstName }}</td>
                   <td class="whitespace-nowrap px-3 text-sm">{{ driver.lastName }}</td>
                   <td class="whitespace-nowrap px-3 text-sm">{{ driver.email }}</td>

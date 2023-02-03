@@ -3,11 +3,11 @@ import { Component } from '@angular/core'
 import { FormsModule, NgForm } from '@angular/forms'
 import users from '@app/api/users'
 import { notificationStore, userStore } from '@app/stores'
-import { resource } from '@app/utils'
+import { PFP, resource } from '@app/utils'
 
 @Component({
   standalone: true,
-  imports: [NgIf, FormsModule],
+  imports: [NgIf, FormsModule, PFP],
   template: `
     <form
       ngNativeValidate
@@ -19,7 +19,7 @@ import { resource } from '@app/utils'
       <div class="flex space-x-3 items-center">
         <label for="files">
           <img
-            [src]="user.value.profilePicture"
+            [src]="user.value.profilePicture | PFP"
             class="h-16 w-16 rounded-full cursor-pointer bg-zinc-100 object-cover"
           />
         </label>

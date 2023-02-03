@@ -8,6 +8,7 @@ import com.braintreegateway.BraintreeGateway;
 import com.braintreegateway.Environment;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
@@ -93,6 +94,7 @@ public class Utils {
         .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
         .configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false)
         .configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false)
+        .configure(MapperFeature.CAN_OVERRIDE_ACCESS_MODIFIERS, false)
         .setSerializationInclusion(Include.NON_NULL)
         .findAndRegisterModules();
 

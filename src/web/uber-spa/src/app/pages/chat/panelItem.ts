@@ -1,3 +1,4 @@
+import { NgIf } from '@angular/common'
 import { Component, Input } from '@angular/core'
 import { RouterModule } from '@angular/router'
 
@@ -5,8 +6,7 @@ import dayjs from 'dayjs'
 import relativeTime from 'dayjs/plugin/relativeTime'
 import updateLocale from 'dayjs/plugin/updateLocale'
 
-import { scheme, baseUrl } from '@app/api'
-import { NgIf } from '@angular/common'
+import { PFP } from '@app/utils'
 
 dayjs.extend(relativeTime)
 dayjs.extend(updateLocale)
@@ -32,11 +32,11 @@ dayjs.updateLocale('en', {
 @Component({
   standalone: true,
   selector: 'PanelItem',
-  imports: [RouterModule, NgIf],
+  imports: [RouterModule, NgIf, PFP],
   template: `
     <a [routerLink]="'/chat/' + conversation.id" class="w-full px-6 py-4 flex space-x-3 cursor-pointer relative">
       <img
-        [src]="conversation.messages[0].sender.profilePicture"
+        [src]="conversation.messages[0].sender.profilePicture | PFP"
         class="rounded-full h-12 w-12 object-cover"
       />
       <div class="flex-1">
@@ -62,6 +62,4 @@ dayjs.updateLocale('en', {
 export class PanelItem {
   @Input() conversation: any
   dayjs = dayjs
-  scheme = scheme
-  baseUrl = baseUrl
 }

@@ -4,7 +4,7 @@ import tz from 'dayjs/plugin/timezone'
 import { Component } from '@angular/core'
 import { CurrencyPipe, NgIf } from '@angular/common'
 import { Dialog } from '@app/components/ui/dialog'
-import { computed, formatDistance, formatDuration } from '@app/utils'
+import { computed, formatDistance, formatDuration, IMG } from '@app/utils'
 import { dialogStore, ridesStore } from '@app/stores'
 import { OutboundMessages } from './messages'
 import { send } from '../ws'
@@ -51,7 +51,7 @@ export default (message: { inviter: any, trip: any }) => {
 @Component({
   standalone: true,
   selector: 'TripInviteDialog',
-  imports: [NgIf, CurrencyPipe, PFP],
+  imports: [NgIf, CurrencyPipe, PFP, IMG],
   template: `
     <div class="bg-white w-[360px] pointer-events-auto space-y-2 max-w-md">
       <div class="flex items-center space-x-3 mb-4">
@@ -82,7 +82,7 @@ export default (message: { inviter: any, trip: any }) => {
             </div>
           </div>
         </div>
-        <img [src]="props.trip.route.thumbnail" class="object-cover rounded-md"/>
+        <img [src]="props.trip.route.thumbnail | IMG" class="object-cover rounded-md"/>
       </div>
       <div class="flex items-center -ml-2 -mt-1 pr-3.5">
         <img [src]="props.trip.car.type.image" class="w-[100px] h-[100px]" />

@@ -1,10 +1,11 @@
 import { NgClass, NgIf } from '@angular/common'
 import { Component, Input } from '@angular/core'
+import { PFP } from '@app/utils'
 
 @Component({
   selector: 'DriverDetails',
   standalone: true,
-  imports: [NgIf, NgClass],
+  imports: [NgIf, NgClass, PFP],
   template: `
     <div id="driver-details" *ngIf="driver" class="flex items-center">
       <div class="relative">
@@ -15,7 +16,7 @@ import { Component, Input } from '@angular/core'
           {{ driver.rating.toFixed(1) }}
         </h3>
         <img 
-          [src]="driver.profilePicture"
+          [src]="driver.profilePicture | PFP"
           [ngClass]="{
             'w-11 h-11': !small && !large,
             'w-[52px] h-[52px]': large

@@ -50,16 +50,17 @@ public class RiderData extends UserData {
             && (user.getCurrentTrip().getStatus() == Trip.Status.BUILDING || 
                 user.getCurrentTrip().getStatus() == Trip.Status.CANCELLED 
             )) {
+            var isOwner = user.getCurrentTrip().getOwnerId().equals(user.getId());
             user.getCurrentTrip().getRiders().forEach(rider -> {
                 ws.sendMessageToUser(
                     rider.getId(),
                     new TripInviteUpdate(
-                        UserDTO.builder().id(rider.getId()).build(),
+                        UserDTO.builder().id(isOwner ? rider.getId() : user.getId()).build(),
                         TripInviteUpdate.Status.REMOVED,
                         new HashMap<>()
                     )
                 );
-                rider.setCurrentTrip(null);
+                if (isOwner) rider.setCurrentTrip(null);
             });
             user.setCurrentTrip(null);
         }

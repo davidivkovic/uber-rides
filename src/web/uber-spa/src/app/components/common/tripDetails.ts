@@ -4,7 +4,7 @@ import tz from 'dayjs/plugin/timezone'
 import { watch } from 'usm-mobx'
 import { NgClass, CurrencyPipe, NgIf, NgFor } from '@angular/common'
 import { Component, ElementRef, Input, ViewChild, EventEmitter, Output } from '@angular/core'
-import { computed, formatDistance, formatDuration, InnerHtml } from '@app/utils'
+import { computed, formatDistance, formatDuration, IMG, InnerHtml, PFP } from '@app/utils'
 import { dialogStore, notificationStore, ridesStore, userStore } from '@app/stores'
 import RouteDetails from '@app/components/rides/routeDetails'
 import DriverDetails from '@app/components/common/driverDetails'
@@ -16,7 +16,7 @@ dayjs.extend(tz)
 @Component({
   selector: 'TripDetails',
   standalone: true,
-  imports: [NgIf, NgFor, NgClass, InnerHtml, RouteDetails, DriverDetails, CurrencyPipe],
+  imports: [NgIf, NgFor, NgClass, InnerHtml, RouteDetails, DriverDetails, CurrencyPipe, PFP, IMG],
   template: `
     <div #root class="cursor-pointer px-5 py-2.5 border rounded-md" (click)="expandTrip()">
       <div class="flex items-center justify-between pb-2">
@@ -38,7 +38,7 @@ dayjs.extend(tz)
       </div>
       <div class="flex gap-x-0.5">
         <img 
-          [src]="trip.route.thumbnail" 
+          [src]="trip.route.thumbnail | IMG" 
           [ngClass]="{ 'h-[110px]': !expanded, 'h-[170px]': expanded }"
           class="object-contain rounded-lg"
         />
@@ -111,7 +111,7 @@ dayjs.extend(tz)
           <h3 class="pt-3 pb-1">Passengers</h3>
           <div *ngFor="let rider of trip.riders" class="max-w-[70%] pb-3.5">
             <div class="flex items-start gap-x-3 mt-2">
-              <img [src]="rider.profilePicture" class="w-11 h-11 rounded-full object-cover -mt-1"/>
+              <img [src]="rider.profilePicture | PFP" class="w-11 h-11 rounded-full object-cover -mt-1"/>
               <div class="whitespace-nowrap">
                 <h3 class="flex-1 leading-4 text-[15px]">{{ rider.firstName}} {{ rider.lastName }}</h3>
                 <p class="text-[13px]">{{ trip.driver.phoneNumber }}</p>

@@ -2,16 +2,16 @@ import { NgIf } from '@angular/common'
 import { Component, Input } from '@angular/core'
 import { userStore } from '@app/stores'
 import { scheme, baseUrl } from '@app/api'
-import { computed } from '@app/utils'
+import { computed, PFP } from '@app/utils'
 
 @Component({
   standalone: true,
   selector: 'Message',
-  imports: [NgIf],
+  imports: [NgIf, PFP],
   template: `
     <div class="flex space-x-3 items-end" [class]="{'justify-end': isMine()}">
       <img *ngIf="!isMine()"
-        [src]="imageUrl()"
+        [src]="imageUrl() | PFP"
         class="w-10 h-10 rounded-full bg-gray-50 object-cover"
       />
       <div
@@ -44,7 +44,7 @@ export class Message {
     () => this.message?.sender?.profilePicture,
     () => {
       const profilePic = this.message?.sender?.profilePicture
-      if (!profilePic) return 'defult_pfp.png'
+      if (!profilePic) return 'default_pfp.png'
       if (profilePic.startsWith('http')) return profilePic
       return scheme + baseUrl + '/users/pictures/' + profilePic
     }

@@ -82,7 +82,6 @@ export default class Chat {
   constructor(public router: Router, public route: ActivatedRoute) {
     if (userStore.isAdmin) {
       this.route.paramMap.subscribe(async params => {
-        console.log('param map sub' + params.get('id'))
         this.conversationId = params.get('id')
         await chatStore.setCurrentConversation(this.conversationId)
         window.detector.detectChanges()
@@ -98,6 +97,7 @@ export default class Chat {
       }
     }
     chatStore.clearNotifications()
+    window.detector.detectChanges()
   }
 
 }

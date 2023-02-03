@@ -151,6 +151,7 @@ class ChatStore {
     } else {
       this.addMessageToCurrentConversation(message)
     }
+    window.detector.detectChanges()
   }
 }
 
