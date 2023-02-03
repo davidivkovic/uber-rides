@@ -18,21 +18,23 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-  # rides:
-  #   image: rides
-  #   build:
-  #     context: ./services/rides
-  #     dockerfile: Dockerfile
-  #   restart: always
-  #   ports:
-  #     - 8000:8000
-  #   depends_on:
-  #     - postgres
-  #   volumes:
-  #     - ../images:/images
-  #   environment:
-  #     spring.datasource.url: "jdbc:postgresql://postgres:5432/rides"
+  rides:
+    image: rides
+    build:
+      context: ./services/rides
+      dockerfile: Dockerfile
+    restart: always
+    ports:
+      - 8000:8000
+    depends_on:
+      - postgres
+    volumes:
+      - ../images:/images
+      - m2-repo:/root/.m2
+    environment:
+      spring.datasource.url: "jdbc:postgresql://postgres:5432/rides"
 
 volumes:
+  m2-repo:
   postgres:
     driver: local
