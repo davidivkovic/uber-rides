@@ -174,6 +174,13 @@ export default class Passengers {
     // if (polylines.length === 0 || ridesStore.mapElements?.pickupPolyline?.getMap() !== map) refreshAllElements()
   }
 
+  onActivated(navigatedFrom: string) {
+    ridesStore.setState(store => {
+      store.data.looking = false
+      store.data.choosingRide = false
+    })
+  }
+
   constructor(public router: Router) {
     watch(
       ridesStore,
