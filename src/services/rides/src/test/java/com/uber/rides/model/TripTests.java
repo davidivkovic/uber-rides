@@ -277,6 +277,129 @@ public class TripTests {
     }
 
     @Test
+    public void testOrderRide_tripNotScheduled_pickupStarted() {
+        when(maps.getDirections(anyDouble(), anyDouble(), anyDouble(), anyDouble())).thenReturn(directionsResult);
+        when(context.db().merge(route)).thenReturn(route);
+
+        doReturn(Result.value(new ArrayList<Payment>())).when(service).processPayments(trip);
+
+        trip.setScheduled(false);
+
+        // call the orderRide() method
+        Result<Void> result = service.orderRide(trip);
+
+        assertTrue(result.success());
+
+        // assert that the trip's status is set to AWAITING_PICKUP
+        assertEquals(Status.AWAITING_PICKUP, trip.getStatus());
+
+        // assert that the driver's current trip is set to the input trip
+        assertEquals(trip, driver.getUser().getCurrentTrip());
+
+        // assert that the simulator.runTask method is called
+        verify(simulator).runTask(driver.getUser(), directionsResult.routes[0], false);
+        
+        // assert that the ws.sendMessageToUser method is called for each rider
+        trip.getRiders().forEach(rider -> verify(ws).sendMessageToUser(eq(rider.getId()), any(TripAssigned.class)));
+
+        // assert that the ws.sendMessageToUser method is called for the driver
+        verify(ws).sendMessageToUser(eq(driver.getUser().getId()), any(TripAssigned.class));
+
+    }
+
+    @Test 
+    public void testOrderRide_paymentFails_returnsError() {
+        when(maps.getDirections(anyDouble(), anyDouble(), anyDouble(), anyDouble())).thenReturn(directionsResult);
+        when(context.db().merge(route)).thenReturn(route);
+        doReturn(Result.error("Authorization failed")).when(service).processPayments(trip);
+
+        // call the orderRide() method
+        Result<Void> result = service.orderRide(trip);
+
+        assertFalse(result.success());
+        
+        // assert that the trip's status is set to CREATED
+        assertEquals(Status.CREATED, trip.getStatus());
+
+        assertEquals("Authorization failed", result.error());
+    }
+
+    @Test
+    public void testOrderRide_tripScheduledInmoreThanFifteenMinutesInFuture_schedulerSet() {
+        when(maps.getDirections(anyDouble(), anyDouble(), anyDouble(), anyDouble())).thenReturn(directionsResult);
+        when(context.db().merge(route)).thenReturn(route);
+
+        doReturn(Result.value(new ArrayList<Payment>())).when(service).processPayments(trip);
+
+        trip.setScheduled(true);
+        trip.setScheduledAt(LocalDateTime.now().plusMinutes(30));
+
+        // call the orderRide() method
+        Result<Void> result = service.orderRide(trip);
+
+        assertTrue(result.success());
+
+        //  assert simulator.runTask is not called
+        verify(simulator, never()).runTask(any(), any(), anyBoolean());
+
+        // assert that the scheduler is called exactly 4 times
+        verify(scheduler, times(4)).schedule(any(Runnable.class), any(Instant.class));
+
+        // assert that the ws.sendMessageToUser method is called for each rider
+        trip.getRiders().forEach(rider -> verify(ws).sendMessageToUser(eq(rider.getId()), any(TripAssigned.class)));
+
+        // assert that the ws.sendMessageToUser method is called for the driver
+        verify(ws).sendMessageToUser(eq(driver.getUser().getId()), any(TripAssigned.class));
+    }
+
+    @Test
+    public void testOrderRide_tripScheduledInlessThanFifteenMinutesInFuture_schedulerSet() {
+        when(maps.getDirections(anyDouble(), anyDouble(), anyDouble(), anyDouble())).thenReturn(directionsResult);
+        when(context.db().merge(route)).thenReturn(route);
+
+        doReturn(Result.value(new ArrayList<Payment>())).when(service).processPayments(trip);
+
+        trip.setScheduled(true);
+        trip.setScheduledAt(LocalDateTime.now(ZoneOffset.UTC).plusMinutes(9));
+
+        // call the orderRide() method
+        Result<Void> result = service.orderRide(trip);
+
+        assertTrue(result.success());
+
+        //  assert simulator.runTask is not called
+        verify(simulator, never()).runTask(driver.getUser(), directionsResult.routes[0], false);
+
+        // assert that the scheduler is called exactly 2 times
+        verify(scheduler, times(2)).schedule(any(Runnable.class), any(Instant.class));
+
+        // assert that the ws.sendMessageToUser method is called for each rider
+        trip.getRiders().forEach(rider -> verify(ws).sendMessageToUser(eq(rider.getId()), any(TripAssigned.class)));
+
+        // assert that the ws.sendMessageToUser method is called for the driver
+        verify(ws).sendMessageToUser(eq(driver.getUser().getId()), any(TripAssigned.class));
+    }
+
+    @Test
+    public void testStartTrip_driverNotOnRightLocation_returnsError() {
+        driver.setLatitude(40.0);
+        driver.setLongitude(50.0);
+        trip.getRoute().getStart().setLatitude(39.0);
+        trip.getRoute().getStart().setLongitude(49.0);
+
+        Result<Void> result = service.startTrip(driver, trip);
+
+        assertFalse(result.success());
+        assertEquals("You are not in the right location to start the trip. Please move closer to the pickup location.", result.error());
+
+        // assert that the simulator.runTask method is not called
+        verify(simulator, never()).runTask(driver.getUser(), trip.getDirections(), true);
+
+        // assert that the trip never gets updated
+        verify(context.db(), never()).merge(trip);
+    }
+
+    @Test
     public void testProcessPayments_authorizationFails_returnsError() {
         trip.setSplitPayment(false);
         
