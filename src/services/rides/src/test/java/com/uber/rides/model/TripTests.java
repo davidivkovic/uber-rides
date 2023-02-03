@@ -400,6 +400,153 @@ public class TripTests {
     }
 
     @Test
+    public void testStartTrip_driverOnRightLocation_startSimulation() {
+        driver.setLatitude(40.0);
+        driver.setLongitude(50.0);
+        trip.getRoute().getStart().setLatitude(40.0);
+        trip.getRoute().getStart().setLongitude(50.0);
+
+        Result<Void> result = service.startTrip(driver, trip);
+
+        assertTrue(result.success());
+
+        // assert that the ws.sendMessageToUser method is called for each rider
+        trip.getRiders().forEach(rider -> verify(ws).sendMessageToUser(eq(rider.getId()), any(TripStarted.class)));
+
+        // assert that the ws.sendMessageToUser method is called for the driver
+        verify(ws).sendMessageToUser(eq(driver.getUser().getId()), any(TripStarted.class));
+
+        // assert that the simulator.runTask method is called
+        verify(simulator).runTask(driver.getUser(), trip.getDirections(), true);
+
+        // assert that the trip's status is set to IN_PROGRESS
+        assertEquals(Status.IN_PROGRESS, trip.getStatus());
+
+        // assert that the trip's data is updated and saved to the database
+        verify(context.db()).merge(trip);
+    }
+
+    @Test
+    public void testCancelTrip_splitPayment_tripCancelled() {
+        trip.setSplitPayment(true);
+
+        service.cancelTrip(driver, trip, "Some reason for trip cancellation");
+
+        // assert driver has no current trip and is available
+        assertEquals(true, driver.isAvailable());
+        assertEquals(null, driver.getUser().getCurrentTrip());
+
+        // assert that the trip's status is set to CANCELLED
+        assertEquals(Status.CANCELLED, trip.getStatus());
+
+        // assert that the trip's data is updated and saved to the database
+        verify(context.db()).merge(trip);
+
+        // assert refund has been processed
+        trip.getPayments().forEach(payment -> verify(payment).refund());
+
+        // assert that the ws.sendMessageToUser method is called for each rider
+        trip.getRiders().forEach(rider -> verify(ws).sendMessageToUser(eq(rider.getId()), any(TripCancelled.class)));
+    }   
+
+    @Test
+    public void testCancelTrip_noSplitPayment_tripCancelled() {
+        trip.setSplitPayment(false);
+
+        service.cancelTrip(driver, trip, "Some reason for trip cancellation");
+
+        // assert driver has no current trip and is available
+        assertEquals(true, driver.isAvailable());
+        assertEquals(null, driver.getUser().getCurrentTrip());
+
+        // assert that the trip's status is set to CANCELLED
+        assertEquals(Status.CANCELLED, trip.getStatus());
+
+        // assert that the trip's data is updated and saved to the database
+        verify(context.db()).merge(trip);
+
+        // assert refund has been processed
+        trip.getPayments().forEach(payment -> verify(payment).refund());
+
+        // assert that the ws.sendMessageToUser method is called for each rider
+        trip.getRiders().forEach(rider -> verify(ws).sendMessageToUser(eq(rider.getId()), any(TripCancelled.class)));
+    }   
+
+    @Test
+    public void testChooseRide_changeCar_returnsTrip() {
+        trip.setCar(car);
+
+        Result<Trip> result = service.chooseRide(rider, trip, Car.Types.UBER_X);
+        
+        // assert result value is the trip
+        assertEquals(trip, result.result());
+    }
+
+    @Test
+    public void testChooseRide_getThumbnailFail_returnsError() {
+        trip.setCar(null);
+            
+        when(maps.getRouteThumbnail(directionsResult.routes[0])).thenReturn(new byte[0]);
+
+        Result<Trip> result = service.chooseRide(rider, trip, Car.Types.UBER_X);
+
+        assertFalse(result.success());
+        assertEquals("Could not get route thumbnail at this time. Please try again later.", result.error());
+    }
+
+    @Test
+    public void testChooseRide_noStops_returnsTrip() {
+        trip.setCar(null);
+
+        var thumbnail = new byte[]{1, 2, 3, 4, 5};
+        when(maps.getRouteThumbnail(directionsResult.routes[0])).thenReturn(thumbnail);
+
+        Result<Trip> result = service.chooseRide(rider, trip, Car.Types.UBER_X);
+        assertTrue(result.success());
+
+        // assert result value is the trip
+        assertEquals(trip, result.result());
+
+        // assert trip has only destination
+        assertEquals(1, trip.getRoute().stops.size());
+        assertEquals("Destination", trip.getRoute().stops.get(0).address);
+        assertEquals(1, trip.getRoute().stops.get(0).order);
+    }
+
+    @Test
+    public void testChooseRide_atLeastOneStop_returnsTrip() {
+        // add a stop
+        DirectionsLeg newLeg = new DirectionsLeg();
+        newLeg.startLocation = new com.google.maps.model.LatLng(2, 2);
+        newLeg.startAddress = "Leg Origin";
+        newLeg.endLocation = new com.google.maps.model.LatLng(3, 3);
+        newLeg.endAddress = "Leg Destination";
+        Duration legDuration = new Duration();
+        legDuration.inSeconds = 1;
+        Distance legDistance = new Distance();
+        legDistance.inMeters = 1;
+        newLeg.duration = legDuration;
+        newLeg.distance = legDistance;
+
+        directionsResult.routes[0].legs = Arrays.copyOf(directionsResult.routes[0].legs, 2);
+        directionsResult.routes[0].legs[1]  = newLeg;
+
+        trip.setCar(null);
+        when(maps.getRouteThumbnail(directionsResult.routes[0])).thenReturn(new byte[]{1, 2, 3, 4, 5});
+
+        Result<Trip> result = service.chooseRide(rider, trip, Car.Types.UBER_X);
+
+        
+        assertTrue(result.success());
+
+        // assert result value is the trip
+        assertEquals(trip, result.result());
+
+        // assert trip has a stop
+        assertEquals(2, trip.getRoute().stops.size());
+    }
+
+    @Test
     public void testProcessPayments_authorizationFails_returnsError() {
         trip.setSplitPayment(false);
         
