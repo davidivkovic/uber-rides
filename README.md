@@ -1,5 +1,5 @@
 # Uber Rides
-Order rides, invite friends and pay easily and securely. An Uber Rides Clone.
+Order rides, invite friends, pay easily and securely. An Uber Rides Clone.
 
 ## Built using 💻🚀
 - [Spring](https://spring.io/)
