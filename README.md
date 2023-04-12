@@ -11,6 +11,8 @@ Order rides, invite friends, pay easily and securely. An Uber Rides Clone.
 - [Docker](https://www.docker.com/)
 
 # Showcase 📸
+Please make sure to turn on the sound 🔊
+
 https://user-images.githubusercontent.com/16724395/231331269-e9e4b440-0e38-4518-bf99-e30e64306a2e.mp4
 
 ## Legal ⚖️
