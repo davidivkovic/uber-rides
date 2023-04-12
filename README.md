@@ -1,7 +1,7 @@
 # Uber Rides
 Order rides, invite friends, pay easily and securely. An Uber Rides Clone.
 
-## Built using 💻🚀
+## Built using ⚙️🔧
 - [Spring](https://spring.io/)
 - [Angular](https://angular.io/)
 - [USM MobX](https://github.com/unadlib/usm)
