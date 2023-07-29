@@ -1,4 +1,5 @@
-# Uber Rides
+<h1><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/7/79/Uber_App_Icon.svg/2048px-Uber_App_Icon.svg.png" align="center" width="36" height="36"/> Uber Rides </h1> 
+
 Order rides, invite friends, pay easily and securely. An Uber Rides Clone.
 
 ## Built using ⚙️🔧
